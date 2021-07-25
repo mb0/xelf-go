@@ -35,6 +35,9 @@ func ErrStrTerm(t Tok) *Error {
 	return &Error{Src: t.Src, Code: 105, Name: "unterminated string",
 		Help: fmt.Sprintf("expecting closing %q", t.Raw[0])}
 }
+func ErrUnquote(t Tok, err error) *Error {
+	return &Error{Src: t.Src, Code: 106, Name: fmt.Sprintf("invalid string quoting %v", err)}
+}
 func ErrTreeTerm(t Tok) *Error {
 	_, end := parens(t.Kind)
 	return &Error{Src: t.Src, Code: 111, Name: "unterminated tree",
@@ -42,6 +45,22 @@ func ErrTreeTerm(t Tok) *Error {
 }
 func ErrInvalidSep(t Tok) *Error { return &Error{Src: t.Src, Code: 112, Name: "invalid separator"} }
 func ErrInvalidTag(t Tok) *Error { return &Error{Src: t.Src, Code: 113, Name: "invalid tag"} }
+
+func ErrUnexpected(a Ast) *Error {
+	return &Error{Src: a.Src, Code: 201, Name: fmt.Sprintf("unexpected input %s", a)}
+}
+func ErrExpectSym(a Ast) *Error {
+	return &Error{Src: a.Src, Code: 202, Name: fmt.Sprintf("expect sym got %s", a)}
+}
+func ErrExpectTag(a Ast) *Error {
+	return &Error{Src: a.Src, Code: 203, Name: fmt.Sprintf("expect tag got %s", a)}
+}
+func ErrInvalidType(s Src, raw string) *Error {
+	return &Error{Src: s, Code: 301, Name: fmt.Sprintf("invalid type %s", raw)}
+}
+func ErrInvalidParams(a Ast) *Error {
+	return &Error{Src: a.Src, Code: 302, Name: fmt.Sprintf("invalid type parameters %s", a)}
+}
 
 func parens(k knd.Kind) (rune, rune) {
 	switch k {

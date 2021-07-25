@@ -1,7 +1,6 @@
 package typ
 
 import (
-	"fmt"
 	"io"
 	"strconv"
 	"strings"
@@ -37,9 +36,9 @@ func parse(a ast.Ast, hist []Type) (Type, error) {
 		if err != nil {
 			return t, err
 		}
-		return parseBody(a.Seq[1:], t, hist)
+		return parseBody(a, a.Seq[1:], t, hist)
 	}
-	return Void, fmt.Errorf("parse type %q %w", a, knd.ErrInvalid)
+	return Void, ast.ErrUnexpected(a)
 }
 func ParseSym(raw string, src ast.Src, hist []Type) (Type, error) {
 	var res Type
@@ -48,7 +47,7 @@ func ParseSym(raw string, src ast.Src, hist []Type) (Type, error) {
 	for i := len(sp) - 1; i >= 0; i-- {
 		s, v = sp[i], ""
 		if s == "" {
-			return Void, fmt.Errorf("parse type %q %w", raw, knd.ErrInvalid)
+			return Void, ast.ErrInvalidType(src, raw)
 		}
 		var tk knd.Kind
 		lst := s[len(s)-1]
@@ -111,7 +110,7 @@ func ParseSym(raw string, src ast.Src, hist []Type) (Type, error) {
 	return res, nil
 }
 
-func parseBody(args []ast.Ast, t Type, hist []Type) (_ Type, err error) {
+func parseBody(a ast.Ast, args []ast.Ast, t Type, hist []Type) (_ Type, err error) {
 	if len(args) == 0 {
 		return t, nil
 	}
@@ -163,7 +162,7 @@ func parseBody(args []ast.Ast, t Type, hist []Type) (_ Type, err error) {
 		el.Body = &ElBody{El: b}
 		return t, nil
 	default:
-		return Void, fmt.Errorf("unexpected parameters %s for %s", args, t)
+		return Void, ast.ErrInvalidParams(a)
 	}
 	ps, err := parseParams(args, hist)
 	if err != nil {
@@ -175,7 +174,7 @@ func parseBody(args []ast.Ast, t Type, hist []Type) (_ Type, err error) {
 
 func parseName(a ast.Ast) (string, error) {
 	if a.Kind != knd.Sym {
-		return "", fmt.Errorf("expect symbol got %s", a)
+		return "", ast.ErrExpectSym(a)
 	}
 	return a.Raw, nil
 }
