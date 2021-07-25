@@ -1,6 +1,7 @@
 package lit
 
 import (
+	"bytes"
 	"fmt"
 	"reflect"
 	"strconv"
@@ -132,6 +133,11 @@ func (u *UUID) Reflect() reflect.Value { return reflect.ValueOf(u).Elem() }
 func (t *Time) Reflect() reflect.Value { return reflect.ValueOf(t).Elem() }
 func (s *Span) Reflect() reflect.Value { return reflect.ValueOf(s).Elem() }
 
+func (r *Raw) UnmarshalJSON(b []byte) error  { return unmarshal(b, r) }
+func (u *UUID) UnmarshalJSON(b []byte) error { return unmarshal(b, u) }
+func (t *Time) UnmarshalJSON(b []byte) error { return unmarshal(b, t) }
+func (s *Span) UnmarshalJSON(b []byte) error { return unmarshal(b, s) }
+
 func (v *Bool) Assign(p Val) error {
 	if n, err := ToBool(p); err != nil {
 		return err
@@ -216,4 +222,12 @@ func mustRef(ref reflect.Type, v reflect.Value) (Mut, error) {
 		v = v.Convert(ref)
 	}
 	return v.Interface().(Mut), nil
+}
+
+func unmarshal(b []byte, prx Mut) error {
+	lit, err := Read(bytes.NewReader(b), "")
+	if err != nil {
+		return err
+	}
+	return prx.Assign(lit.Val)
 }

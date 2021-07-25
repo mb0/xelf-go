@@ -1,6 +1,7 @@
 package lit
 
 import (
+	"encoding/json"
 	"reflect"
 
 	"xelf.org/xelf/bfr"
@@ -67,6 +68,13 @@ func (o *OptMut) Assign(v Val) error {
 		o.ptr.Elem().Set(reflect.ValueOf(o.Mut.Ptr()).Convert(o.ptr.Type().Elem()))
 	}
 	return nil
+}
+func (o *OptMut) UnmarshalJSON(b []byte) error {
+	if len(b) == 0 || len(b) == 4 && string(b) == "null" {
+		o.null = true
+		return nil
+	}
+	return json.Unmarshal(b, o.Mut)
 }
 
 func Unwrap(v Val) Val {

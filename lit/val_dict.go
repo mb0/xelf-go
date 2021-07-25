@@ -1,6 +1,9 @@
 package lit
 
 import (
+	"bytes"
+	"fmt"
+
 	"xelf.org/xelf/bfr"
 	"xelf.org/xelf/typ"
 )
@@ -151,5 +154,17 @@ func (d *Dict) IterKey(it func(string, Val) error) error {
 			return err
 		}
 	}
+	return nil
+}
+func (d *Dict) UnmarshalJSON(b []byte) error {
+	lit, err := Read(bytes.NewReader(b), "")
+	if err != nil {
+		return err
+	}
+	o, ok := lit.Val.(*Dict)
+	if !ok {
+		return fmt.Errorf("expect dict got %T", lit.Val)
+	}
+	*d = *o
 	return nil
 }

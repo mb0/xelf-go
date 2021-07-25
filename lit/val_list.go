@@ -1,6 +1,9 @@
 package lit
 
 import (
+	"bytes"
+	"fmt"
+
 	"xelf.org/xelf/bfr"
 	"xelf.org/xelf/typ"
 )
@@ -110,5 +113,17 @@ func (l *List) IterIdx(it func(int, Val) error) error {
 			return err
 		}
 	}
+	return nil
+}
+func (l *List) UnmarshalJSON(b []byte) error {
+	lit, err := Read(bytes.NewReader(b), "")
+	if err != nil {
+		return err
+	}
+	o, ok := lit.Val.(*List)
+	if !ok {
+		return fmt.Errorf("expect list got %T", lit.Val)
+	}
+	*l = *o
 	return nil
 }
