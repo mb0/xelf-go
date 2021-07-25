@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"xelf.org/xelf/bfr"
+	"xelf.org/xelf/cor"
 	"xelf.org/xelf/knd"
 )
 
@@ -30,6 +31,19 @@ func (t Type) Equal(o Type) bool {
 		return o.Body == nil
 	}
 	return t.Body.Equal(o.Body)
+}
+
+func (t *Type) UnmarshalJSON(b []byte) error {
+	s, err := cor.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	r, err := Parse(s, "")
+	if err != nil {
+		return err
+	}
+	*t = r
+	return nil
 }
 
 func (t Type) String() string               { return bfr.String(t) }
