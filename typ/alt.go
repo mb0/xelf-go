@@ -6,6 +6,45 @@ import (
 	"xelf.org/xelf/knd"
 )
 
+func Alt(ts ...Type) Type {
+	a := &AltBody{Alts: make([]Type, 0, len(ts))}
+	var res Type
+	for _, t := range ts {
+		if t.Kind.IsAlt() {
+			res.Kind |= t.Kind
+			if t.ID > 0 && res.ID == 0 {
+				res.ID = t.ID
+			}
+			if t.Body != nil {
+				tb, _ := t.Body.(*AltBody)
+				if tb != nil {
+					for _, ta := range tb.Alts {
+						a.add(ta)
+					}
+				}
+			}
+		} else if t.ID == 0 && t.Body == nil {
+			res.Kind |= t.Kind
+		} else {
+			a.add(t)
+		}
+	}
+	if len(a.Alts) > 0 {
+		sort.Sort(byKind(a.Alts))
+		res.Body = a
+		res.Kind |= knd.Alt
+	}
+	return res
+}
+func (b *AltBody) add(t Type) {
+	for _, a := range b.Alts {
+		if t.AssignableTo(a) {
+			return
+		}
+	}
+	b.Alts = append(b.Alts, t)
+}
+
 func altTypes(a Type) []Type {
 	if !a.Kind.IsAlt() {
 		return []Type{a}
