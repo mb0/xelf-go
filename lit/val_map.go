@@ -1,16 +1,18 @@
 package lit
 
 import (
-	"bytes"
 	"fmt"
 
+	"xelf.org/xelf/ast"
 	"xelf.org/xelf/bfr"
+	"xelf.org/xelf/knd"
 	"xelf.org/xelf/typ"
 )
 
 type Map struct {
-	El typ.Type
-	M  map[string]Val
+	Reg *Reg
+	El  typ.Type
+	M   map[string]Val
 }
 
 func (h *Map) Type() typ.Type               { return typ.DictOf(h.El) }
@@ -18,6 +20,7 @@ func (h *Map) Nil() bool                    { return h == nil }
 func (h *Map) Zero() bool                   { return len(h.M) == 0 }
 func (h *Map) Value() Val                   { return h }
 func (h *Map) MarshalJSON() ([]byte, error) { return bfr.JSON(h) }
+func (h *Map) UnmarshalJSON(b []byte) error { return unmarshal(b, h) }
 func (h *Map) String() string               { return bfr.String(h) }
 func (h *Map) Print(p *bfr.P) (err error) {
 	p.Byte('{')
@@ -35,8 +38,37 @@ func (h *Map) Print(p *bfr.P) (err error) {
 	return p.Byte('}')
 }
 
-func (h *Map) New() Mut         { return &Map{h.El, nil} }
-func (h *Map) Ptr() interface{} { return h }
+func (h *Map) New() (Mut, error) { return &Map{h.Reg, h.El, nil}, nil }
+func (h *Map) WithReg(reg *Reg)  { h.Reg = reg }
+func (h *Map) Ptr() interface{}  { return h }
+func (h *Map) Parse(a ast.Ast) error {
+	if isNull(a) {
+		h.M = nil
+		return nil
+	}
+	if a.Kind != knd.Keyr {
+		return fmt.Errorf("expect keyr")
+	}
+	if h.M == nil {
+		h.M = make(map[string]Val, len(a.Seq))
+	} else if len(h.M) > 0 {
+		for k := range h.M {
+			delete(h.M, k)
+		}
+	}
+	for _, e := range a.Seq {
+		key, val, err := ast.UnquotePair(e)
+		if err != nil {
+			return err
+		}
+		el, err := h.Reg.parseMutNull(val)
+		if err != nil {
+			return err
+		}
+		h.M[key] = el
+	}
+	return nil
+}
 func (h *Map) Assign(p Val) error {
 	// TODO check types
 	switch o := p.(type) {
@@ -92,24 +124,5 @@ func (h *Map) IterKey(it func(string, Val) error) error {
 			return err
 		}
 	}
-	return nil
-}
-func (h *Map) UnmarshalJSON(b []byte) error {
-	lit, err := Read(bytes.NewReader(b), "")
-	if err != nil {
-		return err
-	}
-	o, ok := lit.Val.(*Dict)
-	if !ok {
-		return fmt.Errorf("expect dict got %T", lit.Val)
-	}
-	o.IterKey(func(key string, v Val) error {
-		if h.M == nil {
-			h.M = make(map[string]Val)
-		}
-		h.M[key] = v
-		return nil
-	})
-	h.El = o.El
 	return nil
 }

@@ -3,17 +3,20 @@ package lit
 import (
 	"fmt"
 
+	"xelf.org/xelf/ast"
 	"xelf.org/xelf/bfr"
+	"xelf.org/xelf/knd"
 	"xelf.org/xelf/typ"
 )
 
 type Strc struct {
+	Reg  *Reg
 	Typ  typ.Type
 	Vals []Val
 }
 
-func NewStrc(t typ.Type) (*Strc, error) {
-	s := &Strc{Typ: t}
+func NewStrc(reg *Reg, t typ.Type) (*Strc, error) {
+	s := &Strc{Reg: reg, Typ: t}
 	err := s.init(false)
 	return s, err
 }
@@ -27,7 +30,7 @@ func (s *Strc) init(ext bool) (err error) {
 		if ext && vs[i] != nil {
 			continue
 		}
-		vs[i], err = Zero(p.Type)
+		vs[i], err = s.Reg.Zero(p.Type)
 		if err != nil {
 			break
 		}
@@ -36,7 +39,7 @@ func (s *Strc) init(ext bool) (err error) {
 	return
 }
 func (s *Strc) Type() typ.Type { return s.Typ }
-func (s *Strc) Nil() bool      { return s == nil }
+func (s *Strc) Nil() bool      { return len(s.Vals) == 0 }
 func (s *Strc) Zero() bool {
 	for _, v := range s.Vals {
 		if v != nil && !v.Zero() {
@@ -47,6 +50,7 @@ func (s *Strc) Zero() bool {
 }
 func (s *Strc) Value() Val                   { return s }
 func (s *Strc) MarshalJSON() ([]byte, error) { return bfr.JSON(s) }
+func (s *Strc) UnmarshalJSON(b []byte) error { return unmarshal(b, s) }
 func (s *Strc) String() string               { return bfr.String(s) }
 func (s *Strc) Print(p *bfr.P) (err error) {
 	p.Byte('{')
@@ -58,14 +62,9 @@ func (s *Strc) Print(p *bfr.P) (err error) {
 		var v Val
 		if i < len(s.Vals) {
 			v = s.Vals[i]
-		} else {
-			v, err = Zero(par.Type)
-			if err != nil {
-				return err
-			}
 		}
-		if v == nil {
-			p.Fmt("null")
+		if v == nil || v.Zero() {
+			PrintZero(p, par.Type)
 			continue
 		}
 		if err = v.Print(p); err != nil {
@@ -74,17 +73,50 @@ func (s *Strc) Print(p *bfr.P) (err error) {
 	}
 	return p.Byte('}')
 }
-func (s *Strc) New() Mut         { return &Strc{s.Typ, nil} }
-func (s *Strc) Ptr() interface{} { return s }
+func (s *Strc) New() (Mut, error) { return NewStrc(s.Reg, s.Typ) }
+func (s *Strc) Ptr() interface{}  { return s }
+func (s *Strc) Parse(a ast.Ast) error {
+	if isNull(a) {
+		return s.init(false)
+	}
+	if a.Kind != knd.Keyr {
+		return fmt.Errorf("expect keyr")
+	}
+	pb := s.Typ.Body.(*typ.ParamBody)
+	vs := make([]Val, len(pb.Params))
+	for _, e := range a.Seq {
+		key, val, err := ast.UnquotePair(e)
+		if err != nil {
+			return err
+		}
+		el, err := s.Reg.parseMutNull(val)
+		if err != nil {
+			return err
+		}
+		i := pb.FindKeyIndex(key)
+		if i >= 0 {
+			vs[i] = el
+		}
+	}
+	for i, v := range vs {
+		if v != nil {
+			continue
+		}
+		z, err := s.Reg.Zero(pb.Params[i].Type)
+		if err != nil {
+			return err
+		}
+		vs[i] = z
+	}
+	return nil
+}
 func (s *Strc) Assign(p Val) error {
 	// TODO check types
+	s.init(false)
 	switch o := p.(type) {
 	case nil:
-		s.init(false)
 	case Null:
-		s.init(false)
 	case Keyr:
-		s.init(false)
 		err := o.IterKey(func(k string, v Val) error {
 			return s.SetKey(k, v)
 		})

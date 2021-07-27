@@ -7,23 +7,15 @@ import (
 	"strconv"
 	"time"
 
+	"xelf.org/xelf/ast"
 	"xelf.org/xelf/bfr"
 	"xelf.org/xelf/cor"
+	"xelf.org/xelf/knd"
 	"xelf.org/xelf/typ"
 )
 
-var (
-	ptrBool = reflect.TypeOf((*Bool)(nil))
-	ptrInt  = reflect.TypeOf((*Int)(nil))
-	ptrReal = reflect.TypeOf((*Real)(nil))
-	ptrStr  = reflect.TypeOf((*Str)(nil))
-	ptrRaw  = reflect.TypeOf((*Raw)(nil))
-	ptrUUID = reflect.TypeOf((*UUID)(nil))
-	ptrTime = reflect.TypeOf((*Time)(nil))
-	ptrSpan = reflect.TypeOf((*Span)(nil))
-)
-
 type (
+	Null struct{}
 	Bool bool
 	Int  int64
 	Real float64
@@ -34,6 +26,7 @@ type (
 	Span time.Duration
 )
 
+func (Null) Type() typ.Type { return typ.None }
 func (Bool) Type() typ.Type { return typ.Bool }
 func (Int) Type() typ.Type  { return typ.Int }
 func (Real) Type() typ.Type { return typ.Real }
@@ -43,6 +36,7 @@ func (UUID) Type() typ.Type { return typ.UUID }
 func (Time) Type() typ.Type { return typ.Time }
 func (Span) Type() typ.Type { return typ.Span }
 
+func (Null) Nil() bool   { return true }
 func (v Bool) Nil() bool { return false }
 func (i Int) Nil() bool  { return false }
 func (r Real) Nil() bool { return false }
@@ -52,6 +46,7 @@ func (u UUID) Nil() bool { return false }
 func (t Time) Nil() bool { return false }
 func (s Span) Nil() bool { return false }
 
+func (Null) Zero() bool   { return true }
 func (v Bool) Zero() bool { return bool(!v) }
 func (i Int) Zero() bool  { return i == 0 }
 func (r Real) Zero() bool { return r == 0 }
@@ -61,6 +56,7 @@ func (u UUID) Zero() bool { return u == UUID{} }
 func (t Time) Zero() bool { return time.Time(t).IsZero() }
 func (s Span) Zero() bool { return s == 0 }
 
+func (Null) Value() Val   { return Null{} }
 func (v Bool) Value() Val { return v }
 func (i Int) Value() Val  { return i }
 func (r Real) Value() Val { return r }
@@ -70,6 +66,7 @@ func (u UUID) Value() Val { return u }
 func (t Time) Value() Val { return t }
 func (s Span) Value() Val { return s }
 
+func (Null) String() string   { return "null" }
 func (v Bool) String() string { return strconv.FormatBool(bool(v)) }
 func (i Int) String() string  { return fmt.Sprintf("%d", i) }
 func (r Real) String() string { return fmt.Sprintf("%g", r) }
@@ -79,6 +76,7 @@ func (u UUID) String() string { return cor.FormatUUID(u) }
 func (t Time) String() string { return cor.FormatTime(time.Time(t)) }
 func (s Span) String() string { return cor.FormatSpan(time.Duration(s)) }
 
+func (Null) Print(p *bfr.P) error   { return p.Fmt("null") }
 func (v Bool) Print(p *bfr.P) error { return p.Fmt(v.String()) }
 func (i Int) Print(p *bfr.P) error  { return p.Fmt(i.String()) }
 func (r Real) Print(p *bfr.P) error { return p.Fmt(r.String()) }
@@ -88,6 +86,7 @@ func (u UUID) Print(p *bfr.P) error { return p.Quote(u.String()) }
 func (t Time) Print(p *bfr.P) error { return p.Quote(t.String()) }
 func (s Span) Print(p *bfr.P) error { return p.Quote(s.String()) }
 
+func (Null) MarshalJSON() ([]byte, error)   { return []byte("null"), nil }
 func (v Bool) MarshalJSON() ([]byte, error) { return []byte(v.String()), nil }
 func (i Int) MarshalJSON() ([]byte, error)  { return []byte(i.String()), nil }
 func (r Real) MarshalJSON() ([]byte, error) { return []byte(r.String()), nil }
@@ -97,14 +96,14 @@ func (u UUID) MarshalJSON() ([]byte, error) { return bfr.JSON(u) }
 func (t Time) MarshalJSON() ([]byte, error) { return bfr.JSON(t) }
 func (s Span) MarshalJSON() ([]byte, error) { return bfr.JSON(s) }
 
-func (*Bool) New() Mut { return new(Bool) }
-func (*Int) New() Mut  { return new(Int) }
-func (*Real) New() Mut { return new(Real) }
-func (*Str) New() Mut  { return new(Str) }
-func (*Raw) New() Mut  { return new(Raw) }
-func (*UUID) New() Mut { return new(UUID) }
-func (*Time) New() Mut { return new(Time) }
-func (*Span) New() Mut { return new(Span) }
+func (*Bool) New() (Mut, error) { return new(Bool), nil }
+func (*Int) New() (Mut, error)  { return new(Int), nil }
+func (*Real) New() (Mut, error) { return new(Real), nil }
+func (*Str) New() (Mut, error)  { return new(Str), nil }
+func (*Raw) New() (Mut, error)  { return new(Raw), nil }
+func (*UUID) New() (Mut, error) { return new(UUID), nil }
+func (*Time) New() (Mut, error) { return new(Time), nil }
+func (*Span) New() (Mut, error) { return new(Span), nil }
 
 func (v *Bool) Ptr() interface{} { return v }
 func (i *Int) Ptr() interface{}  { return i }
@@ -137,6 +136,125 @@ func (r *Raw) UnmarshalJSON(b []byte) error  { return unmarshal(b, r) }
 func (u *UUID) UnmarshalJSON(b []byte) error { return unmarshal(b, u) }
 func (t *Time) UnmarshalJSON(b []byte) error { return unmarshal(b, t) }
 func (s *Span) UnmarshalJSON(b []byte) error { return unmarshal(b, s) }
+
+func (v *Bool) Parse(a ast.Ast) error {
+	if isNull(a) {
+		*v = false
+		return nil
+	}
+	if a.Kind != knd.Sym || (a.Raw != "false" && a.Raw != "true") {
+		return fmt.Errorf("expect bool sym")
+	}
+	*v = len(a.Raw) == 4
+	return nil
+}
+func (i *Int) Parse(a ast.Ast) error {
+	if isNull(a) {
+		*i = 0
+		return nil
+	}
+	if a.Kind != knd.Num {
+		return fmt.Errorf("expect num")
+	}
+	n, err := strconv.ParseInt(a.Raw, 10, 64)
+	if err != nil {
+		return err
+	}
+	*i = Int(n)
+	return nil
+}
+func (r *Real) Parse(a ast.Ast) error {
+	if isNull(a) {
+		*r = 0
+		return nil
+	}
+	if a.Kind != knd.Real && a.Kind != knd.Num {
+		return fmt.Errorf("expect num")
+	}
+	n, err := strconv.ParseFloat(a.Raw, 64)
+	if err != nil {
+		return err
+	}
+	*r = Real(n)
+	return nil
+}
+func (s *Str) Parse(a ast.Ast) error {
+	if isNull(a) {
+		*s = ""
+		return nil
+	}
+	txt, err := unquoteChar(a)
+	if err != nil {
+		return err
+	}
+	*s = Str(txt)
+	return nil
+}
+func (r *Raw) Parse(a ast.Ast) error {
+	if isNull(a) {
+		*r = nil
+		return nil
+	}
+	txt, err := unquoteChar(a)
+	if err != nil {
+		return err
+	}
+	n, err := cor.ParseRaw(txt)
+	if err != nil {
+		return err
+	}
+	*r = n
+	return nil
+}
+func (u *UUID) Parse(a ast.Ast) error {
+	if isNull(a) {
+		*u = UUID{}
+		return nil
+	}
+	if a.Kind != knd.Char {
+		return fmt.Errorf("expect char")
+	}
+	txt := a.Raw[1 : len(a.Raw)-1]
+	if txt == "" {
+		*u = UUID{}
+		return nil
+	}
+	n, err := cor.ParseUUID(txt)
+	if err != nil {
+		return err
+	}
+	*u = n
+	return nil
+}
+func (t *Time) Parse(a ast.Ast) error {
+	if isNull(a) {
+		*t = Time{}
+		return nil
+	}
+	if a.Kind != knd.Char {
+		return fmt.Errorf("expect char")
+	}
+	txt := a.Raw[1 : len(a.Raw)-1]
+	n, err := cor.ParseTime(txt)
+	if err != nil {
+		return err
+	}
+	*t = Time(n)
+	return nil
+}
+func (s *Span) Parse(a ast.Ast) error {
+	if isNull(a) {
+		*s = 0
+		return nil
+	}
+	txt := a.Raw[1 : len(a.Raw)-1]
+	n, err := cor.ParseSpan(txt)
+	if err != nil {
+		return err
+	}
+	*s = Span(n)
+	return nil
+}
 
 func (v *Bool) Assign(p Val) error {
 	if n, err := ToBool(p); err != nil {
@@ -224,10 +342,32 @@ func mustRef(ref reflect.Type, v reflect.Value) (Mut, error) {
 	return v.Interface().(Mut), nil
 }
 
-func unmarshal(b []byte, prx Mut) error {
-	lit, err := Read(bytes.NewReader(b), "")
+func isNull(a ast.Ast) bool { return a.Kind == knd.Sym && a.Raw == "null" }
+func unquoteChar(a ast.Ast) (string, error) {
+	if isNull(a) {
+		return "", nil
+	}
+	if a.Kind != knd.Char {
+		return "", fmt.Errorf("expect char")
+	}
+	return cor.Unquote(a.Raw)
+}
+func unmarshal(b []byte, m Mut) error {
+	a, err := ast.Read(bytes.NewReader(b), "")
 	if err != nil {
 		return err
 	}
-	return prx.Assign(lit.Val)
+	return m.Parse(a)
 }
+
+var (
+	ptrNull = reflect.TypeOf((*Null)(nil))
+	ptrBool = reflect.TypeOf((*Bool)(nil))
+	ptrInt  = reflect.TypeOf((*Int)(nil))
+	ptrReal = reflect.TypeOf((*Real)(nil))
+	ptrStr  = reflect.TypeOf((*Str)(nil))
+	ptrRaw  = reflect.TypeOf((*Raw)(nil))
+	ptrUUID = reflect.TypeOf((*UUID)(nil))
+	ptrTime = reflect.TypeOf((*Time)(nil))
+	ptrSpan = reflect.TypeOf((*Span)(nil))
+)

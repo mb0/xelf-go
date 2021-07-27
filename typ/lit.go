@@ -4,12 +4,13 @@ import (
 	"fmt"
 	"reflect"
 
+	"xelf.org/xelf/ast"
 	"xelf.org/xelf/bfr"
 )
 
 var ErrAssign = fmt.Errorf("cannot assign")
 
-// LitVal is the common interface of all literal values.
+// LitVal is the common interface of all literal values see lit.Val for more information.
 // This interface does in principle belong to the lit package.
 type LitVal interface {
 	Type() Type
@@ -21,28 +22,37 @@ type LitVal interface {
 	MarshalJSON() ([]byte, error)
 }
 
-// LitMut is the common interface of all mutable literal values.
-// This interface does in principle belong to the lit package.
+// LitMut is the common interface of all mutable literal values see lit.Mut for more information.
 // Mutable values should have an UnmarshalJSON method unless the base type is natively supported.
+// This interface does in principle belong to the lit package.
 type LitMut interface {
 	LitVal
-	New() LitMut
+	New() (LitMut, error)
 	Ptr() interface{}
 	Assign(LitVal) error
+	Parse(ast.Ast) error
 }
 
-func (Type) Type() Type          { return Typ }
-func (Type) Nil() bool           { return false }
-func (t Type) Zero() bool        { return t == Void }
-func (t Type) Value() LitVal     { return t }
-func (*Type) New() LitMut        { return new(Type) }
-func (t *Type) Ptr() interface{} { return t }
+func (Type) Type() Type            { return Typ }
+func (Type) Nil() bool             { return false }
+func (t Type) Zero() bool          { return t == Void }
+func (t Type) Value() LitVal       { return t }
+func (*Type) New() (LitMut, error) { return new(Type), nil }
+func (t *Type) Ptr() interface{}   { return t }
 func (t *Type) Assign(p LitVal) error {
 	if n, err := ToType(p); err != nil {
 		return err
 	} else {
 		*t = n
 	}
+	return nil
+}
+func (t *Type) Parse(a ast.Ast) error {
+	r, err := ParseAst(a)
+	if err != nil {
+		return err
+	}
+	*t = r
 	return nil
 }
 

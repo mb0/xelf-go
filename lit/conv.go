@@ -7,6 +7,20 @@ import (
 	"xelf.org/xelf/cor"
 )
 
+func Unwrap(v Val) Val {
+	switch p := v.(type) {
+	case *AnyPrx:
+		if !p.Nil() {
+			return p.val
+		}
+	case *OptMut:
+		if !p.Nil() {
+			return p.Mut
+		}
+	}
+	return v
+}
+
 func ToBool(v Val) (b Bool, err error) {
 	switch v := v.(type) {
 	case nil:

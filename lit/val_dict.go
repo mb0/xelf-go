@@ -1,10 +1,11 @@
 package lit
 
 import (
-	"bytes"
 	"fmt"
 
+	"xelf.org/xelf/ast"
 	"xelf.org/xelf/bfr"
+	"xelf.org/xelf/knd"
 	"xelf.org/xelf/typ"
 )
 
@@ -14,6 +15,7 @@ type KeyVal struct {
 }
 
 type Dict struct {
+	Reg   *Reg
 	El    typ.Type
 	Keyed []KeyVal
 }
@@ -23,6 +25,7 @@ func (d *Dict) Nil() bool                    { return d == nil }
 func (d *Dict) Zero() bool                   { return len(d.Keyed) == 0 }
 func (d *Dict) Value() Val                   { return d }
 func (d *Dict) MarshalJSON() ([]byte, error) { return bfr.JSON(d) }
+func (d *Dict) UnmarshalJSON(b []byte) error { return unmarshal(b, d) }
 func (d *Dict) String() string               { return bfr.String(d) }
 func (d *Dict) Print(p *bfr.P) (err error) {
 	p.Byte('{')
@@ -38,8 +41,32 @@ func (d *Dict) Print(p *bfr.P) (err error) {
 	return p.Byte('}')
 }
 
-func (d *Dict) New() Mut         { return &Dict{d.El, nil} }
-func (d *Dict) Ptr() interface{} { return d }
+func (d *Dict) New() (Mut, error) { return &Dict{d.Reg, d.El, nil}, nil }
+func (d *Dict) WithReg(reg *Reg)  { d.Reg = reg }
+func (d *Dict) Ptr() interface{}  { return d }
+func (d *Dict) Parse(a ast.Ast) error {
+	if isNull(a) {
+		d.Keyed = nil
+		return nil
+	}
+	if a.Kind != knd.Keyr {
+		return fmt.Errorf("expect keyr")
+	}
+	kvs := make([]KeyVal, 0, len(a.Seq))
+	for _, e := range a.Seq {
+		key, val, err := ast.UnquotePair(e)
+		if err != nil {
+			return err
+		}
+		el, err := d.Reg.parseMutNull(val)
+		if err != nil {
+			return err
+		}
+		kvs = append(kvs, KeyVal{key, el})
+	}
+	d.Keyed = kvs
+	return nil
+}
 func (d *Dict) Assign(p Val) error {
 	// TODO check types
 	switch o := p.(type) {
@@ -154,17 +181,5 @@ func (d *Dict) IterKey(it func(string, Val) error) error {
 			return err
 		}
 	}
-	return nil
-}
-func (d *Dict) UnmarshalJSON(b []byte) error {
-	lit, err := Read(bytes.NewReader(b), "")
-	if err != nil {
-		return err
-	}
-	o, ok := lit.Val.(*Dict)
-	if !ok {
-		return fmt.Errorf("expect dict got %T", lit.Val)
-	}
-	*d = *o
 	return nil
 }

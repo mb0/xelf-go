@@ -1,25 +1,28 @@
 package lit
 
 import (
-	"bytes"
 	"fmt"
 
+	"xelf.org/xelf/ast"
 	"xelf.org/xelf/bfr"
+	"xelf.org/xelf/knd"
 	"xelf.org/xelf/typ"
 )
 
 type List struct {
+	Reg  *Reg
 	El   typ.Type
 	Vals []Val
 }
 
-func NewList(el typ.Type) *List { return &List{El: el} }
+func NewList(reg *Reg, el typ.Type) *List { return &List{Reg: reg, El: el} }
 
 func (l *List) Type() typ.Type               { return typ.ListOf(l.El) }
 func (l *List) Nil() bool                    { return l == nil }
 func (l *List) Zero() bool                   { return len(l.Vals) == 0 }
 func (l *List) Value() Val                   { return l }
 func (l *List) MarshalJSON() ([]byte, error) { return bfr.JSON(l) }
+func (l *List) UnmarshalJSON(b []byte) error { return unmarshal(b, l) }
 func (l *List) String() string               { return bfr.String(l) }
 func (l *List) Print(p *bfr.P) (err error) {
 	p.Byte('[')
@@ -38,8 +41,29 @@ func (l *List) Print(p *bfr.P) (err error) {
 	}
 	return p.Byte(']')
 }
-func (l *List) New() Mut         { return &List{l.El, nil} }
-func (l *List) Ptr() interface{} { return l }
+func (l *List) New() (Mut, error) { return &List{l.Reg, l.El, nil}, nil }
+func (l *List) WithReg(reg *Reg)  { l.Reg = reg }
+func (l *List) Ptr() interface{}  { return l }
+func (l *List) Parse(a ast.Ast) (err error) {
+	if isNull(a) {
+		l.Vals = nil
+		return nil
+	}
+	if a.Kind != knd.List {
+		return fmt.Errorf("expect list")
+	}
+	vs := make([]Val, 0, len(a.Seq))
+	for _, e := range a.Seq {
+		var el Val
+		el, err = l.Reg.parseMutNull(e)
+		if err != nil {
+			return err
+		}
+		vs = append(vs, el)
+	}
+	l.Vals = vs
+	return nil
+}
 func (l *List) Assign(p Val) error {
 	// TODO compare types
 	switch o := p.(type) {
@@ -72,15 +96,15 @@ func (l *List) Append(p Val) error {
 	return nil
 }
 func (l *List) Len() int { return len(l.Vals) }
-func (l *List) Idx(i int) (Val, error) {
-	if i < 0 || i >= len(l.Vals) {
-		return nil, ErrIdxBounds
+func (l *List) Idx(i int) (res Val, err error) {
+	if i, err = checkIdx(i, len(l.Vals)); err != nil {
+		return
 	}
 	return l.Vals[i], nil
 }
-func (l *List) SetIdx(i int, el Val) error {
-	if i < 0 {
-		return ErrIdxBounds
+func (l *List) SetIdx(i int, el Val) (err error) {
+	if i, err = checkIdx(i, len(l.Vals)); err != nil {
+		return
 	}
 	if el == nil {
 		el = Null{}
@@ -115,15 +139,14 @@ func (l *List) IterIdx(it func(int, Val) error) error {
 	}
 	return nil
 }
-func (l *List) UnmarshalJSON(b []byte) error {
-	lit, err := Read(bytes.NewReader(b), "")
-	if err != nil {
-		return err
+
+func checkIdx(idx, l int) (int, error) {
+	i := idx
+	if i < 0 {
+		i = l + i
 	}
-	o, ok := lit.Val.(*List)
-	if !ok {
-		return fmt.Errorf("expect list got %T", lit.Val)
+	if i < 0 || i >= l {
+		return 0, fmt.Errorf("idx %d %w [0:%d]", idx, ErrIdxBounds, l-1)
 	}
-	*l = *o
-	return nil
+	return i, nil
 }

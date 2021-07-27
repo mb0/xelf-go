@@ -1,9 +1,7 @@
 package lit
 
 import (
-	"fmt"
 	"reflect"
-	"strings"
 	"testing"
 
 	"xelf.org/xelf/bfr"
@@ -55,13 +53,16 @@ func TestRead(t *testing.T) {
 			`{"a":1,"b c":2,"+foo":"bar"}`,
 		},
 	}
-	for i, test := range tests {
-		l, err := Read(strings.NewReader(test.str), fmt.Sprintf("test%d", i))
+	reg := &Reg{}
+	for _, test := range tests {
+		v, err := reg.Parse(test.str)
 		if err != nil {
 			t.Errorf("read %s err %v", test.str, err)
 			continue
 		}
-		v := l.Val
+		if wreg, ok := test.Val.(interface{ WithReg(*Reg) }); ok {
+			wreg.WithReg(reg)
+		}
 		if !reflect.DeepEqual(test.Val, v) {
 			t.Errorf("%s want %+v got %+v", test.str, test.Val, v)
 		}

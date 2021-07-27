@@ -5,6 +5,7 @@ import (
 	"io"
 
 	"xelf.org/xelf/bfr"
+	"xelf.org/xelf/cor"
 	"xelf.org/xelf/knd"
 )
 
@@ -124,6 +125,21 @@ func ScanRest(l *Lexer, t Tok) (Ast, error) {
 		return res, ErrTreeTerm(res.Tok)
 	}
 	return res, nil
+}
+
+func UnquotePair(e Ast) (key string, val Ast, err error) {
+	if e.Kind != knd.Tag || len(e.Seq) < 2 {
+		err = ErrExpectTag(e)
+		return
+	}
+	key, val = e.Seq[0].Raw, e.Seq[1]
+	if e.Seq[0].Kind == knd.Char {
+		key, err = cor.Unquote(key)
+		if err != nil {
+			return
+		}
+	}
+	return
 }
 
 func valStart(t Tok) bool {

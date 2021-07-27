@@ -20,7 +20,11 @@ var (
 	ErrAssign      = typ.ErrAssign
 )
 
+// Val is the common interface of all literal values.
 type Val = typ.LitVal
+
+// Mut is the common interface of all mutable literal values.
+// Mutable values should have an UnmarshalJSON method unless the base type is natively supported.
 type Mut = typ.LitMut
 
 type Lit struct {
@@ -38,16 +42,6 @@ func (a *Lit) Kind() knd.Kind {
 func (a *Lit) Resl() typ.Type  { return a.Res }
 func (a *Lit) Type() typ.Type  { return a.Res }
 func (a *Lit) Source() ast.Src { return a.Src }
-
-type Null struct{}
-
-func (Null) Type() typ.Type               { return typ.None }
-func (Null) Nil() bool                    { return true }
-func (Null) Zero() bool                   { return true }
-func (Null) Value() Val                   { return Null{} }
-func (Null) String() string               { return "null" }
-func (Null) Print(p *bfr.P) error         { return p.Fmt("null") }
-func (Null) MarshalJSON() ([]byte, error) { return []byte("null"), nil }
 
 // Idxr is the interface for indexer values.
 type Idxr interface {
@@ -81,4 +75,32 @@ type Keyr interface {
 	// IterKey iterates over elements, calling iter with the elements key and value.
 	// If iter returns an error the iteration is aborted.
 	IterKey(iter func(string, Val) error) error
+}
+
+func PrintZero(p *bfr.P, t typ.Type) error {
+	k := t.Kind & knd.Any
+	if k&knd.None != 0 || k.Count() != 1 {
+		return p.Fmt("null")
+	}
+	switch k {
+	case knd.Typ:
+		return typ.Void.Print(p)
+	case knd.Bool:
+		return p.Fmt("false")
+	case knd.Int, knd.Real:
+		return p.Fmt("0")
+	case knd.Str, knd.Raw:
+		return Str("").Print(p)
+	case knd.UUID:
+		return UUID{}.Print(p)
+	case knd.Time:
+		return Time{}.Print(p)
+	case knd.Span:
+		return Span(0).Print(p)
+	case knd.List:
+		return p.Fmt(`[]`)
+	case knd.Dict, knd.Rec, knd.Obj:
+		return p.Fmt(`{}`)
+	}
+	return p.Fmt("null")
 }

@@ -1,9 +1,9 @@
 package lit
 
 import (
-	"encoding/json"
 	"reflect"
 
+	"xelf.org/xelf/ast"
 	"xelf.org/xelf/bfr"
 	"xelf.org/xelf/typ"
 )
@@ -35,6 +35,7 @@ func (o *OptMut) MarshalJSON() ([]byte, error) {
 	}
 	return o.Mut.MarshalJSON()
 }
+func (o *OptMut) UnmarshalJSON(b []byte) error { return unmarshal(b, o) }
 
 func (o *OptMut) Print(p *bfr.P) error {
 	if o.null {
@@ -42,8 +43,18 @@ func (o *OptMut) Print(p *bfr.P) error {
 	}
 	return o.Mut.Print(p)
 }
-func (o *OptMut) New() Mut {
-	return &OptMut{o.Mut.New(), nil, true}
+func (o *OptMut) New() (Mut, error) {
+	mut, err := o.Mut.New()
+	if err != nil {
+		return nil, err
+	}
+	return &OptMut{mut, nil, true}, nil
+}
+func (o *OptMut) Parse(a ast.Ast) error {
+	if isNull(a) {
+		o.null = true
+	}
+	return o.Mut.Parse(a)
 }
 func (o *OptMut) Assign(v Val) error {
 	switch v.(type) {
@@ -68,21 +79,4 @@ func (o *OptMut) Assign(v Val) error {
 		o.ptr.Elem().Set(reflect.ValueOf(o.Mut.Ptr()).Convert(o.ptr.Type().Elem()))
 	}
 	return nil
-}
-func (o *OptMut) UnmarshalJSON(b []byte) error {
-	if len(b) == 0 || len(b) == 4 && string(b) == "null" {
-		o.null = true
-		return nil
-	}
-	return json.Unmarshal(b, o.Mut)
-}
-
-func Unwrap(v Val) Val {
-	switch o := v.(type) {
-	case *OptMut:
-		if !o.Nil() {
-			return o.Mut
-		}
-	}
-	return v
 }
