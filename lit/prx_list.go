@@ -23,7 +23,7 @@ func (x *ListPrx) Parse(a ast.Ast) error {
 		return nil
 	}
 	if a.Kind != knd.List {
-		return fmt.Errorf("expect list")
+		return ast.ErrExpect(a, knd.List)
 	}
 	nv := rv.Slice(0, 0)
 	et := rv.Type().Elem()

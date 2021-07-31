@@ -1,8 +1,6 @@
 package lit
 
 import (
-	"fmt"
-
 	"xelf.org/xelf/ast"
 	"xelf.org/xelf/bfr"
 	"xelf.org/xelf/knd"
@@ -47,7 +45,7 @@ func (h *Map) Parse(a ast.Ast) error {
 		return nil
 	}
 	if a.Kind != knd.Dict {
-		return fmt.Errorf("expect dict")
+		return ast.ErrExpect(a, knd.Dict)
 	}
 	if h.M == nil {
 		h.M = make(map[string]Val, len(a.Seq))

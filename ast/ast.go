@@ -136,6 +136,7 @@ func UnquotePair(e Ast) (key string, val Ast, err error) {
 	if e.Seq[0].Kind == knd.Str {
 		key, err = cor.Unquote(key)
 		if err != nil {
+			err = ErrInvalid(e.Seq[0], knd.Str, err)
 			return
 		}
 	}

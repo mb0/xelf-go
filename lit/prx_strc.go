@@ -43,7 +43,7 @@ func (x *StrcPrx) Parse(a ast.Ast) error {
 		return nil
 	}
 	if a.Kind != knd.Dict {
-		return fmt.Errorf("expect dict")
+		return ast.ErrExpect(a, knd.Dict)
 	}
 	rv.Set(reflect.Zero(rv.Type()))
 	for _, e := range a.Seq {

@@ -50,7 +50,7 @@ func (l *List) Parse(a ast.Ast) (err error) {
 		return nil
 	}
 	if a.Kind != knd.List {
-		return fmt.Errorf("expect list")
+		return ast.ErrExpect(a, knd.List)
 	}
 	vs := make([]Val, 0, len(a.Seq))
 	for _, e := range a.Seq {

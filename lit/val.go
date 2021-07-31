@@ -143,7 +143,7 @@ func (v *Bool) Parse(a ast.Ast) error {
 		return nil
 	}
 	if a.Kind != knd.Sym || (a.Raw != "false" && a.Raw != "true") {
-		return fmt.Errorf("expect bool sym")
+		return ast.ErrInvalidBool(a)
 	}
 	*v = len(a.Raw) == 4
 	return nil
@@ -154,11 +154,11 @@ func (i *Int) Parse(a ast.Ast) error {
 		return nil
 	}
 	if a.Kind != knd.Int {
-		return fmt.Errorf("expect int")
+		return ast.ErrExpect(a, knd.Int)
 	}
 	n, err := strconv.ParseInt(a.Raw, 10, 64)
 	if err != nil {
-		return err
+		return ast.ErrInvalid(a, knd.Int, err)
 	}
 	*i = Int(n)
 	return nil
@@ -169,24 +169,17 @@ func (r *Real) Parse(a ast.Ast) error {
 		return nil
 	}
 	if a.Kind != knd.Real && a.Kind != knd.Int {
-		return fmt.Errorf("expect num")
+		return ast.ErrExpect(a, knd.Num)
 	}
 	n, err := strconv.ParseFloat(a.Raw, 64)
 	if err != nil {
-		return err
+		return ast.ErrInvalid(a, knd.Real, err)
 	}
 	*r = Real(n)
 	return nil
 }
 func (s *Str) Parse(a ast.Ast) error {
-	if isNull(a) {
-		*s = ""
-		return nil
-	}
-	if a.Kind != knd.Str {
-		return fmt.Errorf("expect str")
-	}
-	txt, err := unquoteChar(a)
+	txt, err := unquoteStr(a)
 	if err != nil {
 		return err
 	}
@@ -194,14 +187,7 @@ func (s *Str) Parse(a ast.Ast) error {
 	return nil
 }
 func (r *Raw) Parse(a ast.Ast) error {
-	if isNull(a) {
-		*r = nil
-		return nil
-	}
-	if a.Kind != knd.Str {
-		return fmt.Errorf("expect str")
-	}
-	txt, err := unquoteChar(a)
+	txt, err := unquoteStr(a)
 	if err != nil {
 		return err
 	}
@@ -213,53 +199,49 @@ func (r *Raw) Parse(a ast.Ast) error {
 	return nil
 }
 func (u *UUID) Parse(a ast.Ast) error {
-	if isNull(a) {
-		*u = UUID{}
-		return nil
+	txt, err := unquoteStr(a)
+	if err != nil {
+		return err
 	}
-	if a.Kind != knd.Str {
-		return fmt.Errorf("expect str")
-	}
-	txt := a.Raw[1 : len(a.Raw)-1]
 	if txt == "" {
 		*u = UUID{}
 		return nil
 	}
 	n, err := cor.ParseUUID(txt)
 	if err != nil {
-		return err
+		return ast.ErrInvalid(a, knd.UUID, err)
 	}
 	*u = n
 	return nil
 }
 func (t *Time) Parse(a ast.Ast) error {
-	if isNull(a) {
+	txt, err := unquoteStr(a)
+	if err != nil {
+		return err
+	}
+	if txt == "" {
 		*t = Time{}
 		return nil
 	}
-	if a.Kind != knd.Str {
-		return fmt.Errorf("expect str")
-	}
-	txt := a.Raw[1 : len(a.Raw)-1]
 	n, err := cor.ParseTime(txt)
 	if err != nil {
-		return err
+		return ast.ErrInvalid(a, knd.Time, err)
 	}
 	*t = Time(n)
 	return nil
 }
 func (s *Span) Parse(a ast.Ast) error {
-	if isNull(a) {
+	txt, err := unquoteStr(a)
+	if err != nil {
+		return err
+	}
+	if txt == "" {
 		*s = 0
 		return nil
 	}
-	if a.Kind != knd.Str {
-		return fmt.Errorf("expect str")
-	}
-	txt := a.Raw[1 : len(a.Raw)-1]
 	n, err := cor.ParseSpan(txt)
 	if err != nil {
-		return err
+		return ast.ErrInvalid(a, knd.Span, err)
 	}
 	*s = Span(n)
 	return nil
@@ -352,14 +334,18 @@ func mustRef(ref reflect.Type, v reflect.Value) (Mut, error) {
 }
 
 func isNull(a ast.Ast) bool { return a.Kind == knd.Sym && a.Raw == "null" }
-func unquoteChar(a ast.Ast) (string, error) {
+func unquoteStr(a ast.Ast) (string, error) {
 	if isNull(a) {
 		return "", nil
 	}
 	if a.Kind != knd.Str {
-		return "", fmt.Errorf("expect str")
+		return "", ast.ErrExpect(a, knd.Str)
 	}
-	return cor.Unquote(a.Raw)
+	str, err := cor.Unquote(a.Raw)
+	if err != nil {
+		return "", ast.ErrInvalid(a, knd.Str, err)
+	}
+	return str, nil
 }
 func unmarshal(b []byte, m Mut) error {
 	a, err := ast.Read(bytes.NewReader(b), "")

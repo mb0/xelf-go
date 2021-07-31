@@ -80,7 +80,7 @@ func (s *Strc) Parse(a ast.Ast) error {
 		return s.init(false)
 	}
 	if a.Kind != knd.Dict {
-		return fmt.Errorf("expect dict")
+		return ast.ErrExpect(a, knd.Dict)
 	}
 	pb := s.Typ.Body.(*typ.ParamBody)
 	vs := make([]Val, len(pb.Params))

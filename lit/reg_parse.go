@@ -58,13 +58,22 @@ func (reg *Reg) ParseVal(a ast.Ast) (v Val, err error) {
 	switch a.Kind {
 	case knd.Int:
 		n, err := strconv.ParseInt(a.Raw, 10, 64)
-		return Int(n), err
+		if err != nil {
+			return nil, ast.ErrInvalid(a, knd.Int, err)
+		}
+		return Int(n), nil
 	case knd.Real:
 		n, err := strconv.ParseFloat(a.Raw, 64)
-		return Real(n), err
+		if err != nil {
+			return nil, ast.ErrInvalid(a, knd.Real, err)
+		}
+		return Real(n), nil
 	case knd.Str:
 		txt, err := cor.Unquote(a.Raw)
-		return Str(txt), err
+		if err != nil {
+			return nil, ast.ErrInvalid(a, knd.Str, err)
+		}
+		return Str(txt), nil
 	case knd.Sym:
 		switch a.Raw {
 		case "null":
@@ -110,13 +119,22 @@ func (reg *Reg) ParseMut(a ast.Ast) (Mut, error) {
 	switch a.Kind {
 	case knd.Int:
 		n, err := strconv.ParseInt(a.Raw, 10, 64)
-		return (*Int)(&n), err
+		if err != nil {
+			return nil, ast.ErrInvalid(a, knd.Int, err)
+		}
+		return (*Int)(&n), nil
 	case knd.Real:
 		n, err := strconv.ParseFloat(a.Raw, 64)
-		return (*Real)(&n), err
+		if err != nil {
+			return nil, ast.ErrInvalid(a, knd.Real, err)
+		}
+		return (*Real)(&n), nil
 	case knd.Str:
 		txt, err := cor.Unquote(a.Raw)
-		return (*Str)(&txt), err
+		if err != nil {
+			return nil, ast.ErrInvalid(a, knd.Str, err)
+		}
+		return (*Str)(&txt), nil
 	case knd.Sym:
 		switch a.Raw {
 		case "null":

@@ -61,6 +61,15 @@ func ErrInvalidType(s Src, raw string) *Error {
 func ErrInvalidParams(a Ast) *Error {
 	return &Error{Src: a.Src, Code: 302, Name: fmt.Sprintf("invalid type parameters %s", a)}
 }
+func ErrExpect(a Ast, kind knd.Kind) *Error {
+	return &Error{Src: a.Src, Code: 400, Name: fmt.Sprintf("expect %s got %s", knd.Name(kind), a)}
+}
+func ErrInvalidBool(a Ast) *Error {
+	return &Error{Src: a.Src, Code: 401, Name: fmt.Sprintf("invalid bool %s", a)}
+}
+func ErrInvalid(a Ast, kind knd.Kind, err error) *Error {
+	return &Error{Src: a.Src, Code: 402, Name: fmt.Sprintf("invalid %s %s: %v", knd.Name(kind), a, err)}
+}
 
 func parens(k knd.Kind) (rune, rune) {
 	switch k {

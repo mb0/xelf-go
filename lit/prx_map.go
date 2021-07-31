@@ -1,7 +1,6 @@
 package lit
 
 import (
-	"fmt"
 	"reflect"
 
 	"xelf.org/xelf/ast"
@@ -23,7 +22,7 @@ func (x *MapPrx) Parse(a ast.Ast) error {
 		return nil
 	}
 	if a.Kind != knd.Dict {
-		return fmt.Errorf("expect dict")
+		return ast.ErrExpect(a, knd.Dict)
 	}
 	// we need to delete existing map keys to be compatible with dict implementation
 	clearMap(rv)
