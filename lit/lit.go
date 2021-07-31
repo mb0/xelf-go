@@ -3,7 +3,6 @@ package lit
 import (
 	"fmt"
 
-	"xelf.org/xelf/ast"
 	"xelf.org/xelf/bfr"
 	"xelf.org/xelf/knd"
 	"xelf.org/xelf/typ"
@@ -26,22 +25,6 @@ type Val = typ.LitVal
 // Mut is the common interface of all mutable literal values.
 // Mutable values should have an UnmarshalJSON method unless the base type is natively supported.
 type Mut = typ.LitMut
-
-type Lit struct {
-	Res typ.Type
-	Val
-	Src ast.Src
-}
-
-func (a *Lit) Kind() knd.Kind {
-	if a.Res.Kind&knd.Typ != 0 {
-		return knd.Typ
-	}
-	return knd.Lit
-}
-func (a *Lit) Resl() typ.Type  { return a.Res }
-func (a *Lit) Type() typ.Type  { return a.Res }
-func (a *Lit) Source() ast.Src { return a.Src }
 
 // Idxr is the interface for indexer values.
 type Idxr interface {

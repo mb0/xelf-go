@@ -8,7 +8,6 @@ import (
 	"xelf.org/xelf/ast"
 	"xelf.org/xelf/cor"
 	"xelf.org/xelf/knd"
-	"xelf.org/xelf/typ"
 )
 
 // Parse parses str and returns a generic value or an error.
@@ -153,33 +152,10 @@ func (reg *Reg) ParseMut(a ast.Ast) (Mut, error) {
 	return nil, ast.ErrUnexpected(a)
 }
 
-// ParseLit parses a as generic literal and returns it or an error.
-func (reg *Reg) ParseLit(a ast.Ast) (*Lit, error) {
-	switch a.Kind {
-	case knd.Int, knd.Real, knd.Str, knd.Sym, knd.List, knd.Dict:
-		v, err := reg.ParseVal(a)
-		if err != nil {
-			return nil, err
-		}
-		return &Lit{Res: typ.Type{Kind: a.Kind}, Val: v, Src: a.Src}, nil
-	}
-	return nil, ast.ErrUnexpected(a)
-}
-
 func (reg *Reg) parseMutNull(a ast.Ast) (Val, error) {
 	m, err := reg.ParseMut(a)
 	if m == nil {
 		return Null{}, err
 	}
 	return m, err
-}
-
-func ParseSym(raw string, src ast.Src) *Lit {
-	switch raw {
-	case "null":
-		return &Lit{Res: typ.None, Val: Null{}, Src: src}
-	case "false", "true":
-		return &Lit{Res: typ.Bool, Val: Bool(len(raw) == 4), Src: src}
-	}
-	return nil
 }
