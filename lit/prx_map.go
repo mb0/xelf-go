@@ -22,8 +22,8 @@ func (x *MapPrx) Parse(a ast.Ast) error {
 		clearMap(rv)
 		return nil
 	}
-	if a.Kind != knd.Keyr {
-		return fmt.Errorf("expect keyr")
+	if a.Kind != knd.Dict {
+		return fmt.Errorf("expect dict")
 	}
 	// we need to delete existing map keys to be compatible with dict implementation
 	clearMap(rv)

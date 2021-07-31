@@ -153,8 +153,8 @@ func (i *Int) Parse(a ast.Ast) error {
 		*i = 0
 		return nil
 	}
-	if a.Kind != knd.Num {
-		return fmt.Errorf("expect num")
+	if a.Kind != knd.Int {
+		return fmt.Errorf("expect int")
 	}
 	n, err := strconv.ParseInt(a.Raw, 10, 64)
 	if err != nil {
@@ -168,7 +168,7 @@ func (r *Real) Parse(a ast.Ast) error {
 		*r = 0
 		return nil
 	}
-	if a.Kind != knd.Real && a.Kind != knd.Num {
+	if a.Kind != knd.Real && a.Kind != knd.Int {
 		return fmt.Errorf("expect num")
 	}
 	n, err := strconv.ParseFloat(a.Raw, 64)
@@ -183,6 +183,9 @@ func (s *Str) Parse(a ast.Ast) error {
 		*s = ""
 		return nil
 	}
+	if a.Kind != knd.Str {
+		return fmt.Errorf("expect str")
+	}
 	txt, err := unquoteChar(a)
 	if err != nil {
 		return err
@@ -194,6 +197,9 @@ func (r *Raw) Parse(a ast.Ast) error {
 	if isNull(a) {
 		*r = nil
 		return nil
+	}
+	if a.Kind != knd.Str {
+		return fmt.Errorf("expect str")
 	}
 	txt, err := unquoteChar(a)
 	if err != nil {
@@ -211,8 +217,8 @@ func (u *UUID) Parse(a ast.Ast) error {
 		*u = UUID{}
 		return nil
 	}
-	if a.Kind != knd.Char {
-		return fmt.Errorf("expect char")
+	if a.Kind != knd.Str {
+		return fmt.Errorf("expect str")
 	}
 	txt := a.Raw[1 : len(a.Raw)-1]
 	if txt == "" {
@@ -231,8 +237,8 @@ func (t *Time) Parse(a ast.Ast) error {
 		*t = Time{}
 		return nil
 	}
-	if a.Kind != knd.Char {
-		return fmt.Errorf("expect char")
+	if a.Kind != knd.Str {
+		return fmt.Errorf("expect str")
 	}
 	txt := a.Raw[1 : len(a.Raw)-1]
 	n, err := cor.ParseTime(txt)
@@ -246,6 +252,9 @@ func (s *Span) Parse(a ast.Ast) error {
 	if isNull(a) {
 		*s = 0
 		return nil
+	}
+	if a.Kind != knd.Str {
+		return fmt.Errorf("expect str")
 	}
 	txt := a.Raw[1 : len(a.Raw)-1]
 	n, err := cor.ParseSpan(txt)
@@ -347,8 +356,8 @@ func unquoteChar(a ast.Ast) (string, error) {
 	if isNull(a) {
 		return "", nil
 	}
-	if a.Kind != knd.Char {
-		return "", fmt.Errorf("expect char")
+	if a.Kind != knd.Str {
+		return "", fmt.Errorf("expect str")
 	}
 	return cor.Unquote(a.Raw)
 }

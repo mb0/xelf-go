@@ -79,8 +79,8 @@ func (s *Strc) Parse(a ast.Ast) error {
 	if isNull(a) {
 		return s.init(false)
 	}
-	if a.Kind != knd.Keyr {
-		return fmt.Errorf("expect keyr")
+	if a.Kind != knd.Dict {
+		return fmt.Errorf("expect dict")
 	}
 	pb := s.Typ.Body.(*typ.ParamBody)
 	vs := make([]Val, len(pb.Params))

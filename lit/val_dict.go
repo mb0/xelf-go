@@ -49,8 +49,8 @@ func (d *Dict) Parse(a ast.Ast) error {
 		d.Keyed = nil
 		return nil
 	}
-	if a.Kind != knd.Keyr {
-		return fmt.Errorf("expect keyr")
+	if a.Kind != knd.Dict {
+		return fmt.Errorf("expect dict")
 	}
 	kvs := make([]KeyVal, 0, len(a.Seq))
 	for _, e := range a.Seq {

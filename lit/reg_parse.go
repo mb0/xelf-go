@@ -56,13 +56,13 @@ func (reg *Reg) ReadIntoMut(r io.Reader, name string, mut Mut) error {
 // ParseVal parses a as generic value and returns it or an error.
 func (reg *Reg) ParseVal(a ast.Ast) (v Val, err error) {
 	switch a.Kind {
-	case knd.Num:
+	case knd.Int:
 		n, err := strconv.ParseInt(a.Raw, 10, 64)
 		return Int(n), err
 	case knd.Real:
 		n, err := strconv.ParseFloat(a.Raw, 64)
 		return Real(n), err
-	case knd.Char:
+	case knd.Str:
 		txt, err := cor.Unquote(a.Raw)
 		return Str(txt), err
 	case knd.Sym:
@@ -84,7 +84,7 @@ func (reg *Reg) ParseVal(a ast.Ast) (v Val, err error) {
 		}
 		li.Vals = vs
 		return li, nil
-	case knd.Keyr:
+	case knd.Dict:
 		di := &Dict{Reg: reg}
 		kvs := make([]KeyVal, 0, len(a.Seq))
 		for _, e := range a.Seq {
@@ -108,13 +108,13 @@ func (reg *Reg) ParseVal(a ast.Ast) (v Val, err error) {
 // If the null symbol is parsed nil mutable is returned.
 func (reg *Reg) ParseMut(a ast.Ast) (Mut, error) {
 	switch a.Kind {
-	case knd.Num:
+	case knd.Int:
 		n, err := strconv.ParseInt(a.Raw, 10, 64)
 		return (*Int)(&n), err
 	case knd.Real:
 		n, err := strconv.ParseFloat(a.Raw, 64)
 		return (*Real)(&n), err
-	case knd.Char:
+	case knd.Str:
 		txt, err := cor.Unquote(a.Raw)
 		return (*Str)(&txt), err
 	case knd.Sym:
@@ -128,7 +128,7 @@ func (reg *Reg) ParseMut(a ast.Ast) (Mut, error) {
 	case knd.List:
 		li := &List{Reg: reg}
 		return li, li.Parse(a)
-	case knd.Keyr:
+	case knd.Dict:
 		di := &Dict{Reg: reg}
 		return di, di.Parse(a)
 	}
@@ -138,7 +138,7 @@ func (reg *Reg) ParseMut(a ast.Ast) (Mut, error) {
 // ParseLit parses a as generic literal and returns it or an error.
 func (reg *Reg) ParseLit(a ast.Ast) (*Lit, error) {
 	switch a.Kind {
-	case knd.Num, knd.Real, knd.Char, knd.Sym, knd.List, knd.Keyr:
+	case knd.Int, knd.Real, knd.Str, knd.Sym, knd.List, knd.Dict:
 		v, err := reg.ParseVal(a)
 		if err != nil {
 			return nil, err

@@ -48,8 +48,8 @@ func (x *IntPrx) New() (Mut, error)                    { return x.NewWith(x.new(
 func (x *IntPrx) Zero() bool { return x.value() == 0 }
 func (x *IntPrx) Value() Val { return Int(x.value()) }
 func (x *IntPrx) Parse(a ast.Ast) error {
-	if a.Kind != knd.Num {
-		return fmt.Errorf("expect num")
+	if a.Kind != knd.Int {
+		return fmt.Errorf("expect int")
 	}
 	n, err := strconv.ParseInt(a.Raw, 10, 64)
 	if err != nil {
@@ -96,7 +96,7 @@ func (x *RealPrx) New() (Mut, error)                    { return x.NewWith(x.new
 func (x *RealPrx) Zero() bool { return x.value() == 0 }
 func (x *RealPrx) Value() Val { return Real(x.value()) }
 func (x *RealPrx) Parse(a ast.Ast) error {
-	if a.Kind != knd.Real && a.Kind != knd.Num {
+	if a.Kind != knd.Real && a.Kind != knd.Int {
 		return fmt.Errorf("expect num")
 	}
 	n, err := strconv.ParseFloat(a.Raw, 64)

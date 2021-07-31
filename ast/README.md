@@ -7,27 +7,27 @@ Accepting plain JSON as valid literals makes it very simple to interoperate with
 databases, and user assumptions. We already predefined JSON tokens:
 
  * null, true, false as symbols
- * char uses `""`
- * idxr uses `[]`
- * keyr uses `{}`
+ * str  uses `""`
+ * list uses `[]`
+ * dict uses `{}`
  * tags uses `:`
 
 Xelf literals use a superset of JSON with additional rules to make handwriting literals easier:
- * char can use single quotes. Single quotes char literals are the default xelf format,
+ * str can use single quotes. Single quotes str literals are the default xelf format,
    because xelf is often used inside strings in other languages
  * char can use backtick quoted multiline string literals without escape sequence. This is
    helpful for templates and other preformatted multiline strings.
- * the comma seperator is optional, whitespaces work just as well and don't clutter the output
+ * the comma separator is optional, whitespaces work just as well and don't clutter the output
  * tag keys do not need to be quoted if they are simple names as defined by the cor package
  * short flag tags can omit the value `(eq (rec flag;) (rec flag:true))`
 
 We need to fit in types and expressions and only have parenthesis and angle brackets left:
- * exp uses `()` because it is familier to write, needs less escaping and looks like a lisp.
-   exp borrows tag notation form keyer literals `(let a:1 b:2 (add a b))`
- * typ uses `<>` because we don't need it much and can mostly infered in problematic contexts
+ * exp uses `()` because it is familiar to write, needs less escaping and looks like a lisp.
+   exp borrows tag notation form dict literals `(let a:1 b:2 (add a b))`
+ * typ uses `<>` because we don't need it much and can mostly inferred in problematic contexts
    `<list|rec id:int name:str score:real date:time>`
 
-Composite literals can only contain other literals, but no symbols or expressions. Forms can be used
+Composite literals can only contain other literals, but no symbols or calls. Forms can be used
 to construct literals from expressions, instead of reusing the literal syntax. This makes it
 visually more obvious whether something is a literal, type or expression.
 

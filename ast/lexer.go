@@ -127,7 +127,7 @@ func (l *Lexer) Tok() (Tok, error) {
 	case '[', ']':
 		return l.rtok(knd.List), nil
 	case '{', '}':
-		return l.rtok(knd.Keyr), nil
+		return l.rtok(knd.Dict), nil
 	case '<', '>':
 		return l.rtok(knd.Typ), nil
 	case '"', '\'', '`':
@@ -165,7 +165,7 @@ func (l *Lexer) lexString() (Tok, error) {
 		return t, ErrStrTerm(t)
 	}
 	b.WriteRune(q)
-	return l.tok(knd.Char, p, b.String()), nil
+	return l.tok(knd.Str, p, b.String()), nil
 }
 
 // lexSymbol reads and returns a symbol token starting at the current offset.
@@ -182,7 +182,7 @@ func (l *Lexer) lexSymbol() (Tok, error) {
 // lexNumber reads and returns a number token starting at the current offset.
 func (l *Lexer) lexNumber() (Tok, error) {
 	p := l.pos()
-	k := knd.Num
+	k := knd.Int
 	var b strings.Builder
 	if l.cur == '-' {
 		b.WriteRune(l.cur)

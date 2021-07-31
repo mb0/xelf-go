@@ -46,8 +46,8 @@ func (h *Map) Parse(a ast.Ast) error {
 		h.M = nil
 		return nil
 	}
-	if a.Kind != knd.Keyr {
-		return fmt.Errorf("expect keyr")
+	if a.Kind != knd.Dict {
+		return fmt.Errorf("expect dict")
 	}
 	if h.M == nil {
 		h.M = make(map[string]Val, len(a.Seq))

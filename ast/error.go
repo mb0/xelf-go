@@ -70,7 +70,7 @@ func parens(k knd.Kind) (rune, rune) {
 		return '(', ')'
 	case knd.List:
 		return '[', ']'
-	case knd.Keyr:
+	case knd.Dict:
 		return '{', '}'
 	}
 	return 0, 0

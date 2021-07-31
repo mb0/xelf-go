@@ -18,10 +18,10 @@ func (n *Ast) Print(b *bfr.P) error {
 	if len(n.Seq) == 0 {
 		b.Fmt(n.Tok.String())
 	} else if n.Kind == knd.Tag && len(n.Seq) > 1 {
-		b.Fmt(n.Seq[1].String())
 		b.Fmt(n.Seq[0].String())
-		if len(n.Seq) > 2 {
-			n.Seq[2].Print(b)
+		b.Fmt(n.Tok.String())
+		if len(n.Seq) > 1 {
+			b.Fmt(n.Seq[1].String())
 		}
 	} else {
 		for i, s := range n.Seq {
@@ -83,7 +83,7 @@ func ScanRest(l *Lexer, t Tok) (Ast, error) {
 		}
 		if t.Kind == knd.Tag {
 			switch a.Kind {
-			case knd.Sym, knd.Char:
+			case knd.Sym, knd.Str:
 			default:
 				return res, ErrInvalidTag(t)
 			}
@@ -133,7 +133,7 @@ func UnquotePair(e Ast) (key string, val Ast, err error) {
 		return
 	}
 	key, val = e.Seq[0].Raw, e.Seq[1]
-	if e.Seq[0].Kind == knd.Char {
+	if e.Seq[0].Kind == knd.Str {
 		key, err = cor.Unquote(key)
 		if err != nil {
 			return
@@ -143,7 +143,7 @@ func UnquotePair(e Ast) (key string, val Ast, err error) {
 }
 
 func valStart(t Tok) bool {
-	if t.Kind&(knd.Num|knd.Char|knd.Sym) != 0 {
+	if t.Kind&(knd.Int|knd.Real|knd.Str|knd.Sym) != 0 {
 		return true
 	}
 	switch t.Rune {
