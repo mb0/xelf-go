@@ -13,10 +13,10 @@ import (
 var BreakIter = fmt.Errorf("break iter")
 
 var (
-	ErrIdxBounds   = fmt.Errorf("index out of bounds")
 	ErrIdxNotFound = fmt.Errorf("idx not found")
 	ErrKeyNotFound = fmt.Errorf("key not found")
 	ErrAssign      = typ.ErrAssign
+	ErrIdxBounds   = typ.ErrIdxBounds
 )
 
 // Val is the common interface of all literal values.

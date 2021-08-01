@@ -8,7 +8,10 @@ import (
 	"xelf.org/xelf/bfr"
 )
 
-var ErrAssign = fmt.Errorf("cannot assign")
+var (
+	ErrAssign    = fmt.Errorf("cannot assign")
+	ErrIdxBounds = fmt.Errorf("index out of bounds")
+)
 
 // LitVal is the common interface of all literal values see lit.Val for more information.
 // This interface does in principle belong to the lit package.
