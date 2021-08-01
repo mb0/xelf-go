@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"xelf.org/xelf/cor"
+	"xelf.org/xelf/knd"
 )
 
 // Select reads path and returns the selected type from t or an error.
@@ -32,7 +33,7 @@ func SelectPath(t Type, path cor.Path) (r Type, err error) {
 }
 
 func SelectKey(t Type, key string) (Type, error) {
-	if !t.ConvertibleTo(Keyr) {
+	if t.Kind&(knd.Keyr|knd.Spec) == 0 {
 		return Void, fmt.Errorf("want keyr got %s", t)
 	}
 	switch b := t.Body.(type) {
@@ -47,7 +48,7 @@ func SelectKey(t Type, key string) (Type, error) {
 }
 
 func SelectIdx(t Type, idx int) (Type, error) {
-	if !t.ConvertibleTo(Idxr) {
+	if t.Kind&(knd.Idxr|knd.Spec) == 0 {
 		return Void, fmt.Errorf("want idxr got %s", t)
 	}
 	switch b := t.Body.(type) {
