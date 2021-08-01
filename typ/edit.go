@@ -47,7 +47,7 @@ func (e *Editor) edit(f EditFunc) (res Type, err error) {
 	if e.seen == nil {
 		e.seen = make(editMap)
 	}
-	mod := e.Type != res
+	mod := e.Type.Body != res.Body
 	var sub Type
 	switch b := res.Body.(type) {
 	case *ElBody:
