@@ -54,7 +54,7 @@ const (
 
 const (
 	Void = Kind(0)
-	Exp  = Lit | Typ | Sym | Tag | Tupl | Call
+	Exp  = Lit | Sym | Tag | Tupl | Call
 	Schm = Bits | Enum | Obj
 	Meta = Alt | Var | Ref | Sel
 
@@ -68,6 +68,7 @@ const (
 	Data = Prim | Cont | Strc
 	Spec = Func | Form
 	Any  = Data | None
+	All  = Data | Typ | Spec
 )
 
 var ErrInvalid = fmt.Errorf("invalid")
@@ -138,6 +139,7 @@ var Infos = []Info{
 	{"data", Data},
 	{"spec", Spec},
 	{"any", Any},
+	{"all", All},
 }
 
 var kindToStr map[Kind]string

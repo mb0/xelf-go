@@ -143,6 +143,12 @@ func (t Type) print(b *bfr.P, sb *strings.Builder, enclose bool) error {
 		b.Fmt(tb.Name)
 		return b.Byte('>')
 	case *ParamBody:
+		if k&knd.Tupl != 0 && len(tb.Params) == 1 {
+			if p := tb.Params[0]; p.Name == "" {
+				sb.WriteByte('|')
+				return tb.Params[0].Type.print(b, sb, enclose)
+			}
+		}
 		b.Byte('<')
 		b.Fmt(sb.String())
 		if tb.Name != "" && t.Kind&knd.Rec == 0 {

@@ -31,6 +31,9 @@ func TestParse(t *testing.T) {
 		{ListOf(TypOf(Int)), `<list|typ|int>`, ``},
 		{ListOf(TypOf(Int)), `<list <typ int>>`, `<list|typ|int>`},
 		{LitOf(Opt(Int)), `<lit|int?>`, ``},
+		{TuplList(Int), `<tupl int>`, `<tupl|int>`},
+		{TuplList(Int), `<tupl|int>`, ``},
+
 		{Var(-1, Void), `<@>`, ``},
 		{Ref(`a`), `<@a>`, ``},
 		{Ref(`a.b`), `<@a.b>`, ``},

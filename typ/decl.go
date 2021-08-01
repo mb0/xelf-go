@@ -70,6 +70,9 @@ func DictOf(t Type) Type { return Type{knd.Dict, 0, &ElBody{El: t}} }
 func IdxrOf(t Type) Type { return Type{knd.Idxr, 0, &ElBody{El: t}} }
 func KeyrOf(t Type) Type { return Type{knd.Keyr, 0, &ElBody{El: t}} }
 
+func TuplList(t Type) Type     { return TuplRec(P("", t)) }
+func TuplRec(ps ...Param) Type { return Type{knd.Tupl, 0, &ParamBody{Params: ps}} }
+
 func Func(name string, ps ...Param) Type { return Type{knd.Func, 0, &ParamBody{name, ps}} }
 func Form(name string, ps ...Param) Type { return Type{knd.Form, 0, &ParamBody{name, ps}} }
 

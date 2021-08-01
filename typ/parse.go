@@ -100,7 +100,11 @@ func ParseSym(raw string, src ast.Src, hist []Type) (Type, error) {
 				tk |= k
 			}
 		}
-		if tk&(knd.Exp|knd.List|knd.Dict) != 0 {
+		if tk&knd.Exp == knd.Tupl {
+			if res.Kind != 0 {
+				tb = &ParamBody{Params: []Param{{Type: res}}}
+			}
+		} else if tk&(knd.Exp|knd.Typ|knd.List|knd.Dict) != 0 {
 			if res.Kind != 0 {
 				tb = &ElBody{El: res}
 			}

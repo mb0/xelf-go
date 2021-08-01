@@ -2,7 +2,7 @@ package typ
 
 import "xelf.org/xelf/knd"
 
-const kndVal = knd.Data | knd.Spec | knd.Exp
+const kndVal = knd.All | knd.Exp
 
 // AssignableTo returns whether *all* values represented by type t can be assigned to dst.
 func (t Type) AssignableTo(dst Type) bool {
@@ -12,7 +12,7 @@ func (t Type) AssignableTo(dst Type) bool {
 	if dst.Kind&knd.Var != 0 && dst.Kind&kndVal == knd.Void {
 		return true
 	}
-	sk := t.Kind & (knd.Data | knd.Spec | knd.Exp)
+	sk := t.Kind & kndVal
 	if sk == knd.Void {
 		return false
 	}
