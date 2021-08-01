@@ -104,20 +104,19 @@ type Call struct {
 
 func (c *Call) Kind() knd.Kind { return knd.Call }
 func (c *Call) Resl() (t typ.Type) {
-	pb, ok := c.Sig.Body.(*typ.ParamBody)
-	if !ok || len(pb.Params) == 0 {
+	res := SigRes(c.Sig)
+	if res == nil {
 		return typ.Void
 	}
-	ps := pb.Params
-	return ps[len(ps)-1].Type
+	return res.Type
 }
 func (c *Call) Source() ast.Src { return c.Src }
 func (c *Call) String() string  { return bfr.String(c) }
 func (c *Call) Print(p *bfr.P) error {
 	p.Byte('(')
-	pb, ok := c.Sig.Body.(*typ.ParamBody)
-	if ok && len(pb.Params) > 0 {
-		p.Fmt(pb.Name)
+	name := SigName(c.Sig)
+	if name != "" {
+		p.Fmt(name)
 		p.Byte(' ')
 	}
 	for i, a := range c.Args {
