@@ -9,7 +9,10 @@ import (
 	"xelf.org/xelf/knd"
 )
 
-// Read scans and parses from r and returns a type or an error.
+// Parse parses str and returns a type or an error.
+func Parse(str string) (Type, error) { return Read(strings.NewReader(str), "") }
+
+// Read parses named reader r and returns a type or an error.
 func Read(r io.Reader, name string) (Type, error) {
 	a, err := ast.Read(r, name)
 	if err != nil {
@@ -18,11 +21,7 @@ func Read(r io.Reader, name string) (Type, error) {
 	return ParseAst(a)
 }
 
-func Parse(s, name string) (Type, error) {
-	return Read(strings.NewReader(s), name)
-}
-
-// ParseAst parses the element as type and returns it or an error.
+// ParseAst parses a as type and returns it or an error.
 func ParseAst(a ast.Ast) (Type, error) { return parse(a, nil) }
 func parse(a ast.Ast, hist []Type) (Type, error) {
 	switch a.Kind {
@@ -40,6 +39,7 @@ func parse(a ast.Ast, hist []Type) (Type, error) {
 	}
 	return Void, ast.ErrUnexpected(a)
 }
+
 func ParseSym(raw string, src ast.Src, hist []Type) (Type, error) {
 	var res Type
 	sp := strings.SplitN(raw, "|", -1)
@@ -178,6 +178,7 @@ func parseName(a ast.Ast) (string, error) {
 	}
 	return a.Raw, nil
 }
+
 func parseParams(args []ast.Ast, hist []Type) ([]Param, error) {
 	res := make([]Param, 0, len(args))
 	for len(args) > 0 {

@@ -46,11 +46,11 @@ func TestAssignable(t *testing.T) {
 		{"<rec x:int y:int>", "<rec x:int y:int z?:int>", true, true},
 	}
 	for _, test := range tests {
-		src, err := Parse(test.src, "test")
+		src, err := Parse(test.src)
 		if err != nil {
 			t.Errorf("failed to parse %s: %v", test.src, err)
 		}
-		dst, err := Parse(test.dst, "test")
+		dst, err := Parse(test.dst)
 		if err != nil {
 			t.Errorf("failed to parse %s: %v", test.dst, err)
 		}

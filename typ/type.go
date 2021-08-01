@@ -38,7 +38,7 @@ func (t *Type) UnmarshalJSON(b []byte) error {
 	if err != nil {
 		return err
 	}
-	r, err := Parse(s, "")
+	r, err := Parse(s)
 	if err != nil {
 		return err
 	}
