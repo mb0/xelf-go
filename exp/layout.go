@@ -116,7 +116,7 @@ NextEl:
 			// TODO check type
 			res[i] = el
 		} else {
-			return nil, fmt.Errorf("no paramter found for %s", el)
+			return nil, fmt.Errorf("no parameter found for %s", el)
 		}
 	}
 	if len(vs) > 0 {

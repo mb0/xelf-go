@@ -3,6 +3,7 @@ package exp
 import (
 	"fmt"
 
+	"xelf.org/xelf/ast"
 	"xelf.org/xelf/knd"
 	"xelf.org/xelf/lit"
 	"xelf.org/xelf/typ"
@@ -64,7 +65,7 @@ func (p *Prog) Resl(env Env, e Exp, h typ.Type) (Exp, error) {
 		}
 		r, err := env.Resl(p, a, k)
 		if err != nil {
-			return a, fmt.Errorf("%s %w %q for %s", a.Src, err, a.Sym, h)
+			return nil, ast.ErrReslSym(a.Src, a.Sym, err)
 		}
 		// TODO check hint
 		return r, nil
@@ -80,7 +81,7 @@ func (p *Prog) Resl(env Env, e Exp, h typ.Type) (Exp, error) {
 		}
 		rt, err := p.Sys.Unify(a.Res, h)
 		if err != nil {
-			return nil, err
+			return nil, ast.ErrUnify(a.Src, err.Error())
 		}
 		a.Res = rt
 		return a, nil
@@ -103,28 +104,33 @@ func (p *Prog) Resl(env Env, e Exp, h typ.Type) (Exp, error) {
 			sig, _ := p.Sys.Inst(spec.Type())
 			args, err = LayoutSpec(sig, args)
 			if err != nil {
-				return nil, err
+				return nil, ast.ErrLayout(a.Src, sig, err)
 			}
 			a.Sig, a.Spec, a.Args = sig, spec, args
 		}
 		return a.Spec.Resl(p, env, a, h)
 	}
-	return nil, fmt.Errorf("unexpected expression %T", e)
+	return nil, ast.ErrUnexpectedExp(e.Source(), e)
 }
 
 // Eval evaluates a resolved expression and returns a literal or an error.
 func (p *Prog) Eval(env Env, e Exp) (_ *Lit, err error) {
 	switch a := e.(type) {
 	case *Sym:
-		return env.Eval(p, a, a.Sym)
+		res, err := env.Eval(p, a, a.Sym)
+		if err != nil {
+			return nil, ast.ErrEval(a.Src, a.Sym, err)
+		}
+		return res, nil
 	case *Call:
-		return a.Spec.Eval(p, env, a)
+		res, err := a.Spec.Eval(p, env, a)
+		if err != nil {
+			return nil, ast.ErrEval(a.Src, SigName(a.Sig), err)
+		}
+		return res, nil
 	case *Tupl:
 		vals := make([]lit.Val, len(a.Els))
 		for i, arg := range a.Els {
-			if arg == nil {
-				continue
-			}
 			at, err := p.Eval(env, arg)
 			if err != nil {
 				return nil, err
@@ -134,21 +140,13 @@ func (p *Prog) Eval(env Env, e Exp) (_ *Lit, err error) {
 		return &Lit{Val: &lit.List{Vals: vals}}, nil
 	case *Lit:
 		if a.Res.Kind&knd.Typ != 0 {
-			t, ok := a.Val.(typ.Type)
-			if ok {
-				t, err = p.Sys.Update(t)
-				if err != nil {
-					return nil, err
-				}
-				a.Val = t
+			if t, ok := a.Val.(typ.Type); ok {
+				a.Val = p.Sys.Update(t)
 			}
 		}
 		return a, nil
 	}
-	if e == nil {
-		return nil, fmt.Errorf("unexpected expression nil")
-	}
-	return nil, fmt.Errorf("%s unexpected expression %T", e.Source(), e)
+	return nil, ast.ErrUnexpectedExp(e.Source(), e)
 }
 
 // EvalArgs evaluates resolved call arguments and returns the result or an error.
@@ -179,7 +177,7 @@ func (p *Prog) evalDyn(env Env) Spec {
 
 func (p *Prog) reslSpec(env Env, c *Call) (Spec, []Exp, error) {
 	if len(c.Args) == 0 {
-		return nil, nil, fmt.Errorf("%s empty call is unexpected at this point", c.Src)
+		return nil, nil, ast.ErrReslSpec(c.Src, "unexpected empty call", nil)
 	}
 	fst, err := p.Resl(env, c.Args[0], typ.Void)
 	if err != nil {
@@ -196,7 +194,8 @@ func (p *Prog) reslSpec(env Env, c *Call) (Spec, []Exp, error) {
 	if dyn == nil {
 		dyn = p.evalDyn(env)
 		if dyn == nil {
-			return nil, nil, fmt.Errorf("no dyn spec found")
+			name := fmt.Sprintf("no dyn spec found for %s", fst)
+			return nil, nil, ast.ErrReslSpec(c.Src, name, nil)
 		}
 	}
 	return dyn, c.Args, nil

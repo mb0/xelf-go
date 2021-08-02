@@ -2,6 +2,7 @@ package ast
 
 import (
 	"fmt"
+	"strings"
 
 	"xelf.org/xelf/knd"
 )
@@ -12,13 +13,22 @@ type Error struct {
 	Code uint
 	Name string
 	Help string
+	Err  error
 }
 
+func (e *Error) Unwrap() error { return e.Err }
 func (e *Error) Error() string {
-	if e.Help != "" {
-		return fmt.Sprintf("%s: %s E%d\n\t%s", e.Src, e.Name, e.Code, e.Help)
+	var b strings.Builder
+	fmt.Fprintf(&b, "%s: %s E%d", e.Src, e.Name, e.Code)
+	if e.Err != nil {
+		b.WriteString("\n\t")
+		b.WriteString(e.Err.Error())
 	}
-	return fmt.Sprintf("%s: %s E%d", e.Src, e.Name, e.Code)
+	if e.Help != "" {
+		b.WriteString("\n\t")
+		b.WriteString(e.Help)
+	}
+	return b.String()
 }
 
 func ErrTokStart(t Tok) *Error {
@@ -36,7 +46,7 @@ func ErrStrTerm(t Tok) *Error {
 		Help: fmt.Sprintf("expecting closing %q", t.Raw[0])}
 }
 func ErrUnquote(t Tok, err error) *Error {
-	return &Error{Src: t.Src, Code: 106, Name: fmt.Sprintf("invalid string quoting %v", err)}
+	return &Error{Src: t.Src, Code: 106, Name: "invalid string quoting", Err: err}
 }
 func ErrTreeTerm(t Tok) *Error {
 	_, end := parens(t.Kind)
@@ -68,7 +78,29 @@ func ErrInvalidBool(a Ast) *Error {
 	return &Error{Src: a.Src, Code: 401, Name: fmt.Sprintf("invalid bool %s", a)}
 }
 func ErrInvalid(a Ast, kind knd.Kind, err error) *Error {
-	return &Error{Src: a.Src, Code: 402, Name: fmt.Sprintf("invalid %s %s: %v", knd.Name(kind), a, err)}
+	name := fmt.Sprintf("invalid %s %s", knd.Name(kind), a)
+	return &Error{Src: a.Src, Code: 402, Name: name, Err: err}
+}
+func ErrUnexpectedExp(s Src, e interface{}) *Error {
+	return &Error{Src: s, Code: 501, Name: fmt.Sprintf("unexpected exp %T", e)}
+}
+func ErrReslSym(s Src, sym string, err error) *Error {
+	name := fmt.Sprintf("unresolved sym %s", sym)
+	return &Error{Src: s, Code: 502, Name: name, Err: err}
+}
+func ErrReslSpec(s Src, name string, err error) *Error {
+	return &Error{Src: s, Code: 503, Name: name, Err: err}
+}
+func ErrUnify(s Src, name string) *Error {
+	return &Error{Src: s, Code: 504, Name: name}
+}
+func ErrLayout(s Src, t fmt.Stringer, err error) *Error {
+	name := fmt.Sprintf("call layout failed for %s", t)
+	return &Error{Src: s, Code: 505, Name: name, Err: err}
+}
+func ErrEval(s Src, name string, err error) *Error {
+	name = fmt.Sprintf("eval failed for %s", name)
+	return &Error{Src: s, Code: 506, Name: name, Err: err}
 }
 
 func parens(k knd.Kind) (rune, rune) {
