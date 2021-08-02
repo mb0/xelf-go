@@ -114,17 +114,19 @@ func (sys *Sys) inst(t Type, m map[int32]Type) (Type, error) {
 }
 
 // Unify unifies type t and h and returns the result or an error.
+// Type unification in this context means that we have two types that should describe the same type.
+// We then check where these descriptions overlap and use the result instead of the input types.
 func (sys *Sys) Unify(t, h Type) (Type, error) {
-	n := sys.Update(t)
+	t = sys.Update(t)
 	if h == Void {
-		return n, nil
+		return t, nil
 	}
 	h = sys.Update(h)
 	r, err := unify(sys, t, h)
 	if err != nil {
 		return t, err
 	}
-	r = unibind(sys, n, h, r)
+	r = unibind(sys, t, h, r)
 	return r, nil
 }
 
@@ -139,18 +141,12 @@ func unify(sys *Sys, t, h Type) (Type, error) {
 	ak := a.Kind &^ (knd.Var | knd.None)
 	bk := b.Kind &^ (knd.Var | knd.None)
 	if ak == 0 {
-		if a.ID == 0 {
-			return unibind(sys, a, Void, b), nil
-		}
 		r.Kind = b.Kind
-		if b.Kind == 0 || b.Kind.IsAlt() {
-			r.Kind |= knd.Var
-		}
 		r.Body = b.Body
 		return unibind(sys, a, b, r), nil
 	}
 	if bk == 0 {
-		return unibind(sys, Void, b, a), nil
+		return unibind(sys, a, b, r), nil
 	}
 	if kk&knd.Alt != 0 {
 		x, y := a, b
@@ -162,20 +158,26 @@ func unify(sys *Sys, t, h Type) (Type, error) {
 	}
 	if ak == bk {
 		if equalBody(a.Body, b.Body) {
-			return unibind(sys, Void, b, a), nil
+			return unibind(sys, a, b, r), nil
 		}
 		switch ab := a.Body.(type) {
 		case *ElBody:
 			bb, ok := b.Body.(*ElBody)
-			if !ok {
-				return a, nil
+			if ok {
+				el, err := sys.Unify(ab.El, bb.El)
+				if err != nil {
+					return Void, err
+				}
+				r.Body = &ElBody{El: el}
 			}
-			el, err := sys.Unify(ab.El, bb.El)
-			if err != nil {
-				return Void, err
-			}
-			r.Body = &ElBody{El: el}
 			return unibind(sys, a, b, r), nil
+		case *ParamBody:
+			_, ok := b.Body.(*ParamBody)
+			if ak&knd.Tupl != 0 {
+				if !ok {
+					return unibind(sys, a, b, r), nil
+				}
+			}
 		}
 	} else {
 		k := a.Kind & knd.Any
@@ -211,7 +213,7 @@ func equalBody(a, b Body) bool {
 }
 
 func base(t Type) Type {
-	for t.Kind&knd.Exp != 0 && t.Kind&knd.Exp != knd.Typ {
+	for t.Kind&knd.Exp == knd.Exp || t.Kind&knd.Exp != 0 && t.Kind&knd.Tupl == 0 {
 		b, ok := t.Body.(*ElBody)
 		if ok && b.El != Void {
 			t = b.El
@@ -223,13 +225,13 @@ func base(t Type) Type {
 }
 
 func unibind(sys *Sys, a, b, r Type) Type {
-	if a.Kind&knd.Var != 0 {
+	if a.ID > 0 {
 		if r.ID <= 0 {
 			r.ID = a.ID
 		}
 		sys.Map[a.ID] = r
 	}
-	if b.Kind&knd.Var != 0 {
+	if b.ID > 0 {
 		if r.ID <= 0 {
 			r.ID = b.ID
 		}
@@ -237,6 +239,9 @@ func unibind(sys *Sys, a, b, r Type) Type {
 	}
 	if r.ID > 0 {
 		sys.Map[r.ID] = r
+		if r.Kind == 0 || r.Kind.IsAlt() {
+			r.Kind |= knd.Var
+		}
 	}
 	return r
 }

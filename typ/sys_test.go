@@ -68,6 +68,10 @@ func TestUnify(t *testing.T) {
 		{"list|str", "list|int", "cannot", Void},
 		{"<rec x:int y:int>", "<rec x:int y:int>", "", Rec(P("x", Int), P("y", Int))},
 		{"<rec x:int y:int>", "any", "", Rec(P("x", Int), P("y", Int))},
+		{"num@", "exp", "", Var(1, Num)},
+		{"num", "exp|@", "", Var(1, Num)},
+		{"num", "@", "", Var(1, Num)},
+		{"tupl|int", "tupl?", "", TuplList(Int)},
 	}
 	for _, test := range tests {
 		a, err := Parse(test.a)
