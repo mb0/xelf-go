@@ -97,9 +97,11 @@ func (sys *Sys) inst(t Type, m map[int32]Type) (Type, error) {
 			// TODO resolve path or think about type selections
 			var par *Editor
 			for par = e.Parent; par != nil; par = par.Parent {
-				_, ok := par.Type.Body.(*ParamBody)
-				if ok {
-					break
+				if par.Type.Kind&(knd.Strc|knd.Spec) != 0 {
+					_, ok := par.Type.Body.(*ParamBody)
+					if ok {
+						break
+					}
 				}
 			}
 			return Select(par.Type, b.Path)

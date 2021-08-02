@@ -1,6 +1,8 @@
 package lib
 
 import (
+	"fmt"
+
 	"xelf.org/xelf/exp"
 	"xelf.org/xelf/typ"
 )
@@ -9,6 +11,7 @@ import (
 var Core = exp.Builtins(make(Specs).Add(
 	Or, And, Ok, Not, Err,
 	Add, Sub, Mul, Div, Rem, Abs, Neg, Min, Max,
+	Eq, Ne, Lt, Ge, Gt, Le, In, Ni, Equal,
 ))
 
 // Specs is spec map helper that can be converted to a builtin environment.
@@ -34,7 +37,7 @@ func (sm Specs) AddMap(m map[string]exp.Spec) Specs {
 func impl(sig string) exp.SpecBase {
 	t, err := typ.Parse(sig)
 	if err != nil {
-		panic(err)
+		panic(fmt.Errorf("impl sig %s: %v", sig, err))
 	}
 	return exp.SpecBase{Decl: t}
 }

@@ -123,7 +123,10 @@ func (p *Prog) Resl(env Env, e Exp, h typ.Type) (Exp, error) {
 			if err != nil {
 				return nil, err
 			}
-			sig, _ := p.Sys.Inst(spec.Type())
+			sig, err := p.Sys.Inst(spec.Type())
+			if err != nil {
+				return nil, ast.ErrLayout(a.Src, sig, err)
+			}
 			args, err = LayoutSpec(sig, args)
 			if err != nil {
 				return nil, ast.ErrLayout(a.Src, sig, err)
