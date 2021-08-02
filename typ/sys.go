@@ -42,7 +42,7 @@ func (sys *Sys) Get(id int32) Type {
 }
 
 // Update updates all vars and refs in t with the currently bound types or returns an error.
-func (sys *Sys) Update(t Type) (Type, error) { return Edit(t, sys.update) }
+func (sys *Sys) Update(t Type) Type { t, _ = Edit(t, sys.update); return t }
 func (sys *Sys) update(e *Editor) (Type, error) {
 	if e.Kind&knd.Var != 0 {
 		r := sys.Get(e.ID)
@@ -113,17 +113,11 @@ func (sys *Sys) inst(t Type, m map[int32]Type) (Type, error) {
 
 // Unify unifies type t and h and returns the result or an error.
 func (sys *Sys) Unify(t, h Type) (Type, error) {
-	n, err := sys.Update(t)
-	if err != nil {
-		return n, err
-	}
+	n := sys.Update(t)
 	if h == Void {
 		return n, nil
 	}
-	h, err = sys.Update(h)
-	if err != nil {
-		return t, err
-	}
+	h = sys.Update(h)
 	r, err := unify(sys, t, h)
 	if err != nil {
 		return t, err
@@ -256,7 +250,7 @@ func (c *Sys) Free(t Type, res []Type) []Type {
 				}
 			}
 			// update from context
-			t, _ = c.Update(t)
+			t = c.Update(t)
 		}
 		// append if still a free type
 		if t.Kind&(knd.Var|knd.Ref|knd.Sel) != 0 {

@@ -56,16 +56,14 @@ func (s *SpecBase) Resl(p *Prog, env Env, c *Call, h typ.Type) (Exp, error) {
 		}
 	}
 	rp := SigRes(c.Sig)
-	hh := h
-	if hh != typ.Void {
+	if h != typ.Void {
 		_, err := p.Sys.Unify(rp.Type, h)
 		if err != nil {
 			return c, err
 		}
 	}
-	var err error
-	c.Sig, err = p.Sys.Update(c.Sig)
-	return c, err
+	c.Sig = p.Sys.Update(c.Sig)
+	return c, nil
 }
 
 func tuplEl(t typ.Type) (typ.Type, int) {

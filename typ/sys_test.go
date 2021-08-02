@@ -34,7 +34,7 @@ func TestCtx(t *testing.T) {
 	if len(free) != 0 {
 		t.Errorf("want free [] got %s", free)
 	}
-	a, _ := sys.Update(s)
+	a := sys.Update(s)
 	want = `<func <func int bool> list|int list|int>`
 	if got := a.String(); got != want {
 		t.Errorf("want %s\ngot %s", want, got)

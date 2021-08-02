@@ -72,11 +72,7 @@ func (p *Prog) Resl(env Env, e Exp, h typ.Type) (Exp, error) {
 		if a.Res.Kind&knd.Typ != 0 {
 			t, ok := a.Val.(typ.Type)
 			if ok {
-				t, err := p.Sys.Update(t)
-				if err != nil {
-					return nil, err
-				}
-				a.Val = t
+				a.Val = p.Sys.Update(t)
 			}
 		}
 		if h == typ.Void {
