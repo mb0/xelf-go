@@ -67,8 +67,8 @@ const (
 	Keyr = Dict | Strc
 	Data = Prim | Cont | Strc
 	Spec = Func | Form
-	Any  = Data | None
 	All  = Data | Typ | Spec
+	Any  = All | None
 )
 
 var ErrInvalid = fmt.Errorf("invalid")
@@ -138,8 +138,8 @@ var Infos = []Info{
 	{"keyr", Keyr},
 	{"data", Data},
 	{"spec", Spec},
-	{"any", Any},
 	{"all", All},
+	{"any", Any},
 }
 
 var kindToStr map[Kind]string

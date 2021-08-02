@@ -19,7 +19,7 @@ func TestParse(t *testing.T) {
 		{None, `<none>`, ``},
 		{Data, `data`, `<data>`},
 		{Any, `any`, `<any>`},
-		{Any, `data?`, `<any>`},
+		{Any, `all?`, `<any>`},
 		{Num, `num`, `<num>`},
 		{Opt(Num), `num?`, `<num?>`},
 		{Typ, `typ`, `<typ>`},
