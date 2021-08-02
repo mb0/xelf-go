@@ -3,6 +3,7 @@ package exp
 import (
 	"fmt"
 
+	"xelf.org/xelf/knd"
 	"xelf.org/xelf/lit"
 	"xelf.org/xelf/typ"
 )
@@ -13,7 +14,7 @@ type Env interface {
 	Parent() Env
 
 	// Resl resolves a part of a symbol and returns the result or an error.
-	Resl(p *Prog, s *Sym, k string, hint typ.Type) (Exp, error)
+	Resl(p *Prog, s *Sym, k string) (Exp, error)
 
 	// Eval evaluates a part of a symbol and returns a literal or an error.
 	Eval(p *Prog, s *Sym, k string) (*Lit, error)
@@ -26,6 +27,7 @@ type Prog struct {
 	Sys  *typ.Sys
 	Root Env
 	Exp  Exp
+	Dyn  Spec
 }
 
 // NewProg returns a new program using the given registry, environment and expression.
@@ -34,17 +36,123 @@ func NewProg(reg *lit.Reg, env Env, exp Exp) *Prog {
 	if reg == nil {
 		reg = &lit.Reg{}
 	}
-	return &Prog{Reg: reg, Sys: typ.NewSys(reg), Root: env, Exp: exp}
+	p := &Prog{Reg: reg, Sys: typ.NewSys(reg), Root: env, Exp: exp}
+	p.Dyn = p.evalDyn(env)
+	return p
 }
 
 // Resl resolves an expression using a type hint and returns the result or an error.
 func (p *Prog) Resl(env Env, e Exp, h typ.Type) (Exp, error) {
-	return e, nil
+	switch a := e.(type) {
+	case *Tag:
+		if a.Exp != nil {
+			x, err := p.Resl(env, a.Exp, typ.ResEl(h))
+			if err != nil {
+				return nil, err
+			}
+			a.Exp = x
+		}
+		return a, nil
+	case *Sym:
+		if h.Kind == knd.Sym {
+			return &Lit{Res: typ.Sym, Val: lit.Str(a.Sym), Src: a.Src}, nil
+		}
+		k := a.Sym
+		if a.Env != nil {
+			env = a.Env
+			k = a.Rel
+		}
+		r, err := env.Resl(p, a, k)
+		if err != nil {
+			return a, fmt.Errorf("%s %w %q for %s", a.Src, err, a.Sym, h)
+		}
+		// TODO check hint
+		return r, nil
+	case *Lit:
+		if a.Res.Kind&knd.Typ != 0 {
+			t, ok := a.Val.(typ.Type)
+			if ok {
+				t, err := p.Sys.Update(t)
+				if err != nil {
+					return nil, err
+				}
+				a.Val = t
+			}
+		}
+		if h == typ.Void {
+			h = a.Val.Type()
+		}
+		rt, err := p.Sys.Unify(a.Res, h)
+		if err != nil {
+			return nil, err
+		}
+		a.Res = rt
+		return a, nil
+	case *Tupl:
+		// TODO check tupl params
+		for i, arg := range a.Els {
+			el, err := p.Resl(env, arg, h)
+			if err != nil {
+				return nil, err
+			}
+			a.Els[i] = el
+		}
+		return a, nil
+	case *Call:
+		if a.Spec == nil {
+			spec, args, err := p.reslSpec(env, a)
+			if err != nil {
+				return nil, err
+			}
+			sig, _ := p.Sys.Inst(spec.Type())
+			args, err = LayoutSpec(sig, args)
+			if err != nil {
+				return nil, err
+			}
+			a.Sig, a.Spec, a.Args = sig, spec, args
+		}
+		return a.Spec.Resl(p, env, a, h)
+	}
+	return nil, fmt.Errorf("unexpected expression %T", e)
 }
 
 // Eval evaluates a resolved expression and returns a literal or an error.
-func (p *Prog) Eval(env Env, e Exp) (*Lit, error) {
-	return nil, fmt.Errorf("not yet implemented")
+func (p *Prog) Eval(env Env, e Exp) (_ *Lit, err error) {
+	switch a := e.(type) {
+	case *Sym:
+		return env.Eval(p, a, a.Sym)
+	case *Call:
+		return a.Spec.Eval(p, env, a)
+	case *Tupl:
+		vals := make([]lit.Val, len(a.Els))
+		for i, arg := range a.Els {
+			if arg == nil {
+				continue
+			}
+			at, err := p.Eval(env, arg)
+			if err != nil {
+				return nil, err
+			}
+			vals[i] = at.Val
+		}
+		return &Lit{Val: &lit.List{Vals: vals}}, nil
+	case *Lit:
+		if a.Res.Kind&knd.Typ != 0 {
+			t, ok := a.Val.(typ.Type)
+			if ok {
+				t, err = p.Sys.Update(t)
+				if err != nil {
+					return nil, err
+				}
+				a.Val = t
+			}
+		}
+		return a, nil
+	}
+	if e == nil {
+		return nil, fmt.Errorf("unexpected expression nil")
+	}
+	return nil, fmt.Errorf("%s unexpected expression %T", e.Source(), e)
 }
 
 // EvalArgs evaluates resolved call arguments and returns the result or an error.
@@ -62,4 +170,38 @@ func (p *Prog) EvalArgs(c *Call) ([]*Lit, error) {
 		res[i] = a
 	}
 	return res, nil
+}
+
+func (p *Prog) evalDyn(env Env) Spec {
+	ident := &Sym{Sym: "dyn", Type: typ.Spec}
+	found, _ := env.Eval(p, ident, ident.Sym)
+	if dyn, ok := found.Val.(Spec); ok {
+		return dyn
+	}
+	return nil
+}
+
+func (p *Prog) reslSpec(env Env, c *Call) (Spec, []Exp, error) {
+	if len(c.Args) == 0 {
+		return nil, nil, fmt.Errorf("%s empty call is unexpected at this point", c.Src)
+	}
+	fst, err := p.Resl(env, c.Args[0], typ.Void)
+	if err != nil {
+		return nil, nil, err
+	}
+	if fst.Kind() == knd.Lit && fst.Resl().Kind&knd.Spec != 0 {
+		if l, ok := fst.(*Lit); ok {
+			if s, ok := l.Val.(Spec); ok {
+				return s, c.Args[1:], nil
+			}
+		}
+	}
+	dyn := p.Dyn
+	if dyn == nil {
+		dyn = p.evalDyn(env)
+		if dyn == nil {
+			return nil, nil, fmt.Errorf("no dyn spec found")
+		}
+	}
+	return dyn, c.Args, nil
 }

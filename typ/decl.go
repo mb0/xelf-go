@@ -32,6 +32,7 @@ var (
 	Dict = Type{Kind: knd.Dict}
 
 	Data = Type{Kind: knd.Data}
+	Spec = Type{Kind: knd.Spec}
 	Any  = Type{Kind: knd.Any}
 )
 

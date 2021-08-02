@@ -18,5 +18,8 @@ resolve to specs that can be called and themselves create scoped environment def
 Calls and symbols cache their environment during the first resolution phase.
 
 A `Spec` is a func or form definition that resolves and evaluates calls. If the first element of a
-call does not resolve to a spec literal the program calls a special dyn spec from environment to
-allow syntactic sugar.
+call does not resolve to a spec literal the program calls a `dyn` spec to allow syntax sugar.
+
+The `dyn` spec is usually evaluated from the root environment on program creation cached in a
+program field. If the program dyn field is explicitly set to nil, we are in dyndyn mode and look
+up the dyn spec from the current environment whenever we need one.
