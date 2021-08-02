@@ -15,7 +15,7 @@ type Spec interface {
 	Resl(p *Prog, env Env, c *Call, hint typ.Type) (Exp, error)
 
 	// Eval evaluates a resolved call and returns a literal or an error.
-	Eval(p *Prog, env Env, c *Call) (*Lit, error)
+	Eval(p *Prog, c *Call) (*Lit, error)
 }
 
 // SpecBase is partial base definition for spec implementations.

@@ -9,6 +9,25 @@ import (
 	"xelf.org/xelf/typ"
 )
 
+// Eval creates and evaluates a new program for str and returns the result or an error.
+func Eval(reg *lit.Reg, env Env, str string) (*Lit, error) {
+	x, err := Parse(reg, str)
+	if err != nil {
+		return nil, err
+	}
+	return EvalExp(reg, env, x)
+}
+
+// EvalExp creates and evaluates a new program for x and returns the result or an error.
+func EvalExp(reg *lit.Reg, env Env, x Exp) (*Lit, error) {
+	p := NewProg(reg, env, x)
+	x, err := p.Resl(env, x, typ.Void)
+	if err != nil {
+		return nil, err
+	}
+	return p.Eval(env, x)
+}
+
 // Env is a scoped context to resolve symbols. Envs configure most of the program resolution.
 type Env interface {
 	// Parent returns the parent environment or nil.
@@ -123,7 +142,7 @@ func (p *Prog) Eval(env Env, e Exp) (_ *Lit, err error) {
 		}
 		return res, nil
 	case *Call:
-		res, err := a.Spec.Eval(p, env, a)
+		res, err := a.Spec.Eval(p, a)
 		if err != nil {
 			return nil, ast.ErrEval(a.Src, SigName(a.Sig), err)
 		}
@@ -169,8 +188,10 @@ func (p *Prog) EvalArgs(c *Call) ([]*Lit, error) {
 func (p *Prog) evalDyn(env Env) Spec {
 	ident := &Sym{Sym: "dyn", Type: typ.Spec}
 	found, _ := env.Eval(p, ident, ident.Sym)
-	if dyn, ok := found.Val.(Spec); ok {
-		return dyn
+	if found != nil {
+		if dyn, ok := found.Val.(Spec); ok {
+			return dyn
+		}
 	}
 	return nil
 }
