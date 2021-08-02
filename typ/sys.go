@@ -41,7 +41,7 @@ func (sys *Sys) Get(id int32) Type {
 	return sys.Map[id]
 }
 
-// Update updates all vars and refs in t with the currently bound types or returns an error.
+// Update updates all vars and refs in t with the currently bound types and returns the result.
 func (sys *Sys) Update(t Type) Type { t, _ = Edit(t, sys.update); return t }
 func (sys *Sys) update(e *Editor) (Type, error) {
 	if e.Kind&knd.Var != 0 {
