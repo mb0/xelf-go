@@ -68,42 +68,54 @@ func (reg *Reg) Zero(t typ.Type) (m Mut, err error) {
 			}
 		}
 	}
-	k := t.Kind & (knd.Data | knd.Typ)
-	if k.Count() != 0 {
-		return nil, fmt.Errorf("no zero value for type %s", t)
-	}
-	switch k {
-	case knd.Typ:
-		t = typ.El(t)
-		m = &t
-	case knd.Bool:
-		m = new(Bool)
-	case knd.Int:
-		m = new(Int)
-	case knd.Real:
-		m = new(Real)
-	case knd.Str:
-		m = new(Str)
-	case knd.Raw:
-		m = new(Raw)
-	case knd.UUID:
-		m = new(UUID)
-	case knd.Time:
-		m = new(Time)
-	case knd.Span:
-		m = new(Span)
-	case knd.List:
-		m = &List{Reg: reg}
-	case knd.Dict:
-		m = &Dict{Reg: reg}
-	case knd.Rec, knd.Obj:
-		m, err = NewStrc(reg, t)
-		if err != nil {
-			return nil, err
+	k := t.Kind & knd.All
+	if k.Count() != 1 {
+		switch {
+		case k&knd.Num != 0:
+			m = new(Int)
+		case k&knd.Str != 0:
+			m = new(Str)
+		case k&knd.List != 0:
+			m = &List{Reg: reg}
+		case k&knd.Dict != 0:
+			m = &Dict{Reg: reg}
+		default:
+			return nil, fmt.Errorf("no zero value for type %s", t)
 		}
-	default:
-		var any interface{}
-		return &AnyPrx{proxy{reg, t, reflect.ValueOf(&any)}, Null{}}, nil
+	} else {
+		switch k {
+		case knd.Typ:
+			t = typ.El(t)
+			m = &t
+		case knd.Bool:
+			m = new(Bool)
+		case knd.Int:
+			m = new(Int)
+		case knd.Real:
+			m = new(Real)
+		case knd.Str:
+			m = new(Str)
+		case knd.Raw:
+			m = new(Raw)
+		case knd.UUID:
+			m = new(UUID)
+		case knd.Time:
+			m = new(Time)
+		case knd.Span:
+			m = new(Span)
+		case knd.List:
+			m = &List{Reg: reg}
+		case knd.Dict:
+			m = &Dict{Reg: reg}
+		case knd.Rec, knd.Obj:
+			m, err = NewStrc(reg, t)
+			if err != nil {
+				return nil, err
+			}
+		default:
+			var any interface{}
+			return &AnyPrx{proxy{reg, t, reflect.ValueOf(&any)}, Null{}}, nil
+		}
 	}
 	if t.Kind&knd.None != 0 {
 		m = &OptMut{m, nil, true}
