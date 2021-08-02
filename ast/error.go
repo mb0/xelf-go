@@ -102,6 +102,9 @@ func ErrEval(s Src, name string, err error) *Error {
 	name = fmt.Sprintf("eval failed for %s", name)
 	return &Error{Src: s, Code: 506, Name: name, Err: err}
 }
+func ErrUserErr(s Src, name string, err error) *Error {
+	return &Error{Src: s, Code: 600, Name: name, Err: err}
+}
 
 func parens(k knd.Kind) (rune, rune) {
 	switch k {

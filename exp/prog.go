@@ -11,6 +11,9 @@ import (
 
 // Eval creates and evaluates a new program for str and returns the result or an error.
 func Eval(reg *lit.Reg, env Env, str string) (*Lit, error) {
+	if reg == nil {
+		reg = &lit.Reg{}
+	}
 	x, err := Parse(reg, str)
 	if err != nil {
 		return nil, err
