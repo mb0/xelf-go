@@ -30,27 +30,20 @@ func LayoutForm(sig typ.Type, els []Exp) ([]Exp, error) {
 		var arg Exp
 		if pt.Kind&knd.Exp == knd.Tupl {
 			vari = true
-			pb, ok := pt.Body.(*typ.ParamBody)
-			if !ok || len(pb.Params) == 0 {
-				pt = typ.Type{Kind: knd.Exp}
-			} else {
-				switch tn := len(pb.Params); tn {
-				case 1:
-					pt = pb.Params[0].Type
-				default:
-					pt = typ.Type{Kind: knd.Rec, Body: pb}
-					n = consume(els, false)
-					n -= n % tn
-					tupl := &Tupl{Type: typ.TuplList(pt), Els: make([]Exp, 0, n/tn)}
-					for i := 0; i < n; i += tn {
-						fst := els[i].Source()
-						lst := els[i+tn-1].Source()
-						tupl.Els = append(tupl.Els, &Tupl{Type: pt, Els: els[i : i+tn],
-							Src: ast.Src{Doc: fst.Doc, Pos: fst.Pos, End: lst.End},
-						})
-					}
-					arg = tupl
+			var tn int
+			pt, tn = tuplEl(pt)
+			if tn > 1 {
+				n = consume(els, false)
+				n -= n % tn
+				tupl := &Tupl{Type: typ.TuplList(pt), Els: make([]Exp, 0, n/tn)}
+				for i := 0; i < n; i += tn {
+					fst := els[i].Source()
+					lst := els[i+tn-1].Source()
+					tupl.Els = append(tupl.Els, &Tupl{Type: pt, Els: els[i : i+tn],
+						Src: ast.Src{Doc: fst.Doc, Pos: fst.Pos, End: lst.End},
+					})
 				}
+				arg = tupl
 			}
 		}
 		if vari && arg == nil {

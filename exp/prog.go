@@ -19,23 +19,13 @@ type Env interface {
 	Eval(p *Prog, s *Sym, k string) (*Lit, error)
 }
 
-// Spec is a literal value for func or form specification used to resolve calls.
-type Spec interface {
-	lit.Val
-
-	// Resl resolves a call using a type hint and returns the result or an error.
-	Resl(p *Prog, env Env, c *Call, hint typ.Type) (Exp, error)
-
-	// Eval evaluates a resolved call and returns a literal or an error.
-	Eval(p *Prog, env Env, c *Call) (*Lit, error)
-}
-
 // Prog is the entry context to resolve an expression in an environment.
 // Programs are bound to their expression and cannot be reused.
 type Prog struct {
 	Reg  *lit.Reg
-	Exp  Exp
+	Sys  *typ.Sys
 	Root Env
+	Exp  Exp
 }
 
 // NewProg returns a new program using the given registry, environment and expression.
@@ -44,7 +34,7 @@ func NewProg(reg *lit.Reg, env Env, exp Exp) *Prog {
 	if reg == nil {
 		reg = &lit.Reg{}
 	}
-	return &Prog{Reg: reg, Root: env, Exp: exp}
+	return &Prog{Reg: reg, Sys: typ.NewSys(reg), Root: env, Exp: exp}
 }
 
 // Resl resolves an expression using a type hint and returns the result or an error.
@@ -53,6 +43,23 @@ func (p *Prog) Resl(env Env, e Exp, h typ.Type) (Exp, error) {
 }
 
 // Eval evaluates a resolved expression and returns a literal or an error.
-func (p *Prog) Eval(env Env, e Exp) (Exp, error) {
-	return e, fmt.Errorf("not yet implemented")
+func (p *Prog) Eval(env Env, e Exp) (*Lit, error) {
+	return nil, fmt.Errorf("not yet implemented")
+}
+
+// EvalArgs evaluates resolved call arguments and returns the result or an error.
+// This is a convenience method for the most basic needs of many spec implementations.
+func (p *Prog) EvalArgs(c *Call) ([]*Lit, error) {
+	res := make([]*Lit, len(c.Args))
+	for i, arg := range c.Args {
+		if arg == nil {
+			continue
+		}
+		a, err := p.Eval(c.Env, arg)
+		if err != nil {
+			return nil, err
+		}
+		res[i] = a
+	}
+	return res, nil
 }
