@@ -8,6 +8,7 @@ import (
 // Core is a builtin environment with foundational specs.
 var Core = exp.Builtins(make(Specs).Add(
 	Or, And, Ok, Not, Err,
+	Add, Sub, Mul, Div, Rem, Abs, Neg, Min, Max,
 ))
 
 // Specs is spec map helper that can be converted to a builtin environment.
