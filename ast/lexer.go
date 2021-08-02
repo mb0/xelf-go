@@ -25,7 +25,12 @@ type Src struct {
 	End Pos
 }
 
-func (s Src) String() string { return fmt.Sprintf("%s:%d:%d", s.Name, s.Line, s.Byte) }
+func (s Src) String() string {
+	if s.Doc == nil || s.Name == "" {
+		return fmt.Sprintf("%d:%d", s.Line, s.Byte)
+	}
+	return fmt.Sprintf("%s:%d:%d", s.Name, s.Line, s.Byte)
+}
 
 // Tok is a lexer token with either a single rune or the raw string.
 type Tok struct {
