@@ -35,34 +35,32 @@ func LayoutForm(sig typ.Type, els []Exp) ([]Exp, error) {
 			if tn > 1 {
 				n = consume(els, false)
 				n -= n % tn
-				tupl := &Tupl{Type: typ.TuplList(pt), Els: make([]Exp, 0, n/tn)}
-				for i := 0; i < n; i += tn {
-					fst := els[i].Source()
-					lst := els[i+tn-1].Source()
-					tupl.Els = append(tupl.Els, &Tupl{Type: pt, Els: els[i : i+tn],
-						Src: ast.Src{Doc: fst.Doc, Pos: fst.Pos, End: lst.End},
-					})
-				}
-				arg = tupl
+				fst := els[0].Source()
+				lst := els[n-1].Source()
+				arg = &Tupl{Type: p.Type, Els: els[:n], Src: ast.Src{
+					Doc: fst.Doc, Pos: fst.Pos, End: lst.End,
+				}}
 			}
 		}
-		if vari && arg == nil {
-			if pt == typ.Exp {
-				arg = &Tupl{Type: typ.TuplList(pt), Els: els}
-				n = len(els)
-			} else {
-				n = consume(els, pt.Kind == knd.Tag)
-				// TODO type dict|T for tags else list|T
-				var at typ.Type
-				if pt.Kind&knd.Tag != 0 {
-					at = typ.DictOf(typ.ResEl(pt))
+		if arg == nil {
+			if vari {
+				if pt == typ.Exp {
+					arg = &Tupl{Type: typ.TuplList(pt), Els: els}
+					n = len(els)
 				} else {
-					at = typ.ListOf(pt)
+					n = consume(els, pt.Kind == knd.Tag)
+					// TODO type dict|T for tags else list|T
+					var at typ.Type
+					if pt.Kind&knd.Tag != 0 {
+						at = typ.DictOf(typ.ResEl(pt))
+					} else {
+						at = pt
+					}
+					arg = &Tupl{Type: typ.TuplList(at), Els: els[:n]}
 				}
-				arg = &Tupl{Type: typ.TuplList(at), Els: els[:n]}
+			} else if len(els) > 0 {
+				n, arg = 1, els[0]
 			}
-		} else if len(els) > 0 {
-			n, arg = 1, els[0]
 		}
 		if !opt && n == 0 {
 			return nil, fmt.Errorf("missing argument %d %s", i, pt)

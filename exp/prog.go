@@ -108,14 +108,23 @@ func (p *Prog) Resl(env Env, e Exp, h typ.Type) (Exp, error) {
 		a.Res = rt
 		return a, nil
 	case *Tupl:
-		// TODO check tupl params
+		tt, tn := tuplEl(a.Type)
 		for i, arg := range a.Els {
-			el, err := p.Resl(env, arg, h)
+			ah := tt
+			if tn > 1 {
+				ah = tt.Body.(*typ.ParamBody).Params[i%tn].Type
+			}
+			el, err := p.Resl(env, arg, ah)
 			if err != nil {
 				return nil, err
 			}
 			a.Els[i] = el
 		}
+		ut, err := p.Sys.Unify(a.Type, h)
+		if err != nil {
+			return nil, ast.ErrUnify(a.Src, err.Error())
+		}
+		a.Type = ut
 		return a, nil
 	case *Call:
 		if a.Spec == nil {

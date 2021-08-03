@@ -1,6 +1,8 @@
 package exp
 
 import (
+	"log"
+
 	"xelf.org/xelf/bfr"
 	"xelf.org/xelf/knd"
 	"xelf.org/xelf/lit"
@@ -38,29 +40,31 @@ func (s *SpecBase) Resl(p *Prog, env Env, c *Call, h typ.Type) (Exp, error) {
 	vari := s.Decl.Kind&knd.Spec == knd.Func && n > 0 && ps[n-1].Kind&knd.List != 0
 	for i, pa := range ps {
 		a := c.Args[i]
-		if a != nil {
-			ah := pa.Type
-			if ah.Kind&knd.Tupl != 0 {
+		if a == nil {
+			continue
+		}
+		ah := pa.Type
+		if vari && i == n-1 {
+			if _, ok := a.(*Tupl); ok {
 				ah, _ = tuplEl(ah)
 			}
-			if vari && i == n-1 {
-				if _, ok := a.(*Tupl); ok {
-					ah, _ = tuplEl(ah)
-				}
-			}
-			e, err := p.Resl(c.Env, a, ah)
-			if err != nil {
-				return c, err
-			}
-			c.Args[i] = e
 		}
+		e, err := p.Resl(c.Env, a, ah)
+		if err != nil {
+			if a.Kind() == knd.Tupl {
+				log.Printf("resl tupl arg %s %s %s", a, a.Resl(), ah)
+			}
+			return c, err
+		}
+		c.Args[i] = e
 	}
 	rp := SigRes(c.Sig)
 	if h != typ.Void {
-		_, err := p.Sys.Unify(rp.Type, h)
+		ut, err := p.Sys.Unify(rp.Type, h)
 		if err != nil {
 			return c, err
 		}
+		rp.Type = ut
 	}
 	c.Sig = p.Sys.Update(c.Sig)
 	return c, nil
@@ -69,11 +73,11 @@ func (s *SpecBase) Resl(p *Prog, env Env, c *Call, h typ.Type) (Exp, error) {
 func tuplEl(t typ.Type) (typ.Type, int) {
 	b, ok := t.Body.(*typ.ParamBody)
 	if !ok || len(b.Params) == 0 {
-		return typ.Exp, 0
+		return typ.Any, 0
 	}
 	n := len(b.Params)
 	if n == 1 {
 		return b.Params[0].Type, 1
 	}
-	return typ.Type{Kind: knd.Rec, Body: b}, n
+	return t, n
 }

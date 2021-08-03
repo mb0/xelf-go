@@ -7,10 +7,10 @@ import (
 )
 
 var (
-	Or  = &logicSpec{impl("<form or  tupl?|all? bool>"), false, false, true}
-	Ok  = &logicSpec{impl("<form ok  tupl?|all? bool>"), false, true, false}
-	And = &logicSpec{impl("<form and tupl?|all? bool>"), true, true, false}
-	Not = &logicSpec{impl("<form not tupl?|all? bool>"), true, true, true}
+	Or  = &logicSpec{impl("<form or  tupl? bool>"), false, false, true}
+	Ok  = &logicSpec{impl("<form ok  tupl? bool>"), false, true, false}
+	And = &logicSpec{impl("<form and tupl? bool>"), true, true, false}
+	Not = &logicSpec{impl("<form not tupl? bool>"), true, true, true}
 )
 
 type logicSpec struct {
@@ -38,7 +38,7 @@ func (s *logicSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 	return &exp.Lit{Res: exp.SigRes(c.Sig).Type, Val: lit.Bool(r)}, nil
 }
 
-var Err = &errSpec{impl("<form err tupl? @>")}
+var Err = &errSpec{impl("<form err tupl?|exp @>")}
 
 type errSpec struct{ exp.SpecBase }
 
