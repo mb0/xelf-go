@@ -14,6 +14,7 @@ var Core = exp.Builtins(make(Specs).Add(
 	Eq, Ne, Lt, Ge, Gt, Le, In, Ni, Equal,
 	If, Swt, Df,
 	Cat, Sep, Xelf, Json,
+	Con,
 ))
 
 // Std extends the core environment with commonly used specs.
