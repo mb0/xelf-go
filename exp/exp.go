@@ -27,6 +27,18 @@ type Lit struct {
 func (a *Lit) Kind() knd.Kind  { return knd.Lit }
 func (a *Lit) Resl() typ.Type  { return a.Res }
 func (a *Lit) Source() ast.Src { return a.Src }
+func (a *Lit) String() string {
+	if a.Val == nil {
+		return "null"
+	}
+	return a.Val.String()
+}
+func (a *Lit) Print(p *bfr.P) error {
+	if a.Val == nil {
+		return p.Fmt("null")
+	}
+	return a.Val.Print(p)
+}
 
 // Sym is a symbol expression which caches the resolving environment and a relative name.
 type Sym struct {

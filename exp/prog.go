@@ -51,6 +51,7 @@ type Prog struct {
 	Root Env
 	Exp  Exp
 	Dyn  Spec
+	fnid uint
 }
 
 // NewProg returns a new program using the given registry, environment and expression.
@@ -198,6 +199,12 @@ func (p *Prog) EvalArgs(c *Call) ([]*Lit, error) {
 		res[i] = a
 	}
 	return res, nil
+}
+
+// NextFnID returns a new to identify anonymous functions.
+func (p *Prog) NextFnID() uint {
+	p.fnid++
+	return p.fnid
 }
 
 func (p *Prog) evalDyn(env Env) Spec {
