@@ -1,8 +1,6 @@
 package lib
 
 import (
-	"log"
-
 	"xelf.org/xelf/exp"
 	"xelf.org/xelf/lit"
 )
@@ -32,7 +30,6 @@ func (s *ifSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 	if err != nil {
 		return nil, err
 	}
-	log.Printf("zero res type %s %v", rt, res)
 	return &exp.Lit{Res: rt, Val: res.Value()}, nil
 }
 

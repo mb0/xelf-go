@@ -1,8 +1,6 @@
 package exp
 
 import (
-	"log"
-
 	"xelf.org/xelf/bfr"
 	"xelf.org/xelf/knd"
 	"xelf.org/xelf/lit"
@@ -51,9 +49,6 @@ func (s *SpecBase) Resl(p *Prog, env Env, c *Call, h typ.Type) (Exp, error) {
 		}
 		e, err := p.Resl(c.Env, a, ah)
 		if err != nil {
-			if a.Kind() == knd.Tupl {
-				log.Printf("resl tupl arg %s %s %s", a, a.Resl(), ah)
-			}
 			return c, err
 		}
 		c.Args[i] = e

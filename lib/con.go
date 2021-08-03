@@ -2,7 +2,6 @@ package lib
 
 import (
 	"fmt"
-	"log"
 
 	"xelf.org/xelf/exp"
 	"xelf.org/xelf/lit"
@@ -30,12 +29,15 @@ func (s *conSpec) Resl(p *exp.Prog, env exp.Env, c *exp.Call, h typ.Type) (exp.E
 	args, aok := c.Args[1].(*exp.Tupl)
 	tags, tok := c.Args[2].(*exp.Tupl)
 	if (!aok || len(args.Els) == 0) && (!tok || len(tags.Els) == 0) {
-		prx, err := p.Reg.Zero(t)
+		mut, err := p.Reg.Zero(t)
 		if err != nil {
 			return c, err
 		}
-		return &exp.Lit{Res: t, Val: prx.Value()}, nil
+		return &exp.Lit{Res: t, Val: mut.Value(), Src: c.Src}, nil
 	}
+	rp := exp.SigRes(c.Sig)
+	rp.Type = t
+	c.Sig = p.Sys.Update(c.Sig)
 	return s.SpecBase.Resl(p, env, c, h)
 }
 func (s *conSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
@@ -57,7 +59,6 @@ func (s *conSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 	tags, tok := c.Args[2].(*exp.Tupl)
 	tok = tok && len(tags.Els) > 0
 	res, err := p.Reg.Zero(t)
-	log.Printf("con eval type %s %s", t, res.Type())
 	if err != nil {
 		return nil, err
 	}
@@ -114,5 +115,5 @@ func (s *conSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 			}
 		}
 	}
-	return &exp.Lit{Res: t, Val: res.Value()}, nil
+	return &exp.Lit{Res: t, Val: res.Value(), Src: c.Src}, nil
 }
