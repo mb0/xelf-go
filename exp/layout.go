@@ -49,14 +49,7 @@ func LayoutForm(sig typ.Type, els []Exp) ([]Exp, error) {
 					n = len(els)
 				} else {
 					n = consume(els, pt.Kind == knd.Tag)
-					// TODO type dict|T for tags else list|T
-					var at typ.Type
-					if pt.Kind&knd.Tag != 0 {
-						at = typ.DictOf(typ.ResEl(pt))
-					} else {
-						at = pt
-					}
-					arg = &Tupl{Type: typ.TuplList(at), Els: els[:n]}
+					arg = &Tupl{Type: typ.TuplList(pt), Els: els[:n]}
 				}
 			} else if len(els) > 0 {
 				n, arg = 1, els[0]

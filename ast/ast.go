@@ -83,7 +83,7 @@ func ScanRest(l *Lexer, t Tok) (Ast, error) {
 		}
 		if t.Kind == knd.Tag {
 			switch a.Kind {
-			case knd.Sym, knd.Str:
+			case knd.Sym, knd.Str, knd.Int:
 			default:
 				return res, ErrInvalidTag(t)
 			}

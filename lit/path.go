@@ -72,7 +72,7 @@ func AssignPath(root Val, path cor.Path, val Val) (err error) {
 	return mut.Assign(val)
 }
 
-// Create creates an element of root at path to val or returns an error.
+// CreatePath creates an element of root at path to val or returns an error.
 // It resizes and creates missing intermediate container values using the registry.
 func CreatePath(reg *Reg, root Val, path cor.Path, val Val) (err error) {
 	npath := path
@@ -112,6 +112,13 @@ func CreatePath(reg *Reg, root Val, path cor.Path, val Val) (err error) {
 	if et == typ.Void && len(npath) == 1 {
 		ev = val.Value()
 	} else {
+		if et == typ.Void {
+			if npath[1].Key == "" {
+				et = typ.List
+			} else {
+				et = typ.Dict
+			}
+		}
 		z, err := reg.Zero(et)
 		if err != nil {
 			return err

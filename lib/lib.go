@@ -19,6 +19,7 @@ var Core = exp.Builtins(make(Specs).Add(
 // Std extends the core environment with commonly used specs.
 var Std = exp.Builtins(make(Specs).AddMap(Core).Add(
 	Dot, Let,
+	Mut,
 ))
 
 // Specs is spec map helper that can be converted to a builtin environment.
