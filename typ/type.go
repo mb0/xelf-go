@@ -134,8 +134,10 @@ func (t Type) print(b *bfr.P, sb *strings.Builder, enclose bool) error {
 			return b.Byte('>')
 		}
 	case *ElBody:
-		sb.WriteByte('|')
-		return tb.El.print(b, sb, enclose)
+		if tb.El != Void {
+			sb.WriteByte('|')
+			return tb.El.print(b, sb, enclose)
+		}
 	case *ConstBody:
 		b.Byte('<')
 		b.Fmt(sb.String())
@@ -144,7 +146,7 @@ func (t Type) print(b *bfr.P, sb *strings.Builder, enclose bool) error {
 		return b.Byte('>')
 	case *ParamBody:
 		if k&knd.Tupl != 0 && len(tb.Params) == 1 {
-			if p := tb.Params[0]; p.Name == "" {
+			if p := tb.Params[0]; p.Name == "" && p.Type != Void {
 				sb.WriteByte('|')
 				return tb.Params[0].Type.print(b, sb, enclose)
 			}

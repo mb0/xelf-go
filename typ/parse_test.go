@@ -28,6 +28,8 @@ func TestParse(t *testing.T) {
 		{CallOf(Num), `<call|num>`, ``},
 		{Opt(CallOf(Num)), `<call?|num>`, ``},
 		{TypOf(ListOf(Int)), `<typ|list|int>`, ``},
+		{List, `<list>`, ``},
+		{ListOf(Void), `<list>`, ``},
 		{ListOf(TypOf(Int)), `<list|typ|int>`, ``},
 		{ListOf(TypOf(Int)), `<list <typ int>>`, `<list|typ|int>`},
 		{LitOf(Opt(Int)), `<lit|int?>`, ``},

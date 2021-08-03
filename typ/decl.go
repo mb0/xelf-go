@@ -61,15 +61,22 @@ func Sel(sel string) Type  { return Type{knd.Sel, 0, &SelBody{Path: sel}} }
 func Rec(ps ...Param) Type          { return Type{knd.Rec, 0, &ParamBody{Params: ps}} }
 func Obj(n string, ps []Param) Type { return Type{knd.Obj, 0, &ParamBody{Name: n, Params: ps}} }
 
-func TypOf(t Type) Type  { return Type{knd.Typ, 0, &ElBody{El: t}} }
-func LitOf(t Type) Type  { return Type{knd.Lit, 0, &ElBody{El: t}} }
-func SymOf(t Type) Type  { return Type{knd.Sym, 0, &ElBody{El: t}} }
-func TagOf(t Type) Type  { return Type{knd.Tag, 0, &ElBody{El: t}} }
-func CallOf(t Type) Type { return Type{knd.Call, 0, &ElBody{El: t}} }
-func ListOf(t Type) Type { return Type{knd.List, 0, &ElBody{El: t}} }
-func DictOf(t Type) Type { return Type{knd.Dict, 0, &ElBody{El: t}} }
-func IdxrOf(t Type) Type { return Type{knd.Idxr, 0, &ElBody{El: t}} }
-func KeyrOf(t Type) Type { return Type{knd.Keyr, 0, &ElBody{El: t}} }
+func elType(k knd.Kind, el Type) Type {
+	if el == Void {
+		return Type{Kind: k}
+	}
+	return Type{k, 0, &ElBody{El: el}}
+}
+
+func TypOf(t Type) Type  { return elType(knd.Typ, t) }
+func LitOf(t Type) Type  { return elType(knd.Lit, t) }
+func SymOf(t Type) Type  { return elType(knd.Sym, t) }
+func TagOf(t Type) Type  { return elType(knd.Tag, t) }
+func CallOf(t Type) Type { return elType(knd.Call, t) }
+func ListOf(t Type) Type { return elType(knd.List, t) }
+func DictOf(t Type) Type { return elType(knd.Dict, t) }
+func IdxrOf(t Type) Type { return elType(knd.Idxr, t) }
+func KeyrOf(t Type) Type { return elType(knd.Keyr, t) }
 
 func TuplList(t Type) Type     { return TuplRec(P("", t)) }
 func TuplRec(ps ...Param) Type { return Type{knd.Tupl, 0, &ParamBody{Params: ps}} }
