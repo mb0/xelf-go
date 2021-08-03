@@ -13,6 +13,7 @@ var Core = exp.Builtins(make(Specs).Add(
 	Add, Sub, Mul, Div, Rem, Abs, Neg, Min, Max,
 	Eq, Ne, Lt, Ge, Gt, Le, In, Ni, Equal,
 	If, Swt, Df,
+	Cat, Sep, Xelf, Json,
 ))
 
 // Specs is spec map helper that can be converted to a builtin environment.
