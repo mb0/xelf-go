@@ -58,6 +58,7 @@ func (s *letSpec) Resl(p *exp.Prog, env exp.Env, c *exp.Call, h typ.Type) (_ exp
 		if err != nil {
 			return c, err
 		}
+		tag.Exp = ta
 		a := le.Lets[tag.Tag]
 		if a == nil {
 			a = &exp.Lit{Res: ta.Resl()}

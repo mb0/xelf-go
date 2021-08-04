@@ -160,6 +160,7 @@ func unify(sys *Sys, t, h Type) (Type, error) {
 		if equalBody(a.Body, b.Body) {
 			return unibind(sys, a, b, r), nil
 		}
+	Switch:
 		switch ab := a.Body.(type) {
 		case *ElBody:
 			bb, ok := b.Body.(*ElBody)
@@ -172,12 +173,30 @@ func unify(sys *Sys, t, h Type) (Type, error) {
 			}
 			return unibind(sys, a, b, r), nil
 		case *ParamBody:
-			_, ok := b.Body.(*ParamBody)
+			bb, ok := b.Body.(*ParamBody)
 			if ak&knd.Tupl != 0 {
 				if !ok {
 					return unibind(sys, a, b, r), nil
 				}
 			}
+			if len(ab.Params) > len(bb.Params) {
+				break
+			}
+			ps := make([]Param, 0, len(ab.Params))
+			for i, p := range ab.Params {
+				op := bb.Params[i]
+				if p.Name != op.Name || p.Key != op.Key ||
+					p.Type.Kind&^knd.None != op.Type.Kind&^knd.None ||
+					(p.Type.Body == nil) != (op.Type.Body == nil) {
+					break Switch
+				}
+				if p.Type.Body != nil && !p.Type.Body.Equal(op.Type.Body) {
+					break Switch
+				}
+				ps = append(ps, p)
+			}
+			r.Body = &ParamBody{Name: "_", Params: ps}
+			return unibind(sys, a, b, r), nil
 		}
 	} else {
 		k := a.Kind & knd.Any

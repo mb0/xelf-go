@@ -30,6 +30,7 @@ func (s *fnSpec) Resl(p *exp.Prog, env exp.Env, c *exp.Call, h typ.Type) (_ exp.
 	spec := makeFunc(fe, ft, c.Args[1])
 	return &exp.Lit{Res: ft, Val: spec}, nil
 }
+
 func (s *fnSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 	return nil, fmt.Errorf("unexpected fn eval %s", c)
 }
