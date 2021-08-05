@@ -95,7 +95,7 @@ func ParseSym(raw string, src ast.Src, hist []Type) (Type, error) {
 			} else {
 				k, err := knd.ParseName(s)
 				if err != nil {
-					return Void, err
+					return Void, ast.ErrInvalidType(src, s)
 				}
 				tk |= k
 			}

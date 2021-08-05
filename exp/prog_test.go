@@ -12,7 +12,32 @@ import (
 
 type Point struct{ X, Y int }
 
-func TestProg(t *testing.T) {
+func TestProgEval(t *testing.T) {
+	tests := []struct {
+		raw  string
+		want string
+	}{
+		{`(@test.point {})`, `{x:0 y:0}`},
+		{`(dot {a:[{b:2}]} .a.0.b)`, `2`},
+		{`(dot {a:[{b:2}, {b:3}]} .a/b)`, `[2 3]`},
+	}
+	reg := &lit.Reg{}
+	mut := reg.MustProxy(&Point{})
+	reg.SetRef("test.point", mut.Type(), mut)
+	for _, test := range tests {
+		got, err := exp.Eval(reg, lib.Std, test.raw)
+		if err != nil {
+			t.Errorf("eval %s failed: %v", test.raw, err)
+			continue
+		}
+		str := got.String()
+		if str != test.want {
+			t.Errorf("eval %s want res %s got %s", test.raw, test.want, str)
+		}
+	}
+}
+
+func TestProgResl(t *testing.T) {
 	tests := []struct {
 		raw  string
 		want string
@@ -33,7 +58,7 @@ func TestProg(t *testing.T) {
 			t.Errorf("read %s failed: %v", test.raw, err)
 			continue
 		}
-		p := exp.NewProg(reg, lib.Core, e)
+		p := exp.NewProg(reg, lib.Std, e)
 		got, err := p.Resl(p.Root, p.Exp, typ.Void)
 		if err != nil {
 			t.Errorf("resl %s failed: %v", test.raw, err)

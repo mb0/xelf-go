@@ -18,8 +18,10 @@ func Select(val Val, path string) (Val, error) {
 
 // SelectPath returns the selected value at path from val or an error.
 func SelectPath(val Val, path cor.Path) (_ Val, err error) {
-	for _, s := range path {
-		if s.Key != "" {
+	for i, s := range path {
+		if s.Sel {
+			val, err = SelectList(val, path[i:])
+		} else if s.Key != "" {
 			val, err = SelectKey(val, s.Key)
 		} else {
 			val, err = SelectIdx(val, s.Idx)
@@ -45,6 +47,61 @@ func SelectIdx(val Val, idx int) (res Val, err error) {
 		return a.Idx(idx)
 	}
 	return nil, fmt.Errorf("idx segment %d expects idxr got %[2]T %[2]s", idx, val)
+}
+
+func SelectList(val Val, path cor.Path) (_ Val, err error) {
+	res := &List{}
+	switch a := val.(type) {
+	case *List:
+		res.Reg = a.Reg
+		res.Vals = make([]Val, 0, len(a.Vals))
+		for _, v := range a.Vals {
+			if err = collectIdxrVal(v, path, res); err != nil {
+				break
+			}
+		}
+	case *Strc:
+		res.Reg = a.Reg
+		for _, v := range a.Vals {
+			if err = collectIdxrVal(v, path, res); err != nil {
+				break
+			}
+		}
+	case *ListPrx:
+		res.Reg = a.Reg
+		err = collectIdxr(a, path, res)
+	case *StrcPrx:
+		res.Reg = a.Reg
+		err = collectIdxr(a, path, res)
+	}
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
+}
+
+func collectIdxr(idxr Idxr, path cor.Path, into *List) error {
+	into.Vals = make([]Val, 0, idxr.Len())
+	return idxr.IterIdx(func(idx int, v Val) (err error) {
+		return collectIdxrVal(v, path, into)
+	})
+}
+
+func collectIdxrVal(v Val, path cor.Path, into *List) (err error) {
+	if s := path[0]; s.Key != "" {
+		v, err = SelectKey(v, s.Key)
+	} else {
+		v, err = SelectIdx(v, s.Idx)
+	}
+	if err == nil && len(path) > 1 {
+		v, err = SelectPath(v, path[1:])
+	}
+	if err != nil {
+		return err
+	}
+	into.El = typ.Alt(into.El, v.Type())
+	into.Vals = append(into.Vals, v)
+	return nil
 }
 
 // AssignPath sets an element of root at path to val or returns an error.
