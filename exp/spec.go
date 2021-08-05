@@ -44,7 +44,7 @@ func (s *SpecBase) Resl(p *Prog, env Env, c *Call, h typ.Type) (Exp, error) {
 		ah := pa.Type
 		if vari && i == n-1 {
 			if _, ok := a.(*Tupl); ok {
-				ah, _ = tuplEl(ah)
+				ah, _ = typ.TuplEl(ah)
 			}
 		}
 		e, err := p.Resl(c.Env, a, ah)
@@ -63,16 +63,4 @@ func (s *SpecBase) Resl(p *Prog, env Env, c *Call, h typ.Type) (Exp, error) {
 	}
 	c.Sig = p.Sys.Update(c.Sig)
 	return c, nil
-}
-
-func tuplEl(t typ.Type) (typ.Type, int) {
-	b, ok := t.Body.(*typ.ParamBody)
-	if !ok || len(b.Params) == 0 {
-		return typ.Any, 0
-	}
-	n := len(b.Params)
-	if n == 1 {
-		return b.Params[0].Type, 1
-	}
-	return t, n
 }

@@ -31,7 +31,7 @@ func LayoutForm(sig typ.Type, els []Exp) ([]Exp, error) {
 		if pt.Kind&knd.Exp == knd.Tupl {
 			vari = true
 			var tn int
-			pt, tn = tuplEl(pt)
+			pt, tn = typ.TuplEl(pt)
 			if tn > 1 {
 				n = consume(els, false)
 				n -= n % tn

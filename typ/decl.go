@@ -109,6 +109,18 @@ func ContEl(t Type) Type {
 	return t
 }
 
+func TuplEl(t Type) (Type, int) {
+	b, ok := t.Body.(*ParamBody)
+	if !ok || len(b.Params) == 0 {
+		return Any, 0
+	}
+	n := len(b.Params)
+	if n == 1 {
+		return b.Params[0].Type, 1
+	}
+	return t, n
+}
+
 // Last returns the last element type if t is a list or dict type otherwise t is returned as is.
 func Last(t Type) Type {
 	for {

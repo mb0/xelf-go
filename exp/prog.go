@@ -109,7 +109,7 @@ func (p *Prog) Resl(env Env, e Exp, h typ.Type) (Exp, error) {
 		a.Res = rt
 		return a, nil
 	case *Tupl:
-		tt, tn := tuplEl(a.Type)
+		tt, tn := typ.TuplEl(a.Type)
 		for i, arg := range a.Els {
 			ah := tt
 			if tn > 1 {
