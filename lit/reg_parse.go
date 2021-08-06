@@ -8,6 +8,7 @@ import (
 	"xelf.org/xelf/ast"
 	"xelf.org/xelf/cor"
 	"xelf.org/xelf/knd"
+	"xelf.org/xelf/typ"
 )
 
 // Parse parses str and returns a generic value or an error.
@@ -108,6 +109,12 @@ func (reg *Reg) ParseVal(a ast.Ast) (v Val, err error) {
 		}
 		di.Keyed = kvs
 		return di, nil
+	case knd.Typ:
+		t, err := typ.ParseAst(a)
+		if err != nil {
+			return nil, err
+		}
+		return t, nil
 	}
 	return nil, ast.ErrUnexpected(a)
 }
@@ -148,6 +155,12 @@ func (reg *Reg) ParseMut(a ast.Ast) (Mut, error) {
 	case knd.Dict:
 		di := &Dict{Reg: reg}
 		return di, di.Parse(a)
+	case knd.Typ:
+		t, err := typ.ParseAst(a)
+		if err != nil {
+			return nil, err
+		}
+		return &t, nil
 	}
 	return nil, ast.ErrUnexpected(a)
 }
