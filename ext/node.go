@@ -61,9 +61,9 @@ func NodeSpecName(reg *lit.Reg, name string, val interface{}, rs Rules) (*NodeSp
 	if rs.IdxKeyer != nil {
 		ps = append(ps, typ.P("", typ.Opt(typ.Tupl)))
 	}
-	ps = append(ps, typ.P("", typ.Opt(typ.TuplList(typ.Tag))))
+	ps = append(ps, typ.P("", typ.Opt(typ.ElemTupl(typ.Tag))))
 	if rs.Tail.Setter != nil {
-		ps = append(ps, typ.P("", typ.Opt(typ.TuplList(typ.Exp))))
+		ps = append(ps, typ.P("", typ.Opt(typ.ElemTupl(typ.Exp))))
 	}
 	ps = append(ps, typ.P("", node.Type()))
 	return NewNodeSpec(typ.Form(name, ps...), node, rs), nil

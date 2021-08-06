@@ -71,7 +71,7 @@ func TestUnify(t *testing.T) {
 		{"num@", "exp", "", Var(1, Num)},
 		{"num", "exp|@", "", Var(1, Num)},
 		{"num", "@", "", Var(1, Num)},
-		{"tupl|int", "tupl?", "", TuplList(Int)},
+		{"tupl|int", "tupl?", "", ElemTupl(Int)},
 		{"<form a int any>", "<form b int any>", "", Form("_", P("", Int), P("", Any))},
 		{"<form a int any>", "<form b int? any>", "", Form("_", P("", Int), P("", Any))},
 	}

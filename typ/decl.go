@@ -78,8 +78,8 @@ func DictOf(t Type) Type { return elType(knd.Dict, t) }
 func IdxrOf(t Type) Type { return elType(knd.Idxr, t) }
 func KeyrOf(t Type) Type { return elType(knd.Keyr, t) }
 
-func TuplList(t Type) Type     { return TuplRec(P("", t)) }
-func TuplRec(ps ...Param) Type { return Type{knd.Tupl, 0, &ParamBody{Params: ps}} }
+func ElemTupl(t Type) Type       { return Type{knd.Tupl, 0, &ElBody{El: t}} }
+func ParamTupl(ps ...Param) Type { return Type{knd.Tupl, 0, &ParamBody{Params: ps}} }
 
 func Func(name string, ps ...Param) Type { return Type{knd.Func, 0, &ParamBody{name, ps}} }
 func Form(name string, ps ...Param) Type { return Type{knd.Form, 0, &ParamBody{name, ps}} }
@@ -110,15 +110,15 @@ func ContEl(t Type) Type {
 }
 
 func TuplEl(t Type) (Type, int) {
-	b, ok := t.Body.(*ParamBody)
-	if !ok || len(b.Params) == 0 {
-		return Any, 0
+	switch b := t.Body.(type) {
+	case *ElBody:
+		return b.El, 1
+	case *ParamBody:
+		if n := len(b.Params); n > 0 {
+			return t, n
+		}
 	}
-	n := len(b.Params)
-	if n == 1 {
-		return b.Params[0].Type, 1
-	}
-	return t, n
+	return Any, 0
 }
 
 // Last returns the last element type if t is a list or dict type otherwise t is returned as is.

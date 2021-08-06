@@ -45,11 +45,11 @@ func LayoutForm(sig typ.Type, els []Exp) ([]Exp, error) {
 		if arg == nil {
 			if vari {
 				if pt == typ.Exp {
-					arg = &Tupl{Type: typ.TuplList(pt), Els: els}
+					arg = &Tupl{Type: typ.ElemTupl(pt), Els: els}
 					n = len(els)
 				} else {
 					n = consume(els, pt.Kind == knd.Tag)
-					arg = &Tupl{Type: typ.TuplList(pt), Els: els[:n]}
+					arg = &Tupl{Type: typ.ElemTupl(pt), Els: els[:n]}
 				}
 			} else if len(els) > 0 {
 				n, arg = 1, els[0]

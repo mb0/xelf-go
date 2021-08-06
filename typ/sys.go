@@ -164,6 +164,11 @@ func unify(sys *Sys, t, h Type) (Type, error) {
 		switch ab := a.Body.(type) {
 		case *ElBody:
 			bb, ok := b.Body.(*ElBody)
+			if ak&knd.Tupl != 0 {
+				if !ok {
+					return unibind(sys, a, b, r), nil
+				}
+			}
 			if ok {
 				el, err := sys.Unify(ab.El, bb.El)
 				if err != nil {

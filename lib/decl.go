@@ -110,7 +110,7 @@ func (e *LetEnv) Eval(p *exp.Prog, s *exp.Sym, k string) (*exp.Lit, error) {
 }
 
 func resType(t typ.Type) typ.Type {
-	if t.Kind&knd.Exp == knd.Exp || t.Kind&knd.Exp != 0 && t.Kind&knd.Tupl == 0 {
+	if t.Kind&knd.Exp == knd.Exp || t.Kind&knd.Exp != 0 {
 		if b, ok := t.Body.(*typ.ElBody); ok && b.El.Kind != knd.Void {
 			return b.El
 		}
