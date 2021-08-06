@@ -42,15 +42,17 @@ primitives is cumbersome `(*lit.Bool)(cor.Bool(true))`. Both options however onl
 therefor we use an OptMut internally that has a null flag (similar to sql.NullX types but works for
 any mutable value). The Null type has only a value implementation.
 
-Other implementations are always mutable variants, because we would gain nothing from using value
-type and instead would increase code complexity.
+Other implementations are always mutable variants, because we would gain nothing from using a value
+type implictly addressed abd wrapped in an interface and instead would increase code complexity.
 
-Another special implementation is the `AnyPrx` that proxies to interface values values with resolved
-type alternatives.
+All proxy values can point to pointer and then represent null directly without using an OptMut.
 
 The generic `Map` implementation can explicitly used instead of dicts by users provided types to
 make working with dicts easier. `Dict` is a useful default because they preserve order which may be
-important for the internal conversion and resolution process.
+important for some internal conversions and program resolution.
+
+Another special implementation is the `AnyPrx` that proxies to interface values values with resolved
+type alternatives and manage a literal value to represent that interface value.
 
 The `MapPrx` uses a neat trick to provide mutable element values even though go map elements are not
-addressable.
+addressable without using a pointer element type.
