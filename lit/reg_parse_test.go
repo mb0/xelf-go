@@ -55,7 +55,7 @@ func TestRead(t *testing.T) {
 	}
 	reg := &Reg{}
 	for _, test := range tests {
-		v, err := reg.Parse(test.str)
+		v, err := Parse(reg, test.str)
 		if err != nil {
 			t.Errorf("read %s err %v", test.str, err)
 			continue

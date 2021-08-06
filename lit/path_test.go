@@ -22,7 +22,7 @@ func TestSelect(t *testing.T) {
 	}
 	reg := &Reg{}
 	for _, test := range tests {
-		on, err := reg.Parse(test.raw)
+		on, err := Parse(reg, test.raw)
 		if err != nil {
 			t.Errorf("parse error: %v", err)
 			continue

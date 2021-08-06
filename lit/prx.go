@@ -39,7 +39,7 @@ func (x *proxy) new() reflect.Value           { return reflect.New(x.val.Type().
 func (x *proxy) with(ptr reflect.Value) proxy { return newProxy(x.Reg, x.typ, ptr) }
 func (x *proxy) WithReg(reg *Reg)             { x.Reg = reg }
 func (x *proxy) unmarshal(b []byte, mut Mut) error {
-	return x.Reg.ReadIntoMut(bytes.NewReader(b), "", mut)
+	return ReadIntoMut(x.Reg, bytes.NewReader(b), "", mut)
 }
 func (x *proxy) isptr() bool { return x.val.Type().Elem().Kind() == reflect.Ptr }
 func (x *proxy) setNull() error {

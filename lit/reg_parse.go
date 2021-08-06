@@ -11,22 +11,22 @@ import (
 )
 
 // Parse parses str and returns a generic value or an error.
-func (reg *Reg) Parse(str string) (Val, error) {
-	return reg.Read(strings.NewReader(str), "string")
+func Parse(reg *Reg, str string) (Val, error) {
+	return Read(reg, strings.NewReader(str), "string")
 }
 
 // ParseInto parses str into ptr or returns an error.
-func (reg *Reg) ParseInto(str string, ptr interface{}) error {
-	return reg.ReadInto(strings.NewReader(str), "string", ptr)
+func ParseInto(reg *Reg, str string, ptr interface{}) error {
+	return ReadInto(reg, strings.NewReader(str), "string", ptr)
 }
 
 // ParseIntoMut parses str into mut or returns an error.
-func (reg *Reg) ParseIntoMut(str string, mut Mut) error {
-	return reg.ReadIntoMut(strings.NewReader(str), "string", mut)
+func ParseIntoMut(reg *Reg, str string, mut Mut) error {
+	return ReadIntoMut(reg, strings.NewReader(str), "string", mut)
 }
 
 // Read parses named reader r and returns a generic value or an error.
-func (reg *Reg) Read(r io.Reader, name string) (Val, error) {
+func Read(reg *Reg, r io.Reader, name string) (Val, error) {
 	a, err := ast.Read(r, name)
 	if err != nil {
 		return nil, err
@@ -35,16 +35,16 @@ func (reg *Reg) Read(r io.Reader, name string) (Val, error) {
 }
 
 // ReadInto parses named reader r into ptr or returns an error.
-func (reg *Reg) ReadInto(r io.Reader, name string, ptr interface{}) error {
+func ReadInto(reg *Reg, r io.Reader, name string, ptr interface{}) error {
 	mut, err := reg.Proxy(ptr)
 	if err != nil {
 		return err
 	}
-	return reg.ReadIntoMut(r, name, mut)
+	return ReadIntoMut(reg, r, name, mut)
 }
 
 // ReadIntoMut parses named reader r into mut or returns an error.
-func (reg *Reg) ReadIntoMut(r io.Reader, name string, mut Mut) error {
+func ReadIntoMut(reg *Reg, r io.Reader, name string, mut Mut) error {
 	a, err := ast.Read(r, name)
 	if err != nil {
 		return err

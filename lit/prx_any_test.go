@@ -8,7 +8,7 @@ import (
 func TestProxyAny(t *testing.T) {
 	reg := &Reg{}
 	var one interface{}
-	err := reg.ParseInto(`1`, &one)
+	err := ParseInto(reg, `1`, &one)
 	if err != nil {
 		t.Errorf("parse one %#v", err)
 	}
@@ -17,7 +17,7 @@ func TestProxyAny(t *testing.T) {
 		t.Errorf("want %#v got %#v", want, one)
 	}
 	var any []interface{}
-	err = reg.ParseInto(`[null 1 'test' []]`, &any)
+	err = ParseInto(reg, `[null 1 'test' []]`, &any)
 	if err != nil {
 		t.Errorf("parse %#v", err)
 	}
