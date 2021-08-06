@@ -14,17 +14,21 @@ func (x *MapPrx) NewWith(v reflect.Value) (Mut, error) { return &MapPrx{x.with(v
 func (x *MapPrx) New() (Mut, error)                    { return x.NewWith(x.new()) }
 
 func (x *MapPrx) Zero() bool { return x.Len() == 0 }
-func (x *MapPrx) Value() Val { return x }
+func (x *MapPrx) Value() Val {
+	if x.Nil() {
+		return Null{}
+	}
+	return x
+}
 func (x *MapPrx) Parse(a ast.Ast) error {
-	rv := x.Reflect()
 	if isNull(a) {
-		clearMap(rv)
-		return nil
+		return x.setNull()
 	}
 	if a.Kind != knd.Dict {
 		return ast.ErrExpect(a, knd.Dict)
 	}
 	// we need to delete existing map keys to be compatible with dict implementation
+	rv := x.elem()
 	clearMap(rv)
 	et := rv.Type().Elem()
 	for _, e := range a.Seq {
@@ -46,13 +50,12 @@ func (x *MapPrx) Parse(a ast.Ast) error {
 	return nil
 }
 func (x *MapPrx) Assign(v Val) error {
-	e := x.Reflect()
-	var zero reflect.Value
-	for _, k := range e.MapKeys() {
-		e.SetMapIndex(k, zero)
+	if v == nil || v.Nil() {
+		return x.setNull()
 	}
-	switch o := v.(type) {
-	case nil:
+	rv := x.elem()
+	clearMap(rv)
+	switch o := v.Value().(type) {
 	case Null:
 	case Keyr:
 		// TODO check type
@@ -71,7 +74,10 @@ func (x *MapPrx) String() string               { return bfr.String(x) }
 func (x *MapPrx) MarshalJSON() ([]byte, error) { return bfr.JSON(x) }
 func (x *MapPrx) UnmarshalJSON(b []byte) error { return x.unmarshal(b, x) }
 func (x *MapPrx) Print(p *bfr.P) error {
-	e := x.Reflect()
+	if x.Nil() && x.isptr() {
+		return p.Fmt("null")
+	}
+	e := x.elem()
 	p.Byte('{')
 	iter := e.MapRange()
 	for i := 0; iter.Next(); i++ {
@@ -91,9 +97,17 @@ func (x *MapPrx) Print(p *bfr.P) error {
 	}
 	return p.Byte('}')
 }
-func (x *MapPrx) Len() int { return x.Reflect().Len() }
+func (x *MapPrx) Len() int {
+	if x.Nil() {
+		return 0
+	}
+	return x.elem().Len()
+}
 func (x *MapPrx) Keys() []string {
-	e := x.Reflect()
+	if x.Nil() {
+		return nil
+	}
+	e := x.elem()
 	res := make([]string, 0, e.Len())
 	iter := e.MapRange()
 	for iter.Next() {
@@ -102,26 +116,30 @@ func (x *MapPrx) Keys() []string {
 	return res
 }
 func (x *MapPrx) Key(k string) (Val, error) {
-	e := x.Reflect()
-	rv := e.MapIndex(reflect.ValueOf(k))
+	if x.Nil() {
+		return Null{}, nil
+	}
+	rv := x.elem().MapIndex(reflect.ValueOf(k))
 	return x.entry(k, rv)
 }
-func (x *MapPrx) SetKey(k string, v Val) error {
-	e := x.Reflect()
-	if e.IsNil() {
-		e.Set(reflect.MakeMap(e.Type()))
-	}
-	val, err := x.Reg.Conv(e.Type().Elem(), v)
-	if err != nil {
-		return err
+func (x *MapPrx) SetKey(k string, v Val) (err error) {
+	e := x.elem()
+	var val reflect.Value
+	if !v.Nil() {
+		val, err = x.Reg.Conv(e.Type().Elem(), v)
+		if err != nil {
+			return err
+		}
 	}
 	e.SetMapIndex(reflect.ValueOf(k), val)
 	return nil
 }
 func (x *MapPrx) IterKey(it func(string, Val) error) error {
-	e := x.Reflect()
-	iter := e.MapRange()
-	for iter.Next() {
+	if x.Nil() {
+		return nil
+	}
+	e := x.elem()
+	for iter := e.MapRange(); iter.Next(); {
 		key := iter.Key().String()
 		prx, err := x.entry(key, iter.Value())
 		if err != nil {

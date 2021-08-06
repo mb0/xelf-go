@@ -2,7 +2,6 @@ package typ
 
 import (
 	"fmt"
-	"reflect"
 
 	"xelf.org/xelf/ast"
 	"xelf.org/xelf/bfr"
@@ -43,6 +42,10 @@ func (t Type) Value() LitVal       { return t }
 func (*Type) New() (LitMut, error) { return new(Type), nil }
 func (t *Type) Ptr() interface{}   { return t }
 func (t *Type) Assign(p LitVal) error {
+	if p == nil || p.Nil() {
+		*t = Void
+		return nil
+	}
 	if n, err := ToType(p); err != nil {
 		return err
 	} else {
@@ -57,20 +60,6 @@ func (t *Type) Parse(a ast.Ast) error {
 	}
 	*t = r
 	return nil
-}
-
-var ptrType = reflect.TypeOf((*Type)(nil))
-
-func (t *Type) Reflect() reflect.Value { return reflect.ValueOf(t) }
-func (*Type) NewWith(ptr reflect.Value) (LitMut, error) {
-	t := ptr.Type()
-	if t != ptrType {
-		if !t.ConvertibleTo(ptrType) {
-			return nil, fmt.Errorf("cannot convert %s to *typ.Type", t)
-		}
-		ptr = ptr.Convert(ptrType)
-	}
-	return ptr.Interface().(*Type), nil
 }
 
 func ToType(v LitVal) (t Type, err error) {

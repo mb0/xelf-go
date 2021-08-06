@@ -2,6 +2,7 @@ package lit
 
 import (
 	"fmt"
+	"reflect"
 
 	"xelf.org/xelf/bfr"
 	"xelf.org/xelf/knd"
@@ -58,6 +59,17 @@ type Keyr interface {
 	// IterKey iterates over elements, calling iter with the elements key and value.
 	// If iter returns an error the iteration is aborted.
 	IterKey(iter func(string, Val) error) error
+}
+
+// Prx is the interface for all reflection based mutable values.
+type Prx interface {
+	Mut
+	// Reflect returns the reflect value pointed to by this proxy.
+	Reflect() reflect.Value
+	// NewWith returns a new proxy instance with ptr as value.
+	// This method is used internally for proxy caching and should only be called with pointer
+	// values known to be compatible with this proxy implementation.
+	NewWith(ptr reflect.Value) (Mut, error)
 }
 
 func PrintZero(p *bfr.P, t typ.Type) error {

@@ -12,32 +12,62 @@ import (
 	"xelf.org/xelf/typ"
 )
 
-// Prx is the interface for all reflection based mutable values.
-type Prx interface {
-	Mut
-	// Reflect returns the reflect value pointed to by this proxy.
-	Reflect() reflect.Value
-	// NewWith returns a new proxy instance with ptr as value.
-	// This method is used internally for proxy caching and should only be called with pointer
-	// values known to be compatible with this proxy implementation.
-	NewWith(ptr reflect.Value) (Mut, error)
-}
-
 type proxy struct {
 	Reg *Reg
 	typ typ.Type
 	val reflect.Value
 }
 
+func newProxy(reg *Reg, t typ.Type, ptr reflect.Value) proxy {
+	x := proxy{reg, t, ptr}
+	if x.isptr() {
+		x.typ = typ.Opt(t)
+	}
+	return x
+}
+func (x *proxy) Nil() bool {
+	switch x.val.Type().Elem().Kind() {
+	case reflect.Interface, reflect.Ptr, reflect.Map, reflect.Slice:
+		return x.val.Elem().IsNil()
+	}
+	return false
+}
 func (x *proxy) Type() typ.Type               { return x.typ }
 func (x *proxy) Ptr() interface{}             { return x.val.Interface() }
 func (x *proxy) Reflect() reflect.Value       { return x.val.Elem() }
-func (x *proxy) Nil() bool                    { return false }
 func (x *proxy) new() reflect.Value           { return reflect.New(x.val.Type().Elem()) }
-func (x *proxy) with(ptr reflect.Value) proxy { return proxy{x.Reg, x.typ, ptr} }
+func (x *proxy) with(ptr reflect.Value) proxy { return newProxy(x.Reg, x.typ, ptr) }
 func (x *proxy) WithReg(reg *Reg)             { x.Reg = reg }
 func (x *proxy) unmarshal(b []byte, mut Mut) error {
 	return x.Reg.ReadIntoMut(bytes.NewReader(b), "", mut)
+}
+func (x *proxy) isptr() bool { return x.val.Type().Elem().Kind() == reflect.Ptr }
+func (x *proxy) setNull() error {
+	if x.isptr() {
+		val := reflect.Zero(x.val.Type().Elem())
+		x.val.Elem().Set(val)
+	} else {
+		x.val.Elem().Set(reflect.Zero(x.val.Type().Elem()))
+	}
+	return nil
+}
+func (x *proxy) elem() reflect.Value {
+	e := x.val.Elem()
+	if !x.isptr() {
+		if e.Kind() == reflect.Map && e.IsNil() {
+			e.Set(reflect.MakeMap(e.Type()))
+		}
+		return e
+	}
+	if !e.IsNil() {
+		return e.Elem()
+	}
+	e = reflect.New(e.Type().Elem())
+	if e.Kind() == reflect.Map {
+		e.Set(reflect.MakeMap(e.Type()))
+	}
+	x.val.Elem().Set(e)
+	return e.Elem()
 }
 
 type IntPrx struct{ proxy }
@@ -45,25 +75,36 @@ type IntPrx struct{ proxy }
 func (x *IntPrx) NewWith(v reflect.Value) (Mut, error) { return &IntPrx{x.with(v)}, nil }
 func (x *IntPrx) New() (Mut, error)                    { return x.NewWith(x.new()) }
 
-func (x *IntPrx) Zero() bool { return x.value() == 0 }
-func (x *IntPrx) Value() Val { return Int(x.value()) }
+func (x *IntPrx) Zero() bool { return x.Nil() || x.value() == 0 }
+func (x *IntPrx) Value() Val {
+	if x.Nil() {
+		return Null{}
+	}
+	return Int(x.value())
+}
 func (x *IntPrx) Parse(a ast.Ast) error {
+	if isNull(a) {
+		return x.setNull()
+	}
 	if a.Kind != knd.Int {
-		return fmt.Errorf("expect int")
+		return ast.ErrExpect(a, knd.Int)
 	}
 	n, err := strconv.ParseInt(a.Raw, 10, 64)
 	if err != nil {
 		return err
 	}
-	x.Reflect().SetInt(n)
+	x.elem().SetInt(n)
 	return nil
 }
 func (x *IntPrx) Assign(v Val) error {
+	if v == nil || v.Nil() {
+		return x.setNull()
+	}
 	n, err := ToInt(v)
 	if err != nil {
 		return err
 	}
-	switch e := x.Reflect(); e.Kind() {
+	switch e := x.elem(); e.Kind() {
 	case reflect.Int64, reflect.Int, reflect.Int32, reflect.Int16:
 		e.SetInt(int64(n))
 	case reflect.Uint64, reflect.Uint, reflect.Uint32, reflect.Uint16:
@@ -74,7 +115,7 @@ func (x *IntPrx) Assign(v Val) error {
 	return nil
 }
 func (x *IntPrx) value() int64 {
-	switch e := x.Reflect(); e.Kind() {
+	switch e := x.elem(); e.Kind() {
 	case reflect.Int64, reflect.Int, reflect.Int32:
 		return e.Int()
 	case reflect.Uint64, reflect.Uint, reflect.Uint32:
@@ -83,35 +124,51 @@ func (x *IntPrx) value() int64 {
 		panic(fmt.Errorf("unexpected int proxy target %s", e.Type()))
 	}
 }
-func (x *IntPrx) String() string               { return fmt.Sprintf("%d", x.value()) }
+func (x *IntPrx) String() string {
+	if x.Nil() {
+		return "null"
+	}
+	return fmt.Sprintf("%d", x.value())
+}
 func (x *IntPrx) MarshalJSON() ([]byte, error) { return []byte(x.String()), nil }
 func (x *IntPrx) UnmarshalJSON(b []byte) error { return x.unmarshal(b, x) }
-func (x *IntPrx) Print(p *bfr.P) error         { return p.Fmt("%d", x.value()) }
+func (x *IntPrx) Print(p *bfr.P) error         { return p.Fmt(x.String()) }
 
 type RealPrx struct{ proxy }
 
 func (x *RealPrx) NewWith(v reflect.Value) (Mut, error) { return &RealPrx{x.with(v)}, nil }
 func (x *RealPrx) New() (Mut, error)                    { return x.NewWith(x.new()) }
 
-func (x *RealPrx) Zero() bool { return x.value() == 0 }
-func (x *RealPrx) Value() Val { return Real(x.value()) }
+func (x *RealPrx) Zero() bool { return x.Nil() || x.value() == 0 }
+func (x *RealPrx) Value() Val {
+	if x.Nil() {
+		return Null{}
+	}
+	return Real(x.value())
+}
 func (x *RealPrx) Parse(a ast.Ast) error {
+	if isNull(a) {
+		return x.setNull()
+	}
 	if a.Kind != knd.Real && a.Kind != knd.Int {
-		return fmt.Errorf("expect num")
+		return ast.ErrExpect(a, knd.Num)
 	}
 	n, err := strconv.ParseFloat(a.Raw, 64)
 	if err != nil {
 		return err
 	}
-	x.Reflect().SetFloat(n)
+	x.elem().SetFloat(n)
 	return nil
 }
 func (x *RealPrx) Assign(v Val) error {
+	if v == nil || v.Nil() {
+		return x.setNull()
+	}
 	n, err := ToReal(v)
 	if err != nil {
 		return err
 	}
-	switch e := x.Reflect(); e.Kind() {
+	switch e := x.elem(); e.Kind() {
 	case reflect.Float64, reflect.Float32:
 		e.SetFloat(float64(n))
 	default:
@@ -120,14 +177,19 @@ func (x *RealPrx) Assign(v Val) error {
 	return nil
 }
 func (x *RealPrx) value() float64 {
-	switch e := x.Reflect(); e.Kind() {
+	switch e := x.elem(); e.Kind() {
 	case reflect.Float64, reflect.Float32:
 		return e.Float()
 	default:
 		panic(fmt.Errorf("unexpected real proxy target %s", e.Type()))
 	}
 }
-func (x *RealPrx) String() string               { return fmt.Sprintf("%g", x.value()) }
+func (x *RealPrx) String() string {
+	if x.Nil() {
+		return "null"
+	}
+	return fmt.Sprintf("%g", x.value())
+}
 func (x *RealPrx) MarshalJSON() ([]byte, error) { return []byte(x.String()), nil }
 func (x *RealPrx) UnmarshalJSON(b []byte) error { return x.unmarshal(b, x) }
-func (x *RealPrx) Print(p *bfr.P) error         { return p.Fmt("%g", x.value()) }
+func (x *RealPrx) Print(p *bfr.P) error         { return p.Fmt(x.String()) }

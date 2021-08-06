@@ -2,6 +2,7 @@ package lit
 
 import (
 	"encoding/json"
+	"reflect"
 	"testing"
 	"time"
 
@@ -33,8 +34,10 @@ func TestProxy(t *testing.T) {
 		{new(*bool), "<bool?>", Bool(true), "true"},
 		{new(*typ.Type), "<typ?>", typ.Int, "<int>"},
 		{new(int64), "<int>", Int(23), "23"},
+		{new(*int64), "<int?>", nil, "null"},
 		{new(int32), "<int>", Int(23), "23"},
 		{new(*int32), "<int?>", Int(23), "23"},
+		{new(*int32), "<int?>", nil, "null"},
 		{new([]byte), "<raw>", Raw("foo"), "'foo'"},
 		{new(time.Time), "<time>", Null{}, "'0001-01-01T00:00:00Z'"},
 		{new([16]byte), "<uuid>",
@@ -46,6 +49,9 @@ func TestProxy(t *testing.T) {
 		{new(Point), "<obj lit.Point>", Null{}, "{x:0 y:0}"},
 		{new(Point), "<obj lit.Point>", &Dict{Keyed: []KeyVal{{"y", Int(5)}}}, "{x:0 y:5}"},
 		{new([]Point), "<list|obj lit.Point>", Null{}, "[]"},
+		{new([]Point), "<list|obj lit.Point>", &List{Vals: []Val{}}, "[]"},
+		{new(*[]Point), "<list?|obj lit.Point>", Null{}, "null"},
+		{new(*[]Point), "<list?|obj lit.Point>", &List{Vals: []Val{}}, "[]"},
 		{new([]Point), "<list|obj lit.Point>", &List{Vals: []Val{
 			&Dict{Keyed: []KeyVal{{"y", Int(5)}}},
 		}}, "[{x:0 y:5}]"},
@@ -88,5 +94,95 @@ func TestProxy(t *testing.T) {
 			t.Errorf("unmarshal %s %#v error: %v", string(gj), p, err)
 			continue
 		}
+	}
+}
+
+func TestProxyAll(t *testing.T) {
+	reg := &Reg{}
+	reg.MustProxy(new(POI))
+	tests := []struct {
+		val interface{}
+		typ string
+		def string
+		nzv string
+	}{
+		{new(bool), "<bool>", "false", "true"},
+		{new(typ.Type), "<typ>", "<>", "<bool>"},
+		{new(int64), "<int>", "0", "1"},
+		{new(int32), "<int>", "0", "1"},
+		{new([]byte), "<raw>", "''", "'a'"},
+		{new(time.Time), "<time>", "'0001-01-01T00:00:00Z'", "'2006-01-02T15:04:05Z'"},
+		{new([16]byte), "<uuid>", "'00000000-0000-0000-0000-000000000000'", "'19f0a4d8-c728-43ec-aca0-1a1f33e2de49'"},
+		{new(time.Duration), "<span>", "'0'", "'1:00'"},
+		{new(Point), "<obj lit.Point>", "{x:0 y:0}", "{x:1 y:2}"},
+		{new([]Point), "<list|obj lit.Point>", "[]", "[{}]"},
+		{new(POI), "<obj lit.POI>", "{name:''}", "{name:'a'}"},
+		{new(map[string]Point), "<dict|obj lit.Point>", "{}", "{a:{}}"},
+	}
+	for _, test := range tests {
+		// test value
+		p, err := reg.Proxy(test.val)
+		if err != nil {
+			t.Errorf("proxy %T error: %v", test.val, err)
+			continue
+		}
+		gt := p.Type().String()
+		if gt != test.typ {
+			t.Errorf("typ want typ %s got %s", test.typ, gt)
+		}
+		gp := bfr.String(p)
+		if gp != test.def {
+			t.Errorf("str want def %s got %s", test.def, gp)
+		}
+		testDefault(t, reg, p, false)
+	}
+}
+
+func testDefault(t *testing.T, reg *Reg, mut Mut, ptr bool) {
+	if ptr {
+		gotstr := bfr.String(mut)
+		if gotstr != "null" {
+			t.Errorf("ptr string %T want null got %s", mut, gotstr)
+		}
+	}
+	jsn, err := bfr.JSON(mut)
+	if err != nil {
+		t.Errorf("marshal %T error: %v", mut, err)
+		return
+	}
+	nmut, err := mut.New()
+	if err != nil {
+		t.Errorf("new %T error: %v", mut, err)
+		return
+	}
+	err = json.Unmarshal(jsn, nmut.Ptr())
+	if err != nil {
+		t.Errorf("unmarshal %T error: %v", mut, err)
+		return
+	}
+	err = nmut.Assign(nil)
+	if err != nil {
+		t.Errorf("assign nil %T error: %v", nmut, err)
+		return
+	}
+	err = nmut.Assign(Null{})
+	if err != nil {
+		t.Errorf("assign null %T error: %v", nmut, err)
+		return
+	}
+	if !nmut.Zero() {
+		t.Errorf("want zero %T", nmut)
+	}
+	if ptr && !nmut.Nil() {
+		t.Errorf("want nil %T", nmut)
+	}
+	if ptr {
+		ppt := reflect.New(reflect.ValueOf(mut.Ptr()).Type())
+		pmut, err := reg.ProxyValue(ppt)
+		if err != nil {
+			t.Errorf("proxy %s error: %v", ppt.Elem(), err)
+			return
+		}
+		testDefault(t, reg, pmut, true)
 	}
 }

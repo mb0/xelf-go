@@ -22,11 +22,14 @@ func (x *StrcPrx) NewWith(v reflect.Value) (Mut, error) {
 func (x *StrcPrx) New() (Mut, error) { return x.NewWith(x.new()) }
 
 func (x *StrcPrx) Zero() bool {
-	e := x.Reflect()
+	if x.Nil() {
+		return true
+	}
+	e := x.elem()
 	for _, idx := range x.idx {
 		el, err := x.Reg.ProxyValue(e.FieldByIndex(idx).Addr())
 		if err != nil {
-			log.Printf("inconsistant struct proxy field: %v", err)
+			log.Printf("inconsistent struct proxy field: %v", err)
 			return false
 		}
 		if !el.Zero() {
@@ -35,16 +38,20 @@ func (x *StrcPrx) Zero() bool {
 	}
 	return true
 }
-func (x *StrcPrx) Value() Val { return x }
+func (x *StrcPrx) Value() Val {
+	if x.Nil() {
+		return Null{}
+	}
+	return x
+}
 func (x *StrcPrx) Parse(a ast.Ast) error {
-	rv := x.Reflect()
 	if isNull(a) {
-		rv.Set(reflect.Zero(rv.Type()))
-		return nil
+		return x.setNull()
 	}
 	if a.Kind != knd.Dict {
 		return ast.ErrExpect(a, knd.Dict)
 	}
+	rv := x.elem()
 	rv.Set(reflect.Zero(rv.Type()))
 	for _, e := range a.Seq {
 		key, val, err := ast.UnquotePair(e)
@@ -65,20 +72,20 @@ func (x *StrcPrx) Parse(a ast.Ast) error {
 	return nil
 }
 func (x *StrcPrx) Assign(v Val) (err error) {
-	if v != nil {
-		switch o := v.Value().(type) {
-		case Null:
-		case Keyr:
-			err = o.IterKey(func(k string, v Val) error {
-				return x.SetKey(k, v)
-			})
-		case Idxr:
-			err = o.IterIdx(func(i int, v Val) error {
-				return x.SetIdx(i, v)
-			})
-		default:
-			err = fmt.Errorf("%T %s to strc %v", v, v.Type(), ErrAssign)
-		}
+	if v == nil || v.Nil() {
+		return x.setNull()
+	}
+	switch o := v.Value().(type) {
+	case Keyr:
+		err = o.IterKey(func(k string, v Val) error {
+			return x.SetKey(k, v)
+		})
+	case Idxr:
+		err = o.IterIdx(func(i int, v Val) error {
+			return x.SetIdx(i, v)
+		})
+	default:
+		err = fmt.Errorf("%T %s to strc %v", v, v.Type(), ErrAssign)
 	}
 	return err
 }
@@ -86,11 +93,15 @@ func (x *StrcPrx) String() string               { return bfr.String(x) }
 func (x *StrcPrx) MarshalJSON() ([]byte, error) { return bfr.JSON(x) }
 func (x *StrcPrx) UnmarshalJSON(b []byte) error { return x.unmarshal(b, x) }
 func (x *StrcPrx) Print(p *bfr.P) error {
-	e := x.Reflect()
+	if x.Nil() {
+		return p.Fmt("null")
+	}
+	e := x.elem()
 	p.Byte('{')
 	var n int
 	for i, idx := range x.idx {
-		el, err := x.Reg.ProxyValue(e.FieldByIndex(idx).Addr())
+		addr := e.FieldByIndex(idx).Addr()
+		el, err := x.Reg.ProxyValue(addr)
 		if err != nil {
 			return err
 		}
@@ -109,13 +120,18 @@ func (x *StrcPrx) Print(p *bfr.P) error {
 	}
 	return p.Byte('}')
 }
-func (x *StrcPrx) Len() int { return len(x.ps) }
+func (x *StrcPrx) Len() int {
+	if x.Nil() {
+		return 0
+	}
+	return len(x.ps)
+}
 func (x *StrcPrx) Idx(i int) (Val, error) {
 	_, idx := x.pidx(i)
 	if len(idx) == 0 {
 		return nil, ErrIdxBounds
 	}
-	e := x.Reflect()
+	e := x.elem()
 	el, err := x.Reg.ProxyValue(e.FieldByIndex(idx).Addr())
 	if err != nil {
 		return nil, err
@@ -127,14 +143,17 @@ func (x *StrcPrx) SetIdx(i int, v Val) error {
 	if len(idx) == 0 {
 		return ErrIdxBounds
 	}
-	el, err := x.Reg.ProxyValue(x.Reflect().FieldByIndex(idx).Addr())
+	el, err := x.Reg.ProxyValue(x.elem().FieldByIndex(idx).Addr())
 	if err != nil {
 		return err
 	}
 	return el.Assign(v)
 }
 func (x *StrcPrx) IterIdx(it func(int, Val) error) error {
-	e := x.Reflect()
+	if x.Nil() {
+		return nil
+	}
+	e := x.elem()
 	for i, idx := range x.idx {
 		el, err := x.Reg.ProxyValue(e.FieldByIndex(idx).Addr())
 		if err != nil {
@@ -150,6 +169,9 @@ func (x *StrcPrx) IterIdx(it func(int, Val) error) error {
 	return nil
 }
 func (x *StrcPrx) Keys() []string {
+	if x.Nil() {
+		return nil
+	}
 	res := make([]string, 0, len(x.ps))
 	for _, p := range x.ps {
 		res = append(res, p.Key)
@@ -157,11 +179,14 @@ func (x *StrcPrx) Keys() []string {
 	return res
 }
 func (x *StrcPrx) Key(k string) (Val, error) {
+	if x.Nil() {
+		return Null{}, nil
+	}
 	_, idx, _ := x.pkey(k)
 	if len(idx) == 0 {
 		return nil, fmt.Errorf("%q in %s: %w", k, x, ErrKeyNotFound)
 	}
-	el, err := x.Reg.ProxyValue(x.Reflect().FieldByIndex(idx).Addr())
+	el, err := x.Reg.ProxyValue(x.elem().FieldByIndex(idx).Addr())
 	if err != nil {
 		return nil, err
 	}
@@ -172,14 +197,17 @@ func (x *StrcPrx) SetKey(k string, v Val) error {
 	if len(idx) == 0 {
 		return fmt.Errorf("%q in %s: %w", k, x, ErrKeyNotFound)
 	}
-	el, err := x.Reg.ProxyValue(x.Reflect().FieldByIndex(idx).Addr())
+	el, err := x.Reg.ProxyValue(x.elem().FieldByIndex(idx).Addr())
 	if err != nil {
 		return err
 	}
 	return el.Assign(v)
 }
 func (x *StrcPrx) IterKey(it func(string, Val) error) error {
-	e := x.Reflect()
+	if x.Nil() {
+		return nil
+	}
+	e := x.elem()
 	for i, idx := range x.idx {
 		f := e.FieldByIndex(idx)
 		el, err := x.Reg.ProxyValue(f.Addr())

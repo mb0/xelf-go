@@ -114,24 +114,6 @@ func (u *UUID) Ptr() interface{} { return u }
 func (t *Time) Ptr() interface{} { return t }
 func (s *Span) Ptr() interface{} { return s }
 
-func (v *Bool) NewWith(ptr reflect.Value) (Mut, error) { return mustRef(ptrBool, ptr) }
-func (i *Int) NewWith(ptr reflect.Value) (Mut, error)  { return mustRef(ptrInt, ptr) }
-func (r *Real) NewWith(ptr reflect.Value) (Mut, error) { return mustRef(ptrReal, ptr) }
-func (s *Str) NewWith(ptr reflect.Value) (Mut, error)  { return mustRef(ptrStr, ptr) }
-func (r *Raw) NewWith(ptr reflect.Value) (Mut, error)  { return mustRef(ptrRaw, ptr) }
-func (u *UUID) NewWith(ptr reflect.Value) (Mut, error) { return mustRef(ptrUUID, ptr) }
-func (t *Time) NewWith(ptr reflect.Value) (Mut, error) { return mustRef(ptrTime, ptr) }
-func (s *Span) NewWith(ptr reflect.Value) (Mut, error) { return mustRef(ptrSpan, ptr) }
-
-func (v *Bool) Reflect() reflect.Value { return reflect.ValueOf(v).Elem() }
-func (i *Int) Reflect() reflect.Value  { return reflect.ValueOf(i).Elem() }
-func (r *Real) Reflect() reflect.Value { return reflect.ValueOf(r).Elem() }
-func (s *Str) Reflect() reflect.Value  { return reflect.ValueOf(s).Elem() }
-func (r *Raw) Reflect() reflect.Value  { return reflect.ValueOf(r).Elem() }
-func (u *UUID) Reflect() reflect.Value { return reflect.ValueOf(u).Elem() }
-func (t *Time) Reflect() reflect.Value { return reflect.ValueOf(t).Elem() }
-func (s *Span) Reflect() reflect.Value { return reflect.ValueOf(s).Elem() }
-
 func (r *Raw) UnmarshalJSON(b []byte) error  { return unmarshal(b, r) }
 func (u *UUID) UnmarshalJSON(b []byte) error { return unmarshal(b, u) }
 func (t *Time) UnmarshalJSON(b []byte) error { return unmarshal(b, t) }

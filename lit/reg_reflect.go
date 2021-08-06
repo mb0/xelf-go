@@ -232,6 +232,7 @@ func isRef(t reflect.Type, ref reflect.Type) bool {
 var (
 	ptrVal   = reflect.TypeOf((*Val)(nil))
 	ptrMut   = reflect.TypeOf((*Mut)(nil))
+	ptrPrx   = reflect.TypeOf((*Prx)(nil))
 	ptrType  = reflect.TypeOf((*typ.Type)(nil))
 	ptrList  = reflect.TypeOf((*List)(nil))
 	ptrDict  = reflect.TypeOf((*Dict)(nil))

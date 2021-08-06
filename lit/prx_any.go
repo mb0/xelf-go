@@ -15,7 +15,7 @@ type AnyPrx struct {
 
 func anyVal(v reflect.Value) Val {
 	if !v.IsValid() || v.Kind() != reflect.Ptr || v.IsNil() || v.Elem().Kind() != reflect.Interface {
-		panic(fmt.Errorf("invalid prxany value %s", v.Type()))
+		panic(fmt.Errorf("invalid anyprx value %s", v.Type()))
 	}
 	ve := v.Elem()
 	if ve.IsNil() {
@@ -33,17 +33,18 @@ func (x *AnyPrx) NewWith(v reflect.Value) (Mut, error) {
 }
 func (x *AnyPrx) New() (Mut, error) { return x.NewWith(x.new()) }
 
-func (x *AnyPrx) Nil() bool  { return x.val.Nil() }
-func (x *AnyPrx) Zero() bool { return x.val.Zero() }
-func (x *AnyPrx) Value() Val {
-	return x.val.Value()
-}
+func (x *AnyPrx) Zero() bool { return x.Nil() || x.val.Zero() }
+func (x *AnyPrx) Value() Val { return x.val.Value() }
 func (x *AnyPrx) Parse(a ast.Ast) (err error) {
-	x.val, err = x.Reg.ParseVal(a)
-	if err != nil {
-		return err
+	if isNull(a) {
+		x.val = Null{}
+	} else {
+		x.val, err = x.Reg.ParseVal(a)
+		if err != nil {
+			return err
+		}
 	}
-	x.Reflect().Set(reflect.ValueOf(x.val))
+	x.elem().Set(reflect.ValueOf(x.val))
 	return nil
 }
 
@@ -53,7 +54,7 @@ func (x *AnyPrx) Assign(v Val) (err error) {
 	} else {
 		x.val = v
 	}
-	x.Reflect().Set(reflect.ValueOf(x.val))
+	x.elem().Set(reflect.ValueOf(x.val))
 	return nil
 }
 func (x *AnyPrx) String() string               { return x.val.String() }
