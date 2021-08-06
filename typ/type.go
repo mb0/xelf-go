@@ -56,13 +56,6 @@ func (t Type) Print(b *bfr.P) error {
 		b.JSON = true
 		return b.Byte('"')
 	}
-	if !b.Plain {
-		b.Byte('\'')
-		b.Plain = true
-		t.print(b, nil, true)
-		b.Plain = false
-		return b.Byte('\'')
-	}
 	return t.print(b, nil, true)
 }
 

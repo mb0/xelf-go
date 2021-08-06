@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"xelf.org/xelf/bfr"
+	"xelf.org/xelf/typ"
 )
 
 func TestRead(t *testing.T) {
@@ -12,6 +13,8 @@ func TestRead(t *testing.T) {
 		Val
 		str, out, jsn string
 	}{
+		{typ.Void, `<>`, ``, `"<>"`},
+		{typ.ListOf(typ.Opt(typ.Int)), `<list|int?>`, ``, `"<list|int?>"`},
 		{Null{}, `null`, ``, ``},
 		{Bool(true), `true`, ``, ``},
 		{Bool(false), `false`, ``, ``},
