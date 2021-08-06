@@ -23,13 +23,11 @@ func LayoutForm(sig typ.Type, els []Exp) ([]Exp, error) {
 	ps := SigArgs(sig)
 	res := make([]Exp, len(ps))
 	for i, p := range ps {
-		var vari bool
 		pt := p.Type
 		opt := p.IsOpt() || pt.Kind&knd.Exp != 0 && pt.Kind&knd.None != 0
 		var n int
 		var arg Exp
 		if pt.Kind&knd.Exp == knd.Tupl {
-			vari = true
 			var tn int
 			pt, tn = typ.TuplEl(pt)
 			if tn > 1 {
@@ -40,20 +38,15 @@ func LayoutForm(sig typ.Type, els []Exp) ([]Exp, error) {
 				arg = &Tupl{Type: p.Type, Els: els[:n], Src: ast.Src{
 					Doc: fst.Doc, Pos: fst.Pos, End: lst.End,
 				}}
+			} else if pt == typ.Exp {
+				arg = &Tupl{Type: typ.ElemTupl(pt), Els: els}
+				n = len(els)
+			} else {
+				n = consume(els, pt.Kind == knd.Tag)
+				arg = &Tupl{Type: typ.ElemTupl(pt), Els: els[:n]}
 			}
-		}
-		if arg == nil {
-			if vari {
-				if pt == typ.Exp {
-					arg = &Tupl{Type: typ.ElemTupl(pt), Els: els}
-					n = len(els)
-				} else {
-					n = consume(els, pt.Kind == knd.Tag)
-					arg = &Tupl{Type: typ.ElemTupl(pt), Els: els[:n]}
-				}
-			} else if len(els) > 0 {
-				n, arg = 1, els[0]
-			}
+		} else if len(els) > 0 {
+			n, arg = 1, els[0]
 		}
 		if !opt && n == 0 {
 			return nil, fmt.Errorf("missing argument %d %s", i, pt)
