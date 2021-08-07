@@ -201,7 +201,7 @@ func (p *Prog) EvalArgs(c *Call) ([]*Lit, error) {
 	return res, nil
 }
 
-// NextFnID returns a new to identify anonymous functions.
+// NextFnID returns a new number to identify an anonymous functions.
 func (p *Prog) NextFnID() uint {
 	p.fnid++
 	return p.fnid
