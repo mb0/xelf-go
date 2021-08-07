@@ -17,20 +17,24 @@ type Type struct {
 	Body
 }
 
+type BodyPair struct{ A, B Body }
+type Hist []BodyPair
+
 // Body contains additional type information.
 type Body interface {
-	Equal(Body) bool
+	EqualHist(Body, Hist) bool
 }
 
 // Equal returns whether type t and o are identical.
-func (t Type) Equal(o Type) bool {
+func (t Type) Equal(o Type) bool { return t.EqualHist(o, nil) }
+func (t Type) EqualHist(o Type, h Hist) bool {
 	if t.Kind != o.Kind || t.ID != o.ID {
 		return false
 	}
 	if t.Body == nil {
 		return o.Body == nil
 	}
-	return t.Body.Equal(o.Body)
+	return t.Body.EqualHist(o.Body, h)
 }
 
 func (t *Type) UnmarshalJSON(b []byte) error {

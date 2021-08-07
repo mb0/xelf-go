@@ -63,22 +63,31 @@ type (
 	}
 )
 
-func (b *ElBody) Equal(o Body) bool {
+func (b *ElBody) EqualHist(o Body, h Hist) bool {
 	ob, ok := o.(*ElBody)
-	return ok && b.El.Equal(ob.El)
+	if !ok {
+		return false
+	}
+	for _, p := range h {
+		if p.A == b && p.B == o {
+			return true
+		}
+	}
+	h = append(h, BodyPair{b, o})
+	return b.El.EqualHist(ob.El, h)
 }
 
-func (b *SelBody) Equal(o Body) bool {
+func (b *SelBody) EqualHist(o Body, h Hist) bool {
 	ob, ok := o.(*SelBody)
-	return ok && b.Path == ob.Path && b.Sel.Equal(ob.Sel)
+	return ok && b.Path == ob.Path && b.Sel.EqualHist(ob.Sel, h)
 }
 
-func (b *RefBody) Equal(o Body) bool {
+func (b *RefBody) EqualHist(o Body, h Hist) bool {
 	ob, ok := o.(*RefBody)
 	return ok && b.Ref == ob.Ref
 }
 
-func (b *AltBody) Equal(o Body) bool {
+func (b *AltBody) EqualHist(o Body, h Hist) bool {
 	ob, ok := o.(*AltBody)
 	if b == nil {
 		return ok && ob == nil
@@ -88,21 +97,27 @@ func (b *AltBody) Equal(o Body) bool {
 	}
 	for i, p := range b.Alts {
 		op := ob.Alts[i]
-		if !p.Equal(op) {
+		if !p.EqualHist(op, h) {
 			return false
 		}
 	}
 	return true
 }
 
-func (b *ParamBody) Equal(o Body) bool {
+func (b *ParamBody) EqualHist(o Body, h Hist) bool {
 	ob, ok := o.(*ParamBody)
 	if !ok || b.Name != ob.Name || len(b.Params) != len(ob.Params) {
 		return false
 	}
+	for _, p := range h {
+		if p.A == b && p.B == o {
+			return true
+		}
+	}
+	h = append(h, BodyPair{b, o})
 	for i, p := range b.Params {
 		op := ob.Params[i]
-		if p.Name != op.Name || p.Key != op.Key || !p.Equal(op.Type) {
+		if p.Name != op.Name || p.Key != op.Key || !p.EqualHist(op.Type, h) {
 			return false
 		}
 	}
@@ -117,7 +132,7 @@ func (b *ParamBody) FindKeyIndex(key string) int {
 	return -1
 }
 
-func (b *ConstBody) Equal(o Body) bool {
+func (b *ConstBody) EqualHist(o Body, h Hist) bool {
 	ob, ok := o.(*ConstBody)
 	if !ok || b.Name != ob.Name || len(b.Consts) != len(ob.Consts) {
 		return false

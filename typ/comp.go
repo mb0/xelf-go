@@ -24,7 +24,7 @@ func (t Type) AssignableTo(dst Type) bool {
 			return elem(t).AssignableTo(db.El)
 		}
 	case *SelBody:
-		return db.Equal(t.Body)
+		return db.EqualHist(t.Body, nil)
 	case *RefBody:
 		sb, ok := t.Body.(*RefBody)
 		return ok && db.Ref == sb.Ref
@@ -99,7 +99,7 @@ func (t Type) ConvertibleTo(dst Type) bool {
 			return elem(t).ConvertibleTo(db.El)
 		}
 	case *SelBody:
-		return db.Equal(t.Body)
+		return db.EqualHist(t.Body, nil)
 	case *RefBody:
 		sb, ok := t.Body.(*RefBody)
 		return ok && db.Ref == sb.Ref

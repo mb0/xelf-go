@@ -195,7 +195,7 @@ func unify(sys *Sys, t, h Type) (Type, error) {
 					(p.Type.Body == nil) != (op.Type.Body == nil) {
 					break Switch
 				}
-				if p.Type.Body != nil && !p.Type.Body.Equal(op.Type.Body) {
+				if p.Type.Body != nil && !p.Type.Body.EqualHist(op.Type.Body, nil) {
 					break Switch
 				}
 				ps = append(ps, p)
@@ -233,7 +233,7 @@ func equalBody(a, b Body) bool {
 	if a == nil {
 		return b == nil
 	}
-	return a.Equal(b)
+	return a.EqualHist(b, nil)
 }
 
 func base(t Type) Type {
