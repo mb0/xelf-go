@@ -123,6 +123,13 @@ func (s *Strc) Assign(p Val) error {
 		if err != nil {
 			return err
 		}
+	case Idxr:
+		err := o.IterIdx(func(i int, v Val) error {
+			return s.SetIdx(i, v)
+		})
+		if err != nil {
+			return err
+		}
 	default:
 		return ErrAssign
 	}
