@@ -88,7 +88,7 @@ func litSpec(a *exp.Lit, args []exp.Exp) (spec exp.Spec, _ []exp.Exp) {
 	case k&knd.Spec != 0:
 		spec, args = a.Val.(exp.Spec), args[1:]
 	case k == knd.Typ:
-		spec = Con
+		spec = Make
 	case k&knd.Num != 0:
 		spec = Add
 	case k&knd.Str != 0:

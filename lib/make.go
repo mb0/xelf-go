@@ -8,12 +8,12 @@ import (
 	"xelf.org/xelf/typ"
 )
 
-var Con = &conSpec{impl("<form con typ tupl? tupl?|tag lit|.0>")}
+var Make = &makeSpec{impl("<form make typ tupl? tupl?|tag lit|.0>")}
 
-type conSpec struct{ exp.SpecBase }
+type makeSpec struct{ exp.SpecBase }
 
-func (s *conSpec) Value() lit.Val { return s }
-func (s *conSpec) Resl(p *exp.Prog, env exp.Env, c *exp.Call, h typ.Type) (exp.Exp, error) {
+func (s *makeSpec) Value() lit.Val { return s }
+func (s *makeSpec) Resl(p *exp.Prog, env exp.Env, c *exp.Call, h typ.Type) (exp.Exp, error) {
 	fst, err := p.Resl(env, c.Args[0], typ.Typ)
 	if err != nil {
 		return nil, err
@@ -40,7 +40,7 @@ func (s *conSpec) Resl(p *exp.Prog, env exp.Env, c *exp.Call, h typ.Type) (exp.E
 	c.Sig = p.Sys.Update(c.Sig)
 	return s.SpecBase.Resl(p, env, c, h)
 }
-func (s *conSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
+func (s *makeSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 	fst, err := p.Eval(c.Env, c.Args[0])
 	if err != nil {
 		return nil, err
@@ -65,7 +65,7 @@ func (s *conSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 	if tok {
 		keyr, ok := res.(lit.Keyr)
 		if !ok {
-			return nil, fmt.Errorf("con non-keyr type %s for tags", t)
+			return nil, fmt.Errorf("make non-keyr type %s for tags", t)
 		}
 		// eval tags and set keyr
 		for _, el := range tags.Els {
@@ -92,7 +92,7 @@ func (s *conSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 					return nil, err
 				}
 			} else {
-				return nil, fmt.Errorf("con non-idxr type %s for vals", t)
+				return nil, fmt.Errorf("make non-idxr type %s for vals", t)
 			}
 		} else {
 			et := typ.ContEl(res.Type())
