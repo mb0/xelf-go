@@ -110,6 +110,9 @@ func (h *Map) SetKey(k string, el Val) error {
 	if h.El != typ.Void {
 		// TODO check and conevert el
 	}
+	if h.M == nil {
+		h.M = make(map[string]Val)
+	}
 	h.M[k] = el
 	return nil
 }
