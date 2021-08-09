@@ -97,6 +97,44 @@ func (s *foldSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 	return nil, fmt.Errorf("unexpected idxr %[1]T %[1]s", args[0])
 }
 
+var Range = &rangeSpec{impl("<form range n:int f?:<func int @1> list|@1>")}
+
+type rangeSpec struct{ exp.SpecBase }
+
+func (s *rangeSpec) Value() lit.Val { return s }
+func (s *rangeSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
+	args, err := p.EvalArgs(c)
+	if err != nil {
+		return nil, err
+	}
+	n, err := lit.ToInt(args[0].Val)
+	if err != nil {
+		return nil, err
+	}
+	snd := args[1]
+	var fun exp.Spec
+	if snd != nil {
+		f, ok := snd.Val.(exp.Spec)
+		if !ok {
+			return nil, fmt.Errorf("unexpected func %[1]T %[1]s", snd)
+		}
+		fun = f
+	}
+	res := make([]lit.Val, n)
+	for i := range res {
+		var r lit.Val = lit.Int(i)
+		if fun != nil {
+			arg := &exp.Lit{Val: r, Src: snd.Src}
+			r, err = callFunc(p, c, fun, []exp.Exp{arg}, snd.Src)
+			if err != nil {
+				return nil, err
+			}
+		}
+		res[i] = r
+	}
+	return &exp.Lit{Res: exp.SigRes(c.Sig).Type, Val: &lit.List{Vals: res}, Src: c.Src}, nil
+}
+
 func callFunc(p *exp.Prog, c *exp.Call, s exp.Spec, args []exp.Exp, src ast.Src) (lit.Val, error) {
 	sig := s.Type()
 	args, err := exp.LayoutSpec(sig, args)

@@ -17,6 +17,7 @@ func TestDynEval(t *testing.T) {
 		{`('a' 'b' 'c')`, `abc`, "<str>"},
 		{`((raw 'a') ['b'] 'c')`, "\"a\"\n[\"b\"]\n\"c\"", "<raw>"},
 		{`(let addone:(fn n:int (add .n 1)) (addone 2))`, `3`, "<int>"},
+		{`(let addone:(fn (_ 1)) (addone (int 2)))`, `3`, "<int>"},
 		{`((if false add sub) 1 2)`, `-1`, "<int>"},
 	}
 	for _, test := range tests {

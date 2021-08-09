@@ -24,6 +24,10 @@ func TestContEval(t *testing.T) {
 		{`(fold [1 2 3] [] (fn
 			(if (ne 0 (rem .1 2)) (mut .0 .1) .0)
 		))`, "[1 3]"},
+		{`(range 4)`, "[0 1 2 3]"},
+		{`(range 4 (fn (add _ 1)))`, "[1 2 3 4]"},
+		{`(range 4)`, "[0 1 2 3]"},
+		{`(range 4 (fn ('' _)))`, "['0' '1' '2' '3']"},
 	}
 	for _, test := range tests {
 		got, err := exp.Eval(nil, Std, test.raw)
