@@ -50,11 +50,7 @@ func (s *swtSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 		if err != nil {
 			return nil, err
 		}
-		ok, err := lit.Equal(arg.Val, res)
-		if err != nil {
-			return nil, err
-		}
-		if ok {
+		if ok := lit.Equal(arg.Val, res); ok {
 			return p.Eval(c.Env, els[i+1])
 		}
 	}

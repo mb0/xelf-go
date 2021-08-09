@@ -32,10 +32,7 @@ func (s *compSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 	cur := args[0].Val
 	for _, v := range args[1].Val.(*lit.List).Vals {
 		if s.want == 0 {
-			ok, err := lit.Equal(cur, v)
-			if err != nil {
-				return nil, err
-			}
+			ok := lit.Equal(cur, v)
 			if s.neg == ok {
 				r = false
 			}
@@ -78,11 +75,7 @@ func (s *inSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 	for _, v := range args[1].Val.(*lit.List).Vals {
 		l := v.(*lit.List)
 		for _, v := range l.Vals {
-			ok, err := lit.Equal(fst, v)
-			if err != nil {
-				return nil, err
-			}
-			if ok {
+			if lit.Equal(fst, v) {
 				r = true
 				break
 			}
