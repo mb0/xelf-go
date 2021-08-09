@@ -121,8 +121,9 @@ func (s *NodeSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 				continue
 			}
 			et, _ := typ.TuplEl(a.Type)
-			switch typ.Deopt(et).Kind {
-			case knd.All: // tupl? -> idx rule
+			ek := typ.Deopt(et).Kind
+			switch {
+			case ek == knd.All: // tupl -> idx rule
 				for idx, d := range a.Els {
 					key := s.IdxKeyer(n, idx)
 					err := s.dokey(p, c, n, key, d)
@@ -130,7 +131,7 @@ func (s *NodeSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 						return nil, err
 					}
 				}
-			case knd.Tag: // tupl?|tag -> tag rule
+			case ek == knd.Tag || sp.Name == "tags": // tupl|tag, tags:tupl -> tag rule
 				for _, d := range a.Els {
 					t, ok := d.(*exp.Tag)
 					var err error
@@ -143,14 +144,22 @@ func (s *NodeSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 						return nil, err
 					}
 				}
-			case knd.Exp: // tupl?|exp -> tail rule
+			case ek == knd.Exp: // tupl|exp -> tail rule
+				if s.Tail.Prepper == nil {
+					return nil, fmt.Errorf("tail without prepper")
+				}
 				v, err := s.Tail.Prepper(p, c.Env, n, "", a)
 				if err != nil {
 					return nil, err
 				}
-				err = s.Tail.Setter(p, n, "", v)
-				if err != nil {
-					return nil, fmt.Errorf("setkey tail: %v", err)
+				if v != nil {
+					if s.Tail.Prepper == nil {
+						return nil, fmt.Errorf("tail without setter")
+					}
+					err = s.Tail.Setter(p, n, "", v)
+					if err != nil {
+						return nil, fmt.Errorf("setkey tail: %v", err)
+					}
 				}
 			default:
 			}
