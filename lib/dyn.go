@@ -40,6 +40,20 @@ func (s *dynSpec) Resl(p *exp.Prog, env exp.Env, c *exp.Call, h typ.Type) (exp.E
 	case *exp.Lit:
 		spec, args = litSpec(a, args)
 	case *exp.Tag:
+		got, err := env.Resl(p, &exp.Sym{Sym: ":"}, ":")
+		if err != nil {
+			break
+		}
+		spec = got.(*exp.Lit).Val.(exp.Spec)
+		tag := fst.(*exp.Tag)
+		src := tag.Src
+		src.End = src.Pos
+		src.End.Byte += int32(len(tag.Tag))
+		nargs := append(make([]exp.Exp, 0, len(args)+1),
+			&exp.Lit{Res: typ.Sym, Val: lit.Str(tag.Tag), Src: src},
+			tag.Exp,
+		)
+		args = append(nargs, args[1:]...)
 	}
 	if spec == nil {
 		return nil, fmt.Errorf("no spec for %[1]T %[1]s %s", fst, fst.Resl())
