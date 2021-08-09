@@ -35,6 +35,7 @@ func TestParse(t *testing.T) {
 		{LitOf(Opt(Int)), `<lit|int?>`, ``},
 		{ElemTupl(Int), `<tupl int>`, `<tupl|int>`},
 		{ElemTupl(Int), `<tupl|int>`, ``},
+		{Obj("test.foo", nil), `<obj test.foo>`, ``},
 
 		{Var(-1, Void), `<@>`, ``},
 		{Ref(`a`), `<@a>`, ``},

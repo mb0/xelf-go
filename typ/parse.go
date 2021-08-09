@@ -134,6 +134,7 @@ func parseBody(a ast.Ast, args []ast.Ast, t Type, hist []Type) (_ Type, err erro
 			el.Body = &ConstBody{Name: name}
 			return t, nil
 		}
+		args = args[1:]
 	case knd.Alt:
 		alts := make([]Type, 0, len(args))
 		for _, arg := range args {
