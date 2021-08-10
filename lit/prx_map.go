@@ -120,6 +120,9 @@ func (x *MapPrx) Key(k string) (Val, error) {
 		return Null{}, nil
 	}
 	rv := x.elem().MapIndex(reflect.ValueOf(k))
+	if !rv.IsValid() {
+		return Null{}, nil
+	}
 	return x.entry(k, rv)
 }
 func (x *MapPrx) SetKey(k string, v Val) (err error) {

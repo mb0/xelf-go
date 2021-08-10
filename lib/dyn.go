@@ -56,7 +56,7 @@ func (s *dynSpec) Resl(p *exp.Prog, env exp.Env, c *exp.Call, h typ.Type) (exp.E
 		args = append(nargs, args[1:]...)
 	}
 	if spec == nil {
-		return nil, fmt.Errorf("no spec for %[1]T %[1]s %s", fst, fst.Resl())
+		return nil, fmt.Errorf("no spec for %[1]T %[1]s", d.Els[0])
 	}
 	sig, _ := p.Sys.Inst(spec.Type())
 	args, err = exp.LayoutSpec(sig, args)
