@@ -9,6 +9,10 @@ import (
 	"xelf.org/xelf/typ"
 )
 
+// ErrDefer is a marker error used to indicate a deferred resolution and not a failure per-se.
+// The user can errors.Is(err, ErrDefer) and resume program resolution with more context provided.
+var ErrDefer = fmt.Errorf("deferred resolution")
+
 // Eval creates and evaluates a new program for str and returns the result or an error.
 func Eval(reg *lit.Reg, env Env, str string) (*Lit, error) {
 	if reg == nil {
