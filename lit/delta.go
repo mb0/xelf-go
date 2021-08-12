@@ -10,19 +10,19 @@ import (
 // The simple and correct answer is always to return b. We do make some effort to find a
 // simpler set of changes, but make no guarantee to return the shortest edit path.
 func Delta(a, b Val) ([]KeyVal, error) { return delta(a, b, ".", nil) }
-func delta(a, b Val, pref string, vals []KeyVal) ([]KeyVal, error) {
+func delta(a, b Val, pre string, vals []KeyVal) ([]KeyVal, error) {
 	if aa, ok := a.(Keyr); ok {
 		if bb, ok := b.(Keyr); ok {
-			return deltaKeyr(aa, bb, pref, vals)
+			return deltaKeyr(aa, bb, pre, vals)
 		}
 	} else if aa, ok := toVals(a); ok {
 		if bb, ok := toVals(b); ok {
-			return deltaIdxr(a, b, aa, bb, pref, vals)
+			return deltaIdxr(a, b, aa, bb, pre, vals)
 		}
 	} else if Equal(a, b) {
 		return vals, nil
 	}
-	return append(vals, KeyVal{Key: pref, Val: b}), nil
+	return append(vals, KeyVal{Key: stripTailDot(pre), Val: b}), nil
 }
 
 func deltaIdxr(a, b Val, aa, bb []Val, pre string, vals []KeyVal) ([]KeyVal, error) {
@@ -35,7 +35,7 @@ func deltaIdxr(a, b Val, aa, bb []Val, pre string, vals []KeyVal) ([]KeyVal, err
 	if !t.changed() {
 		return vals, nil
 	} else if t.replaced() {
-		return append(vals, KeyVal{Key: pre, Val: b}), nil
+		return append(vals, KeyVal{Key: stripTailDot(pre), Val: b}), nil
 	}
 	// we have at least two ops and known at least one of them to be ret and one del or ins
 	// ops of the same kind are merged and do not follow each other
@@ -44,7 +44,7 @@ func deltaIdxr(a, b Val, aa, bb []Val, pre string, vals []KeyVal) ([]KeyVal, err
 	// two ops u,v where u is ret and v is ins
 	if len(ops) == 2 && ops[0].N > 0 && ops[1].N == 0 {
 		// lets return the special append op
-		return append(vals, KeyVal{fmt.Sprintf("%s+", pre), &List{Vals: ops[1].V}}), nil
+		return append(vals, KeyVal{stripTailDot(pre) + "+", &List{Vals: ops[1].V}}), nil
 
 	}
 	// we also want to detect replacing a single element and use idx path notation. that does
@@ -56,26 +56,27 @@ func deltaIdxr(a, b Val, aa, bb []Val, pre string, vals []KeyVal) ([]KeyVal, err
 		u, v, w := ops[0], ops[1], ops[2]
 		if v.N == -1 {
 			if len(w.V) == 1 {
-				kv := KeyVal{fmt.Sprintf("%s%d", pre, u.N), w.V[0]}
-				return append(vals, kv), nil
+				return deltaSub(aa[u.N], w.V[0], pre, u.N, vals)
 			}
 			if t.retn == 1 && len(u.V) == 1 {
-				kv := KeyVal{pre + "0", u.V[0]}
-				return append(vals, kv), nil
+				return deltaSub(aa[0], u.V[0], pre, 0, vals)
 			}
 		} else if len(v.V) == 1 {
 			if w.N == -1 {
-				kv := KeyVal{fmt.Sprintf("%s%d", pre, u.N), v.V[0]}
-				return append(vals, kv), nil
+				return deltaSub(aa[u.N], v.V[0], pre, u.N, vals)
 			}
 			if t.retn == 1 && u.N == -1 {
-				kv := KeyVal{pre + "0", v.V[0]}
-				return append(vals, kv), nil
+				return deltaSub(aa[0], v.V[0], pre, 0, vals)
 			}
 		}
 	}
 	// lets return the ops as list
-	return append(vals, KeyVal{fmt.Sprintf("%s*", pre), opsToList(ops)}), nil
+	return append(vals, KeyVal{stripTailDot(pre) + "*", opsToList(ops)}), nil
+}
+
+func deltaSub(a, b Val, pre string, idx int, vals []KeyVal) ([]KeyVal, error) {
+	path := fmt.Sprintf("%s%d.", pre, idx)
+	return delta(a, b, path, vals)
 }
 
 func deltaKeyr(a, b Keyr, pre string, vals []KeyVal) ([]KeyVal, error) {
@@ -120,7 +121,7 @@ func deltaKeyr(a, b Keyr, pre string, vals []KeyVal) ([]KeyVal, error) {
 		}
 		// call delta on the values
 		path := pre + k
-		nvals, err := delta(av, bv, path, nil)
+		nvals, err := delta(av, bv, path+".", nil)
 		if err != nil {
 			return nil, err
 		}
@@ -142,4 +143,11 @@ func deltaKeyr(a, b Keyr, pre string, vals []KeyVal) ([]KeyVal, error) {
 		}
 	}
 	return vals, nil
+}
+
+func stripTailDot(s string) string {
+	if len(s) > 1 && s[len(s)-1] == '.' {
+		return s[:len(s)-1]
+	}
+	return s
 }

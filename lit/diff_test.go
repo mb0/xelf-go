@@ -81,4 +81,21 @@ func TestListOpSyntax(t *testing.T) {
 	if !isItGoodYet {
 		t.Errorf("no good syntax found for list edit paths")
 	}
+
+	doesItHandleNestedEdits := false
+
+	t.Logf("With {a:[[1 2] [3 4] 5]}")
+	// we can start by creating edits for the single replacements we already detect.
+	t.Logf("{'.a.0.0':3} sets the field {a:[[3 2] [2 4] 5}")
+
+	// if we have only matching inserts and deletions (replacements)
+	// we can form idx paths for all individual elements and create a delta
+	t.Logf("{'.a.0.0':3 .a.1.1:7} sets the field {a:[[3 2] [2 7] 5}")
+	// we could also check all neighbouring inserts and deletions for overlaps but this
+	// is soon going to spiral out of control down this path.
+
+	if !doesItHandleNestedEdits {
+		// maybe we just leave it at that?
+		// t.Errorf("no good nested edit syntax found for list edit paths")
+	}
 }
