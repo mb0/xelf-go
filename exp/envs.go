@@ -44,12 +44,7 @@ func (e *ArgEnv) Resl(p *Prog, s *Sym, k string) (Exp, error) {
 	if k[0] != '$' {
 		return e.Par.Resl(p, s, k)
 	}
-	t, err := typ.Select(e.Val.Type(), k)
-	if err != nil {
-		return nil, err
-	}
-	s.Type, s.Env, s.Rel = t, e, k
-	return s, nil
+	return e.Eval(p, s, k)
 }
 func (e *ArgEnv) Eval(p *Prog, s *Sym, k string) (*Lit, error) {
 	if k[0] != '$' {
