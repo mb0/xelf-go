@@ -82,7 +82,7 @@ func (l *List) Assign(p Val) error {
 		}
 		l.Vals = res
 	default:
-		return ErrAssign
+		return fmt.Errorf("%w %T to %T", ErrAssign, p, l)
 	}
 	return nil
 }

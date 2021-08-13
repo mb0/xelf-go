@@ -83,7 +83,7 @@ func (d *Dict) Assign(p Val) error {
 		})
 		d.Keyed = res
 	default:
-		return ErrAssign
+		return fmt.Errorf("%w %T to %T", ErrAssign, p, d)
 	}
 	return nil
 }
