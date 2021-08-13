@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"xelf.org/xelf/cor"
+	"xelf.org/xelf/knd"
 	"xelf.org/xelf/typ"
 )
 
@@ -37,6 +38,10 @@ func SelectKey(val Val, key string) (Val, error) {
 	switch a := val.(type) {
 	case Keyr:
 		return a.Key(key)
+	default:
+		if a, ok := val.Value().(Keyr); ok {
+			return a.Key(key)
+		}
 	}
 	return nil, fmt.Errorf("key segment %q expects keyr got %[2]T %[2]s", key, val)
 }
@@ -45,6 +50,10 @@ func SelectIdx(val Val, idx int) (res Val, err error) {
 	switch a := val.(type) {
 	case Idxr:
 		return a.Idx(idx)
+	default:
+		if a, ok := val.Value().(Idxr); ok {
+			return a.Idx(idx)
+		}
 	}
 	return nil, fmt.Errorf("idx segment %d expects idxr got %[2]T %[2]s", idx, val)
 }
@@ -106,7 +115,8 @@ func collectIdxrVal(v Val, path cor.Path, into *List) (err error) {
 
 // AssignPath sets an element of root at path to val or returns an error.
 // It fails on missing intermediate container values.
-func AssignPath(root Val, path cor.Path, val Val) (err error) {
+func AssignPath(mut Mut, path cor.Path, val Val) (err error) {
+	var root Val = mut
 	for _, s := range path {
 		var next Val
 		if s.Key != "" {
@@ -131,45 +141,52 @@ func AssignPath(root Val, path cor.Path, val Val) (err error) {
 
 // CreatePath creates an element of root at path to val or returns an error.
 // It resizes and creates missing intermediate container values using the registry.
-func CreatePath(reg *Reg, root Val, path cor.Path, val Val) (err error) {
+func CreatePath(reg *Reg, mut Mut, path cor.Path, val Val) (err error) {
 	npath := path
+	cur := mut
 	for i, s := range path {
 		var next Val
 		if s.Key != "" {
-			next, err = SelectKey(root, s.Key)
+			next, err = SelectKey(cur, s.Key)
 		} else {
-			next, err = SelectIdx(root, s.Idx)
+			next, err = SelectIdx(cur, s.Idx)
 		}
 		if err != nil {
 			break
 		}
-		if next.Nil() {
-			x, ok := next.(*OptMut)
+		nmut, ok := next.(Mut)
+		if !ok {
+			break
+		}
+		if nmut.Nil() {
+			x, ok := nmut.(*OptMut)
 			if !ok {
 				break
 			}
 			x.null = false
 		}
-		root, npath = next, path[i+1:]
-	}
-	mut, ok := root.(Mut)
-	if !ok {
-		return fmt.Errorf("not a mutable value %T at %s", root, path)
+		cur, npath = nmut, path[i+1:]
 	}
 	if len(npath) == 0 {
-		return mut.Assign(val)
+		o, ok := cur.(*OptMut)
+		if ok {
+			o.null = val.Nil()
+			cur = o.Mut
+		}
+		return cur.Assign(val)
 	}
 	s := npath[0]
-	pt := mut.Type()
+	pt := cur.Type()
 	et, err := typ.SelectPath(pt, cor.Path{s})
 	if err != nil {
 		return err
 	}
 	var ev Val
-	if et == typ.Void && len(npath) == 1 {
+	isAny := et == typ.Void || et.Kind&knd.Data == knd.Data
+	if isAny && len(npath) == 1 {
 		ev = val.Value()
 	} else {
-		if et == typ.Void {
+		if isAny {
 			if npath[1].Key == "" {
 				et = typ.List
 			} else {
@@ -190,19 +207,18 @@ func CreatePath(reg *Reg, root Val, path cor.Path, val Val) (err error) {
 		}
 		ev = z.Value()
 	}
-	o, ok := mut.(*OptMut)
-	if ok {
+	if o, ok := cur.(*OptMut); ok {
 		o.null = false
-		mut = o.Mut
+		cur = o.Mut
 	}
 	if s.Key != "" {
-		if a, ok := mut.(Keyr); ok {
+		if a, ok := cur.(Keyr); ok {
 			return a.SetKey(s.Key, ev)
 		}
 	} else {
-		if a, ok := mut.(Idxr); ok {
+		if a, ok := cur.(Idxr); ok {
 			return a.SetIdx(s.Idx, ev)
 		}
 	}
-	return fmt.Errorf("not an applicable value %T at %s", mut, npath)
+	return fmt.Errorf("not an applicable value %T %s at %s", cur, cur, npath)
 }
