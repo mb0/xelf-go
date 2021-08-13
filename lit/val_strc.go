@@ -192,7 +192,7 @@ func (s *Strc) Keys() []string {
 func (s *Strc) Key(k string) (Val, error) {
 	ps, i := s.pkey(k)
 	if i < 0 {
-		return nil, fmt.Errorf("%q in %s: %w", k, s, ErrKeyNotFound)
+		return nil, fmt.Errorf("strc %s %q: %w", s.Typ, k, ErrKeyNotFound)
 	}
 	if len(s.Vals) < len(ps) {
 		if err := s.init(true); err != nil {
@@ -204,7 +204,7 @@ func (s *Strc) Key(k string) (Val, error) {
 func (s *Strc) SetKey(k string, el Val) error {
 	ps, i := s.pkey(k)
 	if i < 0 {
-		return fmt.Errorf("%q in %s: %w", k, s, ErrKeyNotFound)
+		return fmt.Errorf("strc %s %q: %w", s.Typ, k, ErrKeyNotFound)
 	}
 	if len(s.Vals) < len(ps) {
 		if err := s.init(true); err != nil {
