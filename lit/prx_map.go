@@ -2,6 +2,7 @@ package lit
 
 import (
 	"reflect"
+	"sort"
 
 	"xelf.org/xelf/ast"
 	"xelf.org/xelf/bfr"
@@ -77,16 +78,16 @@ func (x *MapPrx) Print(p *bfr.P) error {
 	if x.Nil() && x.isptr() {
 		return p.Fmt("null")
 	}
+	keys := x.Keys()
+	sort.Strings(keys)
 	e := x.elem()
 	p.Byte('{')
-	iter := e.MapRange()
-	for i := 0; iter.Next(); i++ {
+	for i, k := range keys {
 		if i > 0 {
 			p.Sep()
 		}
-		key := iter.Key().String()
-		p.RecordKey(key)
-		el, err := x.entry(key, iter.Value())
+		p.RecordKey(k)
+		el, err := x.entry(k, e.MapIndex(reflect.ValueOf(k)))
 		if err != nil {
 			return err
 		}

@@ -1,6 +1,8 @@
 package lit
 
 import (
+	"sort"
+
 	"xelf.org/xelf/ast"
 	"xelf.org/xelf/bfr"
 	"xelf.org/xelf/knd"
@@ -21,15 +23,15 @@ func (h *Map) MarshalJSON() ([]byte, error) { return bfr.JSON(h) }
 func (h *Map) UnmarshalJSON(b []byte) error { return unmarshal(b, h) }
 func (h *Map) String() string               { return bfr.String(h) }
 func (h *Map) Print(p *bfr.P) (err error) {
+	keys := h.Keys()
+	sort.Strings(keys)
 	p.Byte('{')
-	var i int
-	for k, v := range h.M {
+	for i, k := range keys {
 		if i > 0 {
 			p.Sep()
 		}
-		i++
 		p.RecordKey(k)
-		if err = v.Print(p); err != nil {
+		if err = h.M[k].Print(p); err != nil {
 			return err
 		}
 	}
