@@ -6,11 +6,17 @@ import (
 
 	"xelf.org/xelf/ast"
 	"xelf.org/xelf/bfr"
+	"xelf.org/xelf/typ"
 )
 
 type AnyPrx struct {
 	proxy
 	val Val
+}
+
+func newAnyPrx(reg *Reg, t typ.Type) *AnyPrx {
+	var any interface{}
+	return &AnyPrx{proxy{reg, t, reflect.ValueOf(&any)}, Null{}}
 }
 
 func anyVal(v reflect.Value) Val {

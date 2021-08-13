@@ -80,8 +80,7 @@ func (reg *Reg) Zero(t typ.Type) (m Mut, err error) {
 		case k&knd.Dict != 0 && k&^knd.Keyr == 0:
 			m = &Dict{Reg: reg}
 		default:
-			var any interface{}
-			return &AnyPrx{proxy{reg, t, reflect.ValueOf(&any)}, Null{}}, nil
+			return newAnyPrx(reg, t), nil
 		}
 	} else {
 		switch k {
@@ -114,8 +113,7 @@ func (reg *Reg) Zero(t typ.Type) (m Mut, err error) {
 				return nil, err
 			}
 		default:
-			var any interface{}
-			return &AnyPrx{proxy{reg, t, reflect.ValueOf(&any)}, Null{}}, nil
+			return newAnyPrx(reg, t), nil
 		}
 	}
 	if t.Kind&knd.None != 0 {
