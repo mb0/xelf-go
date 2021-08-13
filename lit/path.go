@@ -163,14 +163,14 @@ func CreatePath(reg *Reg, mut Mut, path cor.Path, val Val) (err error) {
 			if !ok {
 				break
 			}
-			x.null = false
+			x.Null = false
 		}
 		cur, npath = nmut, path[i+1:]
 	}
 	if len(npath) == 0 {
 		o, ok := cur.(*OptMut)
 		if ok {
-			o.null = val.Nil()
+			o.Null = val.Nil()
 			cur = o.Mut
 		}
 		return cur.Assign(val)
@@ -208,7 +208,7 @@ func CreatePath(reg *Reg, mut Mut, path cor.Path, val Val) (err error) {
 		ev = z.Value()
 	}
 	if o, ok := cur.(*OptMut); ok {
-		o.null = false
+		o.Null = false
 		cur = o.Mut
 	}
 	if s.Key != "" {
