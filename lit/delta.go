@@ -4,6 +4,8 @@ import (
 	"fmt"
 
 	"github.com/mb0/diff"
+	"xelf.org/xelf/cor"
+	"xelf.org/xelf/knd"
 )
 
 // Delta returns a set of path edits that can be applied to a to arrive at b.
@@ -23,6 +25,139 @@ func delta(a, b Val, pre string, vals []KeyVal) ([]KeyVal, error) {
 		return vals, nil
 	}
 	return append(vals, KeyVal{Key: stripTailDot(pre), Val: b}), nil
+}
+
+// Apply applies edits d to mutable a or returns an error.
+func Apply(reg *Reg, mut Mut, d []KeyVal) error {
+	for _, kv := range d {
+		key := kv.Key
+		if key != "" && key != "." && key[0] == '.' {
+			lst := len(key) - 1
+			if suf := key[lst]; suf == '+' {
+				return applyListAppend(mut, key[:lst], kv.Val)
+			} else if suf == '*' {
+				return applyListOps(mut, key[:lst], kv.Val)
+			} else if suf == '-' {
+				return applyKeyrDel(mut, key[:lst])
+			}
+		}
+		p, err := cor.ParsePath(key)
+		if err != nil {
+			return err
+		}
+		err = CreatePath(reg, mut, p, kv.Val)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func selMut(mut Mut, path string, full bool) (res Mut, p cor.Path, s cor.Seg, err error) {
+	p, err = cor.ParsePath(path)
+	if err != nil {
+		return
+	}
+	if len(p) == 0 {
+		return mut, p, s, nil
+	}
+	lst := len(p) - 1
+	s = p[lst]
+	if !full {
+		p = p[:lst]
+	}
+	if len(p) > 0 {
+		var found Val
+		found, err = SelectPath(mut, p)
+		if err != nil {
+			return
+		}
+		m, ok := found.(Mut)
+		if !ok {
+			err = fmt.Errorf("expect mutable got %T", found)
+			return
+		}
+		mut = m
+	}
+	return mut, p, s, nil
+}
+
+func applyKeyrDel(mut Mut, path string) error {
+	mut, _, s, err := selMut(mut, path, false)
+	if err != nil {
+		return err
+	}
+	if s.Key == "" {
+		return fmt.Errorf("expect key got %v in %s", s, path)
+	}
+	k, ok := Unwrap(mut).(Keyr)
+	if !ok {
+		return fmt.Errorf("expect keyr got %T", mut)
+	}
+	return k.SetKey(s.Key, nil)
+}
+
+func applyListAppend(mut Mut, key string, v Val) error {
+	mut, _, _, err := selMut(mut, key, true)
+	if err != nil {
+		return err
+	}
+	args, ok := toVals(v)
+	if !ok {
+		return fmt.Errorf("expect list ops got %T", v)
+	}
+	vals, ok := toVals(Unwrap(mut))
+	if !ok {
+		return fmt.Errorf("expect list ops list target got %T", mut)
+	}
+	res := make([]Val, 0, len(vals)+len(args))
+	res = append(res, vals...)
+	res = append(res, args...)
+	return mut.Assign(&List{Vals: res})
+}
+
+func applyListOps(mut Mut, key string, v Val) error {
+	mut, _, _, err := selMut(mut, key, true)
+	if err != nil {
+		return err
+	}
+	ops, ok := toVals(v)
+	if !ok {
+		return fmt.Errorf("expect list ops got %T", v)
+	}
+	vals, ok := toVals(Unwrap(mut))
+	if !ok {
+		return fmt.Errorf("expect list ops list target got %T", mut)
+	}
+	res := make([]Val, 0, len(vals))
+	var ret, del int
+	for _, op := range ops {
+		if op.Type().Kind&knd.Int != 0 {
+			n, err := ToInt(op)
+			if err != nil {
+				return err
+			}
+			if n > 0 {
+				idx := ret + del
+				res = append(res, vals[idx:idx+int(n)]...)
+				ret += int(n)
+			} else if n < 0 {
+				del += int(-n)
+			} else {
+				return fmt.Errorf("unexpected zero ops")
+			}
+		} else if op.Type().Kind&knd.List != 0 {
+			vs, ok := toVals(op)
+			if !ok {
+				return fmt.Errorf("expect list op vals list got %T", v)
+			}
+			res = append(res, vs...)
+		}
+	}
+	if idx := ret + del; idx < len(vals) {
+		res = append(res, vals[idx:]...)
+	}
+	return mut.Assign(&List{Vals: res})
 }
 
 func deltaIdxr(a, b Val, aa, bb []Val, pre string, vals []KeyVal) ([]KeyVal, error) {

@@ -43,6 +43,21 @@ func TestDiff(t *testing.T) {
 		got := dict.String()
 		if got != test.want {
 			t.Errorf("for %s and %s want %s got %s", test.a, test.b, test.want, got)
+			continue
+		}
+		mut, ok := a.(Mut)
+		if !ok {
+			mut = reg.MustProxy(&a)
+		}
+		mut = &OptMut{Mut: mut}
+		err = Apply(reg, mut, d)
+		if err != nil {
+			t.Errorf("apply failed %s %s: %v", test.a, got, err)
+			continue
+		}
+		bstr := mut.String()
+		if bstr != test.b {
+			continue
 		}
 	}
 }
