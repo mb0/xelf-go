@@ -1,6 +1,8 @@
 package lit
 
 import (
+	"fmt"
+
 	"xelf.org/xelf/ast"
 	"xelf.org/xelf/bfr"
 	"xelf.org/xelf/knd"
@@ -67,7 +69,7 @@ func (d *Dict) Parse(a ast.Ast) error {
 }
 func (d *Dict) Assign(p Val) error {
 	// TODO check types
-	switch o := p.(type) {
+	switch o := Unwrap(p).(type) {
 	case nil:
 		d.Keyed = nil
 	case Null:
@@ -153,11 +155,16 @@ func (d *Dict) Key(k string) (Val, error) {
 	return Null{}, nil
 }
 func (d *Dict) SetKey(k string, el Val) error {
-	if el == nil {
-		el = Null{}
-	} else {
-		el = Unwrap(el)
+	if el == nil { // if el is explicitly nil delete the value
+		for i, v := range d.Keyed {
+			if k == v.Key {
+				d.Keyed = append(d.Keyed[:i], d.Keyed[i+1:]...)
+				return nil
+			}
+		}
+		return nil
 	}
+	el = Unwrap(el)
 	if d.El != typ.Void {
 		// TODO check and convert el
 	}

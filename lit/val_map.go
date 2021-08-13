@@ -104,11 +104,12 @@ func (h *Map) Key(k string) (Val, error) {
 	return v, nil
 }
 func (h *Map) SetKey(k string, el Val) error {
-	if el == nil {
-		el = Null{}
+	if el == nil { // if el is explicitly nil delete the value
+		delete(h.M, k)
+		return nil
 	}
 	if h.El != typ.Void {
-		// TODO check and conevert el
+		// TODO check and convert el
 	}
 	if h.M == nil {
 		h.M = make(map[string]Val)

@@ -128,7 +128,7 @@ func (x *MapPrx) Key(k string) (Val, error) {
 func (x *MapPrx) SetKey(k string, v Val) (err error) {
 	e := x.elem()
 	var val reflect.Value
-	if !v.Nil() {
+	if v != nil {
 		val, err = x.Reg.Conv(e.Type().Elem(), v)
 		if err != nil {
 			return err
