@@ -15,6 +15,7 @@ type Exp interface {
 	Source() ast.Src
 	String() string
 	Print(*bfr.P) error
+	Clone() Exp
 }
 
 // Lit is a literal expression with a literal value, which may include a type or spec.
@@ -39,6 +40,7 @@ func (a *Lit) Print(p *bfr.P) error {
 	}
 	return a.Val.Print(p)
 }
+func (a *Lit) Clone() Exp { return &Lit{a.Res, a.Val, a.Src} }
 
 // Sym is a symbol expression which caches the resolving environment and a relative name.
 type Sym struct {
@@ -54,6 +56,7 @@ func (s *Sym) Resl() typ.Type       { return s.Type }
 func (s *Sym) Source() ast.Src      { return s.Src }
 func (s *Sym) String() string       { return s.Sym }
 func (s *Sym) Print(p *bfr.P) error { return p.Fmt(s.Sym) }
+func (s *Sym) Clone() Exp           { return &Sym{s.Type, s.Sym, s.Src, nil, ""} }
 
 // Tag is a named quasi expression that is resolved by its parent call.
 type Tag struct {
@@ -79,6 +82,7 @@ func (t *Tag) Print(p *bfr.P) error {
 	p.Byte(':')
 	return t.Exp.Print(p)
 }
+func (t *Tag) Clone() Exp { return &Tag{t.Tag, t.Exp.Clone(), t.Src} }
 
 // Tupl is a quasi multi-expression that is resolved by its parent call or a program.
 type Tupl struct {
@@ -102,6 +106,13 @@ func (t *Tupl) Print(p *bfr.P) error {
 		}
 	}
 	return nil
+}
+func (t *Tupl) Clone() Exp {
+	els := append(([]Exp)(nil), t.Els...)
+	for i, e := range els {
+		els[i] = e.Clone()
+	}
+	return &Tupl{t.Type, els, t.Src}
 }
 
 // Call is an executable expression that uses a spec to evaluate to a literal.
@@ -141,4 +152,11 @@ func (c *Call) Print(p *bfr.P) error {
 		}
 	}
 	return p.Byte(')')
+}
+func (c *Call) Clone() Exp {
+	args := append(([]Exp)(nil), c.Args...)
+	for i, a := range args {
+		args[i] = a.Clone()
+	}
+	return &Call{c.Sig, c.Spec, args, nil, c.Src}
 }
