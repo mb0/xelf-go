@@ -85,7 +85,7 @@ func ErrUnexpectedExp(s Src, e interface{}) *Error {
 	return &Error{Src: s, Code: 501, Name: fmt.Sprintf("unexpected exp %T", e)}
 }
 func ErrReslSym(s Src, sym string, err error) *Error {
-	name := fmt.Sprintf("unresolved sym %s", sym)
+	name := fmt.Sprintf("sym %s unresolved", sym)
 	return &Error{Src: s, Code: 502, Name: name, Err: err}
 }
 func ErrReslSpec(s Src, name string, err error) *Error {
@@ -95,11 +95,11 @@ func ErrUnify(s Src, name string) *Error {
 	return &Error{Src: s, Code: 504, Name: name}
 }
 func ErrLayout(s Src, t fmt.Stringer, err error) *Error {
-	name := fmt.Sprintf("call layout failed for %s", t)
+	name := fmt.Sprintf("layout %s failed", t)
 	return &Error{Src: s, Code: 505, Name: name, Err: err}
 }
 func ErrEval(s Src, name string, err error) *Error {
-	name = fmt.Sprintf("eval failed for %s", name)
+	name = fmt.Sprintf("eval %s failed", name)
 	return &Error{Src: s, Code: 506, Name: name, Err: err}
 }
 func ErrUserErr(s Src, name string, err error) *Error {
