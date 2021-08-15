@@ -2,7 +2,6 @@ package lib
 
 import (
 	"xelf.org/xelf/ast"
-	"xelf.org/xelf/cor"
 	"xelf.org/xelf/exp"
 	"xelf.org/xelf/lit"
 )
@@ -36,22 +35,16 @@ func (s *mutSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 		}
 	}
 	edit, _ := c.Args[2].(*exp.Tupl)
+	delta := make(lit.Delta, 0, len(edit.Els))
 	for _, el := range edit.Els {
 		tag := el.(*exp.Tag)
 		ta, err := p.Eval(c.Env, tag.Exp)
 		if err != nil {
 			return nil, err
 		}
-		path, err := cor.ParsePath(tag.Tag)
-		if err != nil {
-			return nil, ast.ErrEval(tag.Src, "mut invalid path tag", nil)
-		}
-		err = lit.CreatePath(p.Reg, mut, path, ta.Val)
-		if err != nil {
-			return nil, ast.ErrEval(tag.Src, "mut create path", err)
-		}
+		delta = append(delta, lit.KeyVal{Key: tag.Tag, Val: ta.Val})
 	}
-	return fst, nil
+	return fst, lit.Apply(p.Reg, mut, delta)
 }
 
 var Append = &appendSpec{impl("<form append list tupl? .0>")}

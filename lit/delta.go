@@ -8,39 +8,39 @@ import (
 	"xelf.org/xelf/knd"
 )
 
-// Delta returns a set of path edits that can be applied to a to arrive at b.
-// The simple and correct answer is always to return b. We do make some effort to find a
-// simpler set of changes, but make no guarantee to return the shortest edit path.
-func Delta(a, b Val) (map[string]Val, error) {
-	d := make(map[string]Val)
-	return d, delta(a, b, ".", d)
-}
-func delta(a, b Val, pre string, d map[string]Val) error {
+// Delta is a list of path edits that describe a transformation fromn one value to another.
+type Delta []KeyVal
+
+// Diff returns delta between values a and b or an error. The result can be applied to a to get b.
+// The simplest and correct answer is always to return b. We however do make some effort to find a
+// simpler set of changes, but do not guarantee to return the shortest edit path.
+func Diff(a, b Val) (Delta, error) { return diffVals(a, b, ".", nil) }
+func diffVals(a, b Val, pre string, d Delta) (Delta, error) {
 	if aa, ok := a.(Keyr); ok {
 		if bb, ok := b.(Keyr); ok {
-			return deltaKeyr(aa, bb, pre, d)
+			return diffKeyr(aa, bb, pre, d)
 		}
 	} else if aa, ok := toVals(a); ok {
 		if bb, ok := toVals(b); ok {
-			return deltaIdxr(a, b, aa, bb, pre, d)
+			return diffIdxr(a, b, aa, bb, pre, d)
 		}
 	} else if Equal(a, b) {
-		return nil
+		return d, nil
 	}
-	d[stripTailDot(pre)] = b
-	return nil
+	d = append(d, KeyVal{stripTailDot(pre), b})
+	return d, nil
 }
 
 // Apply applies edits d to mutable a or returns an error.
-func Apply(reg *Reg, mut Mut, d map[string]Val) error {
-	for k, v := range d {
-		key := k
+func Apply(reg *Reg, mut Mut, d Delta) error {
+	for _, kv := range d {
+		key := kv.Key
 		if key != "" && key != "." && key[0] == '.' {
 			lst := len(key) - 1
 			if suf := key[lst]; suf == '+' {
-				return applyListAppend(mut, key[:lst], v)
+				return applyListAppend(mut, key[:lst], kv.Val)
 			} else if suf == '*' {
-				return applyListOps(mut, key[:lst], v)
+				return applyListOps(mut, key[:lst], kv.Val)
 			} else if suf == '-' {
 				return applyKeyrDel(mut, key[:lst])
 			}
@@ -49,7 +49,7 @@ func Apply(reg *Reg, mut Mut, d map[string]Val) error {
 		if err != nil {
 			return err
 		}
-		err = CreatePath(reg, mut, p, v)
+		err = CreatePath(reg, mut, p, kv.Val)
 		if err != nil {
 			return err
 		}
@@ -164,18 +164,18 @@ func applyListOps(mut Mut, key string, v Val) error {
 	return mut.Assign(&List{Vals: res})
 }
 
-func deltaIdxr(a, b Val, aa, bb []Val, pre string, d map[string]Val) error {
+func diffIdxr(a, b Val, aa, bb []Val, pre string, d Delta) (Delta, error) {
 	chgs := diff.Diff(len(aa), len(bb), &valsDiff{aa, bb})
 	if len(chgs) == 0 {
-		return nil
+		return d, nil
 	}
 	// how much and how often we retain and delete from a and insert from b
 	ops, t := diffToOps(chgs, aa, bb)
 	if !t.changed() {
-		return nil
+		return d, nil
 	} else if t.replaced() {
-		d[stripTailDot(pre)] = b
-		return nil
+		d = append(d, KeyVal{stripTailDot(pre), b})
+		return d, nil
 	}
 	// we have at least two ops and known at least one of them to be ret and one del or ins
 	// ops of the same kind are merged and do not follow each other
@@ -184,8 +184,8 @@ func deltaIdxr(a, b Val, aa, bb []Val, pre string, d map[string]Val) error {
 	// two ops u,v where u is ret and v is ins
 	if len(ops) == 2 && ops[0].N > 0 && ops[1].N == 0 {
 		// lets return the special append op
-		d[stripTailDot(pre)+"+"] = &List{Vals: ops[1].V}
-		return nil
+		d = append(d, KeyVal{stripTailDot(pre) + "+", &List{Vals: ops[1].V}})
+		return d, nil
 	}
 	// we also want to detect replacing a single element and use idx path notation. that does
 	// only occur in two instances:
@@ -196,31 +196,31 @@ func deltaIdxr(a, b Val, aa, bb []Val, pre string, d map[string]Val) error {
 		u, v, w := ops[0], ops[1], ops[2]
 		if v.N == -1 {
 			if len(w.V) == 1 {
-				return deltaSub(aa[u.N], w.V[0], pre, u.N, d)
+				return diffSub(aa[u.N], w.V[0], pre, u.N, d)
 			}
 			if t.retn == 1 && len(u.V) == 1 {
-				return deltaSub(aa[0], u.V[0], pre, 0, d)
+				return diffSub(aa[0], u.V[0], pre, 0, d)
 			}
 		} else if len(v.V) == 1 {
 			if w.N == -1 {
-				return deltaSub(aa[u.N], v.V[0], pre, u.N, d)
+				return diffSub(aa[u.N], v.V[0], pre, u.N, d)
 			}
 			if t.retn == 1 && u.N == -1 {
-				return deltaSub(aa[0], v.V[0], pre, 0, d)
+				return diffSub(aa[0], v.V[0], pre, 0, d)
 			}
 		}
 	}
 	// lets return the ops as list
-	d[stripTailDot(pre)+"*"] = opsToList(ops)
-	return nil
+	d = append(d, KeyVal{stripTailDot(pre) + "*", opsToList(ops)})
+	return d, nil
 }
 
-func deltaSub(a, b Val, pre string, idx int, d map[string]Val) error {
+func diffSub(a, b Val, pre string, idx int, d Delta) (Delta, error) {
 	path := fmt.Sprintf("%s%d.", pre, idx)
-	return delta(a, b, path, d)
+	return diffVals(a, b, path, d)
 }
 
-func deltaKeyr(a, b Keyr, pre string, d map[string]Val) error {
+func diffKeyr(a, b Keyr, pre string, d Delta) (Delta, error) {
 	// we may want different behaviour for dicts and strc
 	// dict keys can be deleted, strc keys only be set to zero
 	// dict may be unordered while strc fields are ordered
@@ -239,13 +239,13 @@ func deltaKeyr(a, b Keyr, pre string, d map[string]Val) error {
 				// does not exist in a
 				v, err := b.Key(k)
 				if err != nil {
-					return err
+					return nil, err
 				}
 				path := k
 				if pre != "." {
 					path = pre + k
 				}
-				d[path] = v
+				d = append(d, KeyVal{path, v})
 				// mark as handled
 				km[k] = false
 			} // duplicate key in b
@@ -254,40 +254,37 @@ func deltaKeyr(a, b Keyr, pre string, d map[string]Val) error {
 		// exists in a and b
 		av, err := a.Key(k)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		bv, err := b.Key(k)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		// call delta on the values
 		path := pre + k
-		nvals := make(map[string]Val)
-		err = delta(av, bv, path+".", nvals)
+		nvals, err := diffVals(av, bv, path+".", nil)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		if pre == "." {
 			// check for simple path and turn them into plain keys
-			for nk, nv := range nvals {
-				if nk == path {
-					delete(nvals, nk)
-					nvals[k] = nv
+			for i, kv := range nvals {
+				if kv.Key == path {
+					kv.Key = k
+					nvals[i] = kv
 				}
 			}
 		}
 		// append edits and mark as handled
-		for nk, nv := range nvals {
-			d[nk] = nv
-		}
+		d = append(d, nvals...)
 		km[k] = false
 	}
 	for k, v := range km {
 		if v { // deleted key
-			d[pre+k+"-"] = Null{}
+			d = append(d, KeyVal{pre + k + "-", Null{}})
 		}
 	}
-	return nil
+	return d, nil
 }
 
 func stripTailDot(s string) string {

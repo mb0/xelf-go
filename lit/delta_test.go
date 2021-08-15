@@ -18,7 +18,7 @@ func TestDiff(t *testing.T) {
 		{`null`, `[1 2]`, `{'.':[1 2]}`},
 		{`[1 2]`, `null`, `{'.':null}`},
 		{`{a:1}`, `{a:2}`, `{a:2}`},
-		{`{a:1 b:2}`, `{a:2}`, `{'.b-':null a:2}`},
+		{`{a:1 b:2}`, `{a:2}`, `{a:2 '.b-':null}`},
 		{`{a:[1 2]}`, `{a:[1 3 2]}`, `{'.a*':[1 [3]]}`},
 		{`{a:[[1 2]]}`, `{a:[[1 3]]}`, `{'.a.0.1':3}`},
 	}
@@ -34,12 +34,12 @@ func TestDiff(t *testing.T) {
 			t.Errorf("parse b %s: %v", test.b, err)
 			continue
 		}
-		d, err := Delta(a, b)
+		d, err := Diff(a, b)
 		if err != nil {
 			t.Errorf("delta failed %s %s: %v", test.a, test.b, err)
 			continue
 		}
-		dict := &Map{M: d}
+		dict := &Dict{Keyed: d}
 		got := dict.String()
 		if got != test.want {
 			t.Errorf("for %s and %s want %s got %s", test.a, test.b, test.want, got)
