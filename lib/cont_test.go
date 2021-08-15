@@ -18,11 +18,11 @@ func TestContEval(t *testing.T) {
 		{`(foldr [1 2 3] "" (fn (cat _ .1)))`, "321"},
 		// map
 		{`(fold [1 2 3] [] (fn
-			(mut _ (mul .1 2))
+			(append _ (mul .1 2))
 		))`, "[2 4 6]"},
 		// filter
 		{`(fold [1 2 3] [] (fn
-			(if (ne 0 (rem .1 2)) (mut .0 .1) .0)
+			(if (ne 0 (rem .1 2)) (append .0 .1) .0)
 		))`, "[1 3]"},
 		{`(range 4)`, "[0 1 2 3]"},
 		{`(range 4 (fn (add _ 1)))`, "[1 2 3 4]"},

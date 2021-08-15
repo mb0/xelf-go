@@ -22,7 +22,8 @@ var Core = exp.Builtins(make(Specs).Add(
 var Std = exp.Builtins(make(Specs).AddMap(Core).Add(
 	Dyn,
 	Dot, Let,
-	Mut, Fn,
+	Mut, Append,
+	Fn,
 	Fold, Foldr, Range,
 ))
 
