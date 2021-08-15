@@ -46,7 +46,8 @@ func LayoutForm(sig typ.Type, els []Exp) ([]Exp, error) {
 				arg = &Tupl{Type: typ.ElemTupl(pt), Els: els[:n]}
 			}
 		} else if len(els) > 0 {
-			if el := els[0]; (pt.Kind&knd.Exp == knd.Tag) == (el.Kind()&knd.Tag != 0) {
+			isTag := pt.Kind&knd.Exp == knd.Tag
+			if el := els[0]; isTag == (el != nil && el.Kind()&knd.Tag != 0) {
 				n, arg = 1, el
 			}
 		}
