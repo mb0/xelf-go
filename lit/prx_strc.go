@@ -184,7 +184,7 @@ func (x *StrcPrx) Key(k string) (Val, error) {
 	}
 	_, idx, _ := x.pkey(k)
 	if len(idx) == 0 {
-		return nil, fmt.Errorf("prx strc %T %q: %w", x.Ptr(), k, ErrKeyNotFound)
+		return nil, fmt.Errorf("strc prx %T %q: %w", x.Ptr(), k, ErrKeyNotFound)
 	}
 	el, err := x.Reg.ProxyValue(x.elem().FieldByIndex(idx).Addr())
 	if err != nil {
@@ -195,7 +195,7 @@ func (x *StrcPrx) Key(k string) (Val, error) {
 func (x *StrcPrx) SetKey(k string, v Val) error {
 	_, idx, _ := x.pkey(k)
 	if len(idx) == 0 {
-		return fmt.Errorf("prx strc %T %q: %w", x.Ptr(), k, ErrKeyNotFound)
+		return fmt.Errorf("strc prx %T %q: %w", x.Ptr(), k, ErrKeyNotFound)
 	}
 	el, err := x.Reg.ProxyValue(x.elem().FieldByIndex(idx).Addr())
 	if err != nil {

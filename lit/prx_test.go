@@ -3,11 +3,13 @@ package lit
 import (
 	"encoding/json"
 	"reflect"
+	"strings"
 	"testing"
 	"time"
 
 	"xelf.org/xelf/bfr"
 	"xelf.org/xelf/cor"
+	"xelf.org/xelf/knd"
 	"xelf.org/xelf/typ"
 )
 
@@ -18,6 +20,25 @@ type Point struct {
 type POI struct {
 	Name  string
 	Point *Point `json:"point,omitempty"`
+}
+
+type Embed struct {
+	ID int
+	POI
+}
+
+func TestEmbed(t *testing.T) {
+	reg := &Reg{}
+	o := reg.MustProxy(new(Embed)).(Keyr)
+	ot := o.Type()
+	ot.Kind = knd.Rec
+	if got, want := ot.String(), "<rec id:int name:str point?:<obj? lit.Point>>"; got != want {
+		t.Errorf("embed want type %s got %s", want, got)
+	}
+	keys := o.Keys()
+	if got, want := strings.Join(keys, " "), "id name point"; got != want {
+		t.Errorf("embed want keys %s got %s", want, got)
+	}
 }
 
 func TestProxy(t *testing.T) {

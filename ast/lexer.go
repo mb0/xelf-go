@@ -27,7 +27,7 @@ type Src struct {
 
 func (s Src) String() string {
 	if s.Doc == nil || s.Name == "" {
-		return fmt.Sprintf("%d:%d", s.Line, s.Byte)
+		return fmt.Sprintf(":%d:%d", s.Line, s.Byte)
 	}
 	return fmt.Sprintf("%s:%d:%d", s.Name, s.Line, s.Byte)
 }
