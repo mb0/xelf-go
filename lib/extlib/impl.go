@@ -22,6 +22,8 @@ var Str = FuncMap{
 	"upper":    strings.ToUpper,
 	"lower":    strings.ToLower,
 	"trim":     strings.TrimSpace,
+	"like":     func(t, p string) bool { return Like(t, p, false) },
+	"ilike":    func(t, p string) bool { return Like(t, p, true) },
 }
 
 var Time = FuncMap{
