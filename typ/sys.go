@@ -104,7 +104,9 @@ func (sys *Sys) inst(t Type, m map[int32]Type) (Type, error) {
 					}
 				}
 			}
-			return Select(par.Type, b.Path)
+			if par != nil {
+				return Select(par.Type, b.Path)
+			}
 		}
 		if old > 0 {
 			m[old] = r

@@ -23,7 +23,7 @@ func TestDynEval(t *testing.T) {
 	for _, test := range tests {
 		got, err := exp.Eval(nil, Std, test.raw)
 		if err != nil {
-			t.Errorf("eval %s failed: %v", test.raw, err)
+			t.Errorf("eval %s failed\n\t%v", test.raw, err)
 			continue
 		}
 		str := got.String()

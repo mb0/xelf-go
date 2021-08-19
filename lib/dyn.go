@@ -26,7 +26,9 @@ func (s *dynSpec) Resl(p *exp.Prog, env exp.Env, c *exp.Call, h typ.Type) (exp.E
 	// TODO use exp type with hint as result arg
 	fst, err := p.Resl(env, d.Els[0], typ.Void)
 	if err != nil {
-		return nil, err
+		fst := d.Els[0]
+		src := fst.Source()
+		return nil, ast.ErrEval(src, fmt.Sprintf("dyn resl failed for %s", fst), err)
 	}
 	if fst.Kind()&(knd.Sym|knd.Call) != 0 {
 		// TODO lets check the resolved type of fst
@@ -74,7 +76,7 @@ func (s *dynSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 	// TODO use exp type with hint as result arg
 	a, err := p.Eval(c.Env, d.Els[0])
 	if err != nil {
-		return nil, err
+		return nil, ast.ErrEval(a.Source(), fmt.Sprintf("dyn eval failed for %s", a), err)
 	}
 	spec, args := litSpec(a, d.Els)
 	if spec == nil {
@@ -88,7 +90,7 @@ func (s *dynSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 	cc := &exp.Call{Sig: sig, Spec: spec, Args: args, Src: d.Src}
 	ce, err := spec.Resl(p, c.Env, cc, typ.Void)
 	if err != nil {
-		return nil, err
+		return nil, ast.ErrEval(a.Source(), fmt.Sprintf("dyn resl call failed for %s", a), err)
 	}
 	cc = ce.(*exp.Call)
 	return cc.Spec.Eval(p, cc)

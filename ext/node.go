@@ -110,7 +110,7 @@ func (s *NodeSpec) GetNode(p *exp.Prog, c *exp.Call) (Node, error) {
 func (s *NodeSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 	n, err := s.GetNode(p, c)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("get node: %v", err)
 	}
 	for i, sp := range exp.SigArgs(c.Sig) {
 		switch a := c.Args[i].(type) {
@@ -150,7 +150,7 @@ func (s *NodeSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 				}
 				v, err := s.Tail.Prepper(p, c.Env, n, "", a)
 				if err != nil {
-					return nil, err
+					return nil, fmt.Errorf("tail prep: %v", err)
 				}
 				if v != nil {
 					if s.Tail.Prepper == nil {
@@ -166,12 +166,12 @@ func (s *NodeSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 		case *exp.Tag:
 			err := s.dokey(p, c, n, a.Tag, a.Exp)
 			if err != nil {
-				return nil, fmt.Errorf("setkey %s: %v", a.Tag, err)
+				return nil, err
 			}
 		default:
 			err := s.dokey(p, c, n, sp.Name, a)
 			if err != nil {
-				return nil, fmt.Errorf("setkey %s: %v", sp.Name, err)
+				return nil, err
 			}
 			continue
 		}
@@ -182,12 +182,12 @@ func (s *NodeSpec) dokey(p *exp.Prog, c *exp.Call, prx Node, key string, el exp.
 	r := s.Rule(key)
 	v, err := r.Prepper(p, c.Env, prx, key, el)
 	if err != nil {
-		return err
+		return fmt.Errorf("prep key %s: %v", key, err)
 	}
 	if v != nil {
 		err = r.Setter(p, prx, key, v)
 		if err != nil {
-			return fmt.Errorf("setkey %s: %v", key, err)
+			return fmt.Errorf("set key %s: %v", key, err)
 		}
 	}
 	return nil

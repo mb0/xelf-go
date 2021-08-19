@@ -103,9 +103,6 @@ func (p *Prog) Resl(env Env, e Exp, h typ.Type) (Exp, error) {
 				a.Val = p.Sys.Update(t)
 			}
 		}
-		if h == typ.Void {
-			h = a.Val.Type()
-		}
 		rt, err := p.Sys.Unify(a.Res, h)
 		if err != nil {
 			return nil, ast.ErrUnify(a.Src, err.Error())

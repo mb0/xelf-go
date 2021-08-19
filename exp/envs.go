@@ -54,7 +54,9 @@ func (e *ArgEnv) Eval(p *Prog, s *Sym, k string) (*Lit, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Lit{Res: res.Type(), Val: res, Src: s.Src}, nil
+	// TODO introduce exp Select to sort out correct literal type
+	// this is a stop-gap hack only for arg env
+	return &Lit{Res: typ.Abstract(res.Type()), Val: res, Src: s.Src}, nil
 }
 
 // DotEnv is a child scope that supports relative paths into a literal.
