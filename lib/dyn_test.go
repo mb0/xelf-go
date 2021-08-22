@@ -14,8 +14,9 @@ func TestDynEval(t *testing.T) {
 	}{
 		{`(1 2 3)`, `6`, "<int>"},
 		{`(real 1)`, `1`, "<real>"},
+		{`(raw 'test')`, `test`, "<raw>"},
 		{`('a' 'b' 'c')`, `abc`, "<str>"},
-		{`((raw 'a') ['b'] 'c')`, "\"a\"\n[\"b\"]\n\"c\"", "<raw>"},
+		{`('a' (json ['b']) (xelf 'c'))`, "a[\"b\"]'c'", "<str>"},
 		{`(let addone:(fn n:int (add .n 1)) (addone 2))`, `3`, "<int>"},
 		{`(let addone:(fn (_ 1)) (addone (int 2)))`, `3`, "<int>"},
 		{`((if false add sub) 1 2)`, `-1`, "<int>"},

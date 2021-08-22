@@ -51,8 +51,8 @@ func (s *sepSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 	return &exp.Lit{Res: typ.Str, Val: lit.Str(b.String())}, nil
 }
 
-var Json = &rawSpec{impl("<form json tupl raw>"), true}
-var Xelf = &rawSpec{impl("<form xelf tupl raw>"), false}
+var Json = &rawSpec{impl("<form json any raw>"), true}
+var Xelf = &rawSpec{impl("<form xelf any any raw>"), false}
 
 type rawSpec struct {
 	exp.SpecBase
@@ -65,16 +65,13 @@ func (s *rawSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 	if err != nil {
 		return nil, err
 	}
+	fst := args[0]
 	var b bytes.Buffer
-	ctx := &bfr.P{Writer: &b, JSON: s.JSON}
-	if err != nil {
-		return nil, err
-	}
-	for i, v := range args[0].Val.(*lit.List).Vals {
-		if i > 0 {
-			ctx.WriteByte('\n')
-		}
-		err = v.Print(ctx)
+	if fst == nil || fst.Val == nil {
+		b.WriteString("null")
+	} else {
+		ctx := &bfr.P{Writer: &b, JSON: s.JSON}
+		err = args[0].Val.Print(ctx)
 		if err != nil {
 			return nil, err
 		}

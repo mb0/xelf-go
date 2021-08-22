@@ -16,7 +16,7 @@ func TestCharEval(t *testing.T) {
 		{`(cat 'Hallo' 'Welt' '!')`, lit.Str("HalloWelt!")},
 		{`(sep ' ' 'Hallo' 'Welt' '!')`, lit.Str("Hallo Welt !")},
 		{`(json 'Hallo')`, lit.Raw("\"Hallo\"")},
-		{`(xelf 'Hallo' 'Welt')`, lit.Raw("'Hallo'\n'Welt'")},
+		{`(xelf 'Hallo')`, lit.Raw("'Hallo'")},
 	}
 	for _, test := range tests {
 		got, err := exp.Eval(nil, Core, test.raw)
