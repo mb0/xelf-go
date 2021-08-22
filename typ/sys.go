@@ -162,6 +162,9 @@ func unify(sys *Sys, t, h Type) (Type, error) {
 		if equalBody(a.Body, b.Body) {
 			return unibind(sys, a, b, r), nil
 		}
+		if a.Body == nil {
+			a, b, r, ak, bk = b, a, b, bk, ak
+		}
 	Switch:
 		switch ab := a.Body.(type) {
 		case *ElBody:

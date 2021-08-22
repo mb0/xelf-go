@@ -64,6 +64,8 @@ func TestUnify(t *testing.T) {
 		{"@", "int", "", WithID(1, Int)},
 		{"int", "@", "", WithID(1, Int)},
 		{"@", "@", "", Var(1, Void)},
+		{"list", "list|int", "", ListOf(Int)},
+		{"list|@", "list", "", ListOf(Var(1, Void))},
 		{"list|@", "list|int", "", ListOf(WithID(1, Int))},
 		{"list|str", "list|int", "cannot", Void},
 		{"<rec x:int y:int>", "<rec x:int y:int>", "", Rec(P("x", Int), P("y", Int))},
