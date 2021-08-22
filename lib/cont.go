@@ -20,36 +20,9 @@ func (s *lenSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 		return nil, err
 	}
 	var n int
-	switch v := args[0].Val.(type) {
-	case lit.Null:
-	case lit.Str:
-		n = len(v)
-	case *lit.Str:
-		if v != nil {
-			n = len(*v)
-		}
-	case lit.Raw:
-		n = len(v)
-	case *lit.Raw:
-		if v != nil {
-			n = len(*v)
-		}
-	case *lit.List:
-		n = len(v.Vals)
-	case *lit.Dict:
-		n = len(v.Keyed)
-	case *lit.Map:
-		n = len(v.M)
-	case *lit.Strc:
-		n = v.Len()
-	case *lit.ListPrx:
-		n = v.Len()
-	case *lit.MapPrx:
-		n = v.Len()
-	case *lit.StrcPrx:
-		n = v.Len()
-	default:
-		lenr, ok := v.(interface{ Len() int })
+	v := args[0].Val
+	if v != nil && !v.Nil() {
+		lenr, ok := v.(lit.Lenr)
 		if ok {
 			n = lenr.Len()
 		} else {

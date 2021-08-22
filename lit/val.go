@@ -26,6 +26,12 @@ type (
 	Span time.Duration
 )
 
+// NewUUID returns a new random lit uuid v4 value.
+func NewUUID() UUID { return UUID(cor.NewUUID()) }
+
+// Now returns a new lit time value truncated to millisecond precision.
+func Now() Time { return Time(time.Now().Truncate(time.Millisecond)) }
+
 func (Null) Type() typ.Type { return typ.None }
 func (Bool) Type() typ.Type { return typ.Bool }
 func (Int) Type() typ.Type  { return typ.Int }
@@ -65,6 +71,9 @@ func (r Raw) Value() Val  { return r }
 func (u UUID) Value() Val { return u }
 func (t Time) Value() Val { return t }
 func (s Span) Value() Val { return s }
+
+func (s Str) Len() int { return len(s) }
+func (r Raw) Len() int { return len(r) }
 
 func (Null) String() string   { return "null" }
 func (v Bool) String() string { return strconv.FormatBool(bool(v)) }

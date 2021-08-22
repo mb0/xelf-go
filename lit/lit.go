@@ -46,6 +46,12 @@ type Apdr interface {
 	Append(v Val) error
 }
 
+// Lenr is the common interface of value that have a length.
+type Lenr interface {
+	Val
+	Len() int
+}
+
 // Keyr is the interface for keyer values.
 type Keyr interface {
 	Mut
