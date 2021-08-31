@@ -36,6 +36,8 @@ func SelectPath(val Val, path cor.Path) (_ Val, err error) {
 
 func SelectKey(val Val, key string) (Val, error) {
 	switch a := val.(type) {
+	case Null:
+		return a, nil
 	case Keyr:
 		return a.Key(key)
 	default:
@@ -48,6 +50,8 @@ func SelectKey(val Val, key string) (Val, error) {
 
 func SelectIdx(val Val, idx int) (res Val, err error) {
 	switch a := val.(type) {
+	case Null:
+		return a, nil
 	case Idxr:
 		return a.Idx(idx)
 	default:
