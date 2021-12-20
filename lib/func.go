@@ -170,6 +170,7 @@ type FuncEnv struct {
 }
 
 func (e *FuncEnv) Parent() exp.Env { return e.Par }
+func (e *FuncEnv) Dyn() exp.Spec   { return e.Par.Dyn() }
 func (e *FuncEnv) Resl(p *exp.Prog, s *exp.Sym, k string) (exp.Exp, error) {
 	if k == "recur" && e.recur != nil {
 		// we want to copy the argument def when we recur

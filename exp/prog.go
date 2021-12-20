@@ -40,6 +40,9 @@ type Env interface {
 	// Parent returns the parent environment or nil.
 	Parent() Env
 
+	// Dyn returns a dyn spec for this environment or nil.
+	Dyn() Spec
+
 	// Resl resolves a part of a symbol and returns the result or an error.
 	Resl(p *Prog, s *Sym, k string) (Exp, error)
 
@@ -54,7 +57,6 @@ type Prog struct {
 	Sys  *typ.Sys
 	Root Env
 	Exp  Exp
-	Dyn  Spec
 	fnid uint
 }
 
@@ -64,9 +66,7 @@ func NewProg(reg *lit.Reg, env Env, exp Exp) *Prog {
 	if reg == nil {
 		reg = &lit.Reg{}
 	}
-	p := &Prog{Reg: reg, Sys: typ.NewSys(reg), Root: env, Exp: exp}
-	p.Dyn = p.evalDyn(env)
-	return p
+	return &Prog{Reg: reg, Sys: typ.NewSys(reg), Root: env, Exp: exp}
 }
 
 // Resl resolves an expression using a type hint and returns the result or an error.
@@ -208,17 +208,6 @@ func (p *Prog) NextFnID() uint {
 	return p.fnid
 }
 
-func (p *Prog) evalDyn(env Env) Spec {
-	ident := &Sym{Sym: "dyn", Type: typ.Spec}
-	found, _ := env.Eval(p, ident, ident.Sym)
-	if found != nil {
-		if dyn, ok := found.Val.(Spec); ok {
-			return dyn
-		}
-	}
-	return nil
-}
-
 func (p *Prog) reslSpec(env Env, c *Call) (Spec, []Exp, error) {
 	if len(c.Args) == 0 {
 		return nil, nil, ast.ErrReslSpec(c.Src, "unexpected empty call", nil)
@@ -234,13 +223,10 @@ func (p *Prog) reslSpec(env Env, c *Call) (Spec, []Exp, error) {
 			}
 		}
 	}
-	dyn := p.Dyn
+	dyn := env.Dyn()
 	if dyn == nil {
-		dyn = p.evalDyn(env)
-		if dyn == nil {
-			name := fmt.Sprintf("no dyn spec found for %s", fst)
-			return nil, nil, ast.ErrReslSpec(c.Src, name, nil)
-		}
+		name := fmt.Sprintf("no dyn spec found for %s", fst)
+		return nil, nil, ast.ErrReslSpec(c.Src, name, nil)
 	}
 	return dyn, c.Args, nil
 }

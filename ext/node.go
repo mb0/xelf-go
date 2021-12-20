@@ -19,7 +19,9 @@ type Node interface {
 // NewNode returns a node for val or an error. It either accepts a strc or creates a new proxy.
 func NewNode(reg *lit.Reg, val interface{}) (Node, error) {
 	n, ok := val.(Node)
-	if !ok {
+	if ok {
+		n.WithReg(reg)
+	} else {
 		p, err := reg.Proxy(val)
 		if err != nil {
 			return nil, fmt.Errorf("proxy %T: %w", val, err)
@@ -216,3 +218,4 @@ func (e *NodeEnv) Eval(p *exp.Prog, s *exp.Sym, k string) (*exp.Lit, error) {
 	}
 	return e.Par.Eval(p, s, k)
 }
+func (e *NodeEnv) Dyn() exp.Spec { return e.Par.Dyn() }

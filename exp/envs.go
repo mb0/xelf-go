@@ -14,6 +14,7 @@ var ErrSymNotFound = fmt.Errorf("sym not found")
 type Builtins map[string]Spec
 
 func (e Builtins) Parent() Env { return nil }
+func (e Builtins) Dyn() Spec   { return e["dyn"] }
 
 func (e Builtins) Resl(p *Prog, s *Sym, k string) (Exp, error) { return e.Eval(p, s, k) }
 func (e Builtins) Eval(p *Prog, s *Sym, k string) (*Lit, error) {
@@ -39,6 +40,7 @@ type ArgEnv struct {
 }
 
 func (e *ArgEnv) Parent() Env { return e.Par }
+func (e *ArgEnv) Dyn() Spec   { return e.Par.Dyn() }
 
 func (e *ArgEnv) Resl(p *Prog, s *Sym, k string) (Exp, error) {
 	if k[0] != '$' {
@@ -66,6 +68,8 @@ type DotEnv struct {
 }
 
 func (e *DotEnv) Parent() Env { return e.Par }
+func (e *DotEnv) Dyn() Spec   { return e.Par.Dyn() }
+
 func (e *DotEnv) Resl(p *Prog, s *Sym, k string) (Exp, error) {
 	k, ok := DotKey(k)
 	if !ok {

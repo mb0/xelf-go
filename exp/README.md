@@ -21,6 +21,7 @@ Calls and symbols cache their environment.
 
 A `Spec` is a func or form definition that resolves and evaluates calls. If the first element of a
 call does not resolve to a spec literal the program calls a `dyn` spec to allow syntax sugar.
+The `dyn` spec is evalueated from the environment.
 
 Specs have a declaration type. When we resolves a call spec we instantiate the spec declaration
 and call `LayoutSpec` to match and group all arguments to spec parameters.
@@ -33,11 +34,6 @@ Form specs can mix in tupl parameters to match sequences of expressions, tags an
 groups of parameters. Forms can also use the exp type in their signature to signal the resolution
 not to resolve the argument and leave it to the spec. Form argument resolution and evaluation is
 responsibility of the spec.
-
-The `dyn` spec is usually evaluated from the root environment on program creation cached in a
-program field. If the program dyn field is explicitly set to nil, we are in dyndyn mode and look
-up the dyn spec from the current environment whenever we need one.
-
 
 The `SpecBase` type is a partial spec implementation that implements automatic argument resolution
 based on the type signature. Final implementations mostly need to handle call evaluation, but more
