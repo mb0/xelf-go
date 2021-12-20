@@ -2,6 +2,7 @@ package ast
 
 import (
 	"fmt"
+	"io"
 	"strings"
 
 	"xelf.org/xelf/knd"
@@ -42,7 +43,7 @@ func ErrAdjZero(t Tok) *Error {
 func ErrNumFrac(t Tok) *Error { return &Error{Src: t.Src, Code: 103, Name: "expect number fraction"} }
 func ErrNumExpo(t Tok) *Error { return &Error{Src: t.Src, Code: 104, Name: "expect number exponent"} }
 func ErrStrTerm(t Tok) *Error {
-	return &Error{Src: t.Src, Code: 105, Name: "unterminated string",
+	return &Error{Src: t.Src, Code: 105, Name: "unterminated string", Err: io.EOF,
 		Help: fmt.Sprintf("expecting closing %q", t.Raw[0])}
 }
 func ErrUnquote(t Tok, err error) *Error {
@@ -50,7 +51,7 @@ func ErrUnquote(t Tok, err error) *Error {
 }
 func ErrTreeTerm(t Tok) *Error {
 	_, end := parens(t.Kind)
-	return &Error{Src: t.Src, Code: 111, Name: "unterminated tree",
+	return &Error{Src: t.Src, Code: 111, Name: "unterminated tree", Err: io.EOF,
 		Help: fmt.Sprintf("expecting closing %q", end)}
 }
 func ErrInvalidSep(t Tok) *Error { return &Error{Src: t.Src, Code: 112, Name: "invalid separator"} }
