@@ -35,7 +35,7 @@ func TestEqual(t *testing.T) {
 		}
 		got := Equal(a, b)
 		if test.want != got {
-			t.Errorf("eqal %s %s want %v", a, b, test.want)
+			t.Errorf("equal %s %s want %v", a, b, test.want)
 		}
 	}
 }

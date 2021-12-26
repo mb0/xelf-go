@@ -13,7 +13,7 @@ A `Prog` is used to resolve and evaluate an expression using a root environment.
 has two or more phases. In the first phases we call `Resl` methods to resolve all types. In the last
 phase we call `Eval` methods to evaluate an expression to a literal.
 
-The program itsel mostly manages type checking and otherwise calls out to environments and specs.
+The program itself mostly manages type checking and otherwise calls out to environments and specs.
 
 A `Env` configures the program evaluation by defining all symbols, importantly these symbols can
 resolve to specs that can be called and themselves create scoped environments that define symbols.
@@ -21,7 +21,7 @@ Calls and symbols cache their environment.
 
 A `Spec` is a func or form definition that resolves and evaluates calls. If the first element of a
 call does not resolve to a spec literal the program calls a `dyn` spec to allow syntax sugar.
-The `dyn` spec is evalueated from the environment.
+The `dyn` spec is evaluated from the environment.
 
 Specs have a declaration type. When we resolves a call spec we instantiate the spec declaration
 and call `LayoutSpec` to match and group all arguments to spec parameters.

@@ -41,8 +41,8 @@ And some super types:
 All individual bits signify concrete types. Abstract and base types use a mask of all the
 allowed concrete type bits.
 
-For compatibility reasons we use only 32 bits, because all bitwise operations trunc a numer to 32
-bit in javascript.
+For compatibility reasons we use only 32 bits, because all bitwise operations in javascript
+truncate numbers to 32 bits.
 
 The `none` kind describes the type of the `null` literal. It is often used in type alternatives and
 has a special suffix notation using `?`. The corresponding `some` kind with the `!` suffix

@@ -26,3 +26,10 @@ the type and element with the pipe '|' character.
 
       (eq list|int@1? <list <alt@1 int none>>)
       sym|typ|list|dict|int
+
+Parameter types like rec and obj can have optional fields where the field names ends in a question
+mark '?'. This means if the field has a zero value it can be omitted when serialized or sent to
+database. This is orthogonal to whether the type is optional.
+
+	(rec name?:str opt?:str? (<> explicit optional pointer to string))
+

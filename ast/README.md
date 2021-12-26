@@ -16,7 +16,7 @@ Xelf literals use a superset of JSON with additional rules to make handwriting l
  * str can use single quotes. Single quotes str literals are the default xelf format,
    because xelf is often used inside strings in other languages
  * char can use backtick quoted multiline string literals without escape sequence. This is
-   helpful for templates and other preformatted multiline strings.
+   helpful for templates and other pre-formatted multiline strings.
  * the comma separator is optional, whitespaces work just as well and don't clutter the output
  * tag keys do not need to be quoted if they are simple names as defined by the cor package
  * short flag tags can omit the value `(eq (rec flag;) (rec flag:true))`

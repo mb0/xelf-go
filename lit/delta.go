@@ -8,7 +8,7 @@ import (
 	"xelf.org/xelf/knd"
 )
 
-// Delta is a list of path edits that describe a transformation fromn one value to another.
+// Delta is a list of path edits that describe a transformation from one value to another.
 type Delta []KeyVal
 
 // Diff returns delta between values a and b or an error. The result can be applied to a to get b.

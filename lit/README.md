@@ -14,7 +14,7 @@ We use three interfaces that describe sets of value implementations:
 
 We have three ways to parse an `Ast` to a value implementations:
  * `ParseVal`  returns generic values that may be immutable
- * `ParseMut`  returns generic and registered mutalble values
+ * `ParseMut`  returns generic and registered mutable values
  * `Mut.Parse` parses into a mutable proxy value provided by the user.
     The value parse method can be optimize and allows user defined values.
 
@@ -27,9 +27,9 @@ We have another set of interfaces to cover capabilities:
  * `Apdr` for appendable values like list
  * `Keyr` for keyable values like dict or strc
 
-`Reg` is a regsitry where proxies are registered. The registry then provides implementation for xelf
+`Reg` is a registry where proxies are registered. The registry then provides implementation for xelf
 types, when no proxy is found a generic implementation is provided. We use the same registry as
-reflection cache to break self referencial type cycles.
+reflection cache to break self referential type cycles.
 
 The registry must be used to creating new values or proxies. These operations are used all over the
 place and do happen deep in call stacks. Passing the registry through as argument looks bad and is
@@ -43,7 +43,7 @@ therefor we use an OptMut internally that has a null flag (similar to sql.NullX 
 any mutable value). The Null type has only a value implementation.
 
 Other implementations are always mutable variants, because we would gain nothing from using a value
-type implictly addressed abd wrapped in an interface and instead would increase code complexity.
+type implicitly addressed and wrapped in an interface and instead would increase code complexity.
 
 All proxy values can point to pointer and then represent null directly without using an OptMut.
 

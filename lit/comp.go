@@ -8,10 +8,10 @@ import (
 	"xelf.org/xelf/typ"
 )
 
-// log ignored equal errors for a while until were certain everthing is fine
+// log ignored equal errors for a while until we're certain everything is fine
 const logEqual = true
 
-// Equal returns whtether two literal values are structurally equal.
+// Equal returns whether two literal values are structurally equal.
 // Value types and implementations are not compared.
 func Equal(x, y Val) bool {
 	if x == nil || y == nil {
