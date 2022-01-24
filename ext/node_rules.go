@@ -128,6 +128,9 @@ func BitsPrepper(consts []typ.Const) KeyPrepper {
 		if err != nil {
 			return v, err
 		}
+		if v.Zero() && !v.Nil() {
+			return lit.Int(0), nil
+		}
 		for _, b := range consts {
 			if key == cor.Keyed(b.Name) {
 				return lit.Int(b.Val), nil
