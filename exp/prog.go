@@ -1,6 +1,7 @@
 package exp
 
 import (
+	"context"
 	"fmt"
 
 	"xelf.org/xelf/ast"
@@ -9,12 +10,16 @@ import (
 	"xelf.org/xelf/typ"
 )
 
+type Ctx = context.Context
+
+var BG = context.Background()
+
 // ErrDefer is a marker error used to indicate a deferred resolution and not a failure per-se.
 // The user can errors.Is(err, ErrDefer) and resume program resolution with more context provided.
 var ErrDefer = fmt.Errorf("deferred resolution")
 
 // Eval creates and evaluates a new program for str and returns the result or an error.
-func Eval(reg *lit.Reg, env Env, str string) (*Lit, error) {
+func Eval(ctx Ctx, reg *lit.Reg, env Env, str string) (*Lit, error) {
 	if reg == nil {
 		reg = &lit.Reg{}
 	}
@@ -22,12 +27,12 @@ func Eval(reg *lit.Reg, env Env, str string) (*Lit, error) {
 	if err != nil {
 		return nil, err
 	}
-	return EvalExp(reg, env, x)
+	return EvalExp(ctx, reg, env, x)
 }
 
 // EvalExp creates and evaluates a new program for x and returns the result or an error.
-func EvalExp(reg *lit.Reg, env Env, x Exp) (*Lit, error) {
-	p := NewProg(reg, env, x)
+func EvalExp(ctx Ctx, reg *lit.Reg, env Env, x Exp) (*Lit, error) {
+	p := NewProg(ctx, reg, env, x)
 	x, err := p.Resl(env, x, typ.Void)
 	if err != nil {
 		return nil, err
@@ -53,6 +58,7 @@ type Env interface {
 // Prog is the entry context to resolve an expression in an environment.
 // Programs are bound to their expression and cannot be reused.
 type Prog struct {
+	Ctx  Ctx
 	Reg  *lit.Reg
 	Sys  *typ.Sys
 	Root Env
@@ -62,11 +68,11 @@ type Prog struct {
 
 // NewProg returns a new program using the given registry, environment and expression.
 // The registry argument can be nil, a new registry will be used by default.
-func NewProg(reg *lit.Reg, env Env, exp Exp) *Prog {
+func NewProg(ctx Ctx, reg *lit.Reg, env Env, exp Exp) *Prog {
 	if reg == nil {
 		reg = &lit.Reg{}
 	}
-	return &Prog{Reg: reg, Sys: typ.NewSys(reg), Root: env, Exp: exp}
+	return &Prog{Ctx: ctx, Reg: reg, Sys: typ.NewSys(reg), Root: env, Exp: exp}
 }
 
 // Resl resolves an expression using a type hint and returns the result or an error.

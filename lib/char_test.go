@@ -19,7 +19,7 @@ func TestCharEval(t *testing.T) {
 		{`(xelf 'Hallo')`, lit.Raw("'Hallo'")},
 	}
 	for _, test := range tests {
-		got, err := exp.Eval(nil, Core, test.raw)
+		got, err := exp.Eval(exp.BG, nil, Core, test.raw)
 		if err != nil {
 			t.Errorf("eval %s failed: %v", test.raw, err)
 			continue
