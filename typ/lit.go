@@ -16,11 +16,20 @@ var (
 // This interface does in principle belong to the lit package.
 type LitVal interface {
 	Type() Type
+	// Nil returns whether this is a null literal.
 	Nil() bool
+	// Zero returns whether this is a zero value.
 	Zero() bool
+	// Value returns a simple value representation using these types:
+	// Type, Null, Bool, Int, Real, Str, Raw, UUID, Time, Span for primitive values
+	// Composite literals are returned as is and implement either or both Idxr  Keyr.
 	Value() LitVal
+	// String returns a string content for char literals and xelf format for other literals.
+	// Use bfr.String(l) to get quoted char literals.
 	String() string
+	// Print writes this literal to the given printer or returns an error.
 	Print(*bfr.P) error
+	// MarshalJSON returns the literal as json bytes
 	MarshalJSON() ([]byte, error)
 }
 
