@@ -19,7 +19,7 @@ func TestDeclEval(t *testing.T) {
 		{`(let a:1 b:2 (add a b))`, lit.Int(3)},
 	}
 	for _, test := range tests {
-		got, err := exp.Eval(exp.BG, nil, Std, test.raw)
+		got, err := exp.Eval(nil, nil, Std, test.raw)
 		if err != nil {
 			t.Errorf("eval %s failed: %v", test.raw, err)
 			continue

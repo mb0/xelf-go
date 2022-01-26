@@ -36,7 +36,7 @@ func TestMathEval(t *testing.T) {
 		{`(max 1 2 3)`, lit.Int(3)},
 	}
 	for _, test := range tests {
-		got, err := exp.Eval(exp.BG, nil, Core, test.raw)
+		got, err := exp.Eval(nil, nil, Core, test.raw)
 		if err != nil {
 			t.Errorf("eval %s failed: %v", test.raw, err)
 			continue

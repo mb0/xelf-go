@@ -30,7 +30,7 @@ func TestProgEval(t *testing.T) {
 		{Key: "now", Val: lit.Str("2021-08-19T15:00:00Z")},
 	}}}
 	for _, test := range tests {
-		got, err := exp.Eval(exp.BG, reg, env, test.raw)
+		got, err := exp.Eval(nil, reg, env, test.raw)
 		if err != nil {
 			t.Errorf("eval %s failed: %v", test.raw, err)
 			continue
@@ -63,7 +63,7 @@ func TestProgResl(t *testing.T) {
 			t.Errorf("read %s failed: %v", test.raw, err)
 			continue
 		}
-		p := exp.NewProg(exp.BG, reg, extlib.Std, e)
+		p := exp.NewProg(nil, reg, extlib.Std, e)
 		got, err := p.Resl(p.Root, p.Exp, typ.Void)
 		if err != nil {
 			t.Errorf("resl %s failed: %v", test.raw, err)

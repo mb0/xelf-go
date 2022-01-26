@@ -10,16 +10,12 @@ import (
 	"xelf.org/xelf/typ"
 )
 
-type Ctx = context.Context
-
-var BG = context.Background()
-
 // ErrDefer is a marker error used to indicate a deferred resolution and not a failure per-se.
 // The user can errors.Is(err, ErrDefer) and resume program resolution with more context provided.
 var ErrDefer = fmt.Errorf("deferred resolution")
 
 // Eval creates and evaluates a new program for str and returns the result or an error.
-func Eval(ctx Ctx, reg *lit.Reg, env Env, str string) (*Lit, error) {
+func Eval(ctx context.Context, reg *lit.Reg, env Env, str string) (*Lit, error) {
 	if reg == nil {
 		reg = &lit.Reg{}
 	}
@@ -31,7 +27,7 @@ func Eval(ctx Ctx, reg *lit.Reg, env Env, str string) (*Lit, error) {
 }
 
 // EvalExp creates and evaluates a new program for x and returns the result or an error.
-func EvalExp(ctx Ctx, reg *lit.Reg, env Env, x Exp) (*Lit, error) {
+func EvalExp(ctx context.Context, reg *lit.Reg, env Env, x Exp) (*Lit, error) {
 	p := NewProg(ctx, reg, env, x)
 	x, err := p.Resl(env, x, typ.Void)
 	if err != nil {
@@ -58,7 +54,7 @@ type Env interface {
 // Prog is the entry context to resolve an expression in an environment.
 // Programs are bound to their expression and cannot be reused.
 type Prog struct {
-	Ctx  Ctx
+	Ctx  context.Context
 	Reg  *lit.Reg
 	Sys  *typ.Sys
 	Root Env
@@ -68,9 +64,12 @@ type Prog struct {
 
 // NewProg returns a new program using the given registry, environment and expression.
 // The registry argument can be nil, a new registry will be used by default.
-func NewProg(ctx Ctx, reg *lit.Reg, env Env, exp Exp) *Prog {
+func NewProg(ctx context.Context, reg *lit.Reg, env Env, exp Exp) *Prog {
 	if reg == nil {
 		reg = &lit.Reg{}
+	}
+	if ctx == nil {
+		ctx = context.Background()
 	}
 	return &Prog{Ctx: ctx, Reg: reg, Sys: typ.NewSys(reg), Root: env, Exp: exp}
 }
