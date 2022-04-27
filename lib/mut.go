@@ -6,7 +6,7 @@ import (
 	"xelf.org/xelf/lit"
 )
 
-var Mut = &mutSpec{impl("<form mut @1 data? tupl?|tag .0>")}
+var Mut = &mutSpec{impl("<form mut any data? tupl?|tag _>")}
 
 // TODO add a custom resl method to mutSpec so we can detect incompatible types during resolution
 
@@ -47,7 +47,7 @@ func (s *mutSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 	return fst, lit.Apply(p.Reg, mut, delta)
 }
 
-var Append = &appendSpec{impl("<form append list tupl? .0>")}
+var Append = &appendSpec{impl("<form append list tupl? _>")}
 
 type appendSpec struct{ exp.SpecBase }
 
