@@ -57,6 +57,8 @@ func TestParse(t *testing.T) {
 			`<func text:str sub:str int>`, ``},
 		{Form("_", P(`a`, Int), P(`b`, Int), P("", Int)),
 			`<form _ a:int b:int int>`, ``},
+		{Form("abs", P(``, Num), P("", Sel(`.0`))),
+			`<form abs num _>`, ``},
 	}
 	for _, test := range tests {
 		raw := test.typ.String()

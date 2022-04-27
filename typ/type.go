@@ -85,8 +85,11 @@ func (t Type) print(b *bfr.P, sb *strings.Builder, enclose bool) error {
 		sb = &strings.Builder{}
 	}
 	if isSel {
-		sel := t.Body.(*SelBody)
-		sb.WriteString(sel.Path)
+		path := t.Body.(*SelBody).Path
+		if strings.HasPrefix(path, ".0") {
+			path = "_" + path[2:]
+		}
+		sb.WriteString(path)
 	} else if k != knd.Void {
 		s := knd.Name(k)
 		if isAlt = k&knd.Alt != 0 || s == ""; isAlt {

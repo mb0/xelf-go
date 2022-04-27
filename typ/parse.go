@@ -92,6 +92,9 @@ func ParseSym(raw string, src ast.Src, hist []Type) (Type, error) {
 				// local ref
 				tk |= knd.Sel
 				tb = &SelBody{Path: s}
+			} else if s[0] == '_' && (len(s) == 1 || s[1] == '.') {
+				tk |= knd.Sel
+				tb = &SelBody{Path: ".0" + s[1:]}
 			} else {
 				k, err := knd.ParseName(s)
 				if err != nil {
