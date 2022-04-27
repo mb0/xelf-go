@@ -31,7 +31,11 @@ func parse(a ast.Ast, hist []Type) (Type, error) {
 		if len(a.Seq) == 0 { // empty expression is void
 			return Void, nil
 		}
-		t, err := parse(a.Seq[0], hist)
+		fst := a.Seq[0]
+		if fst.Kind != knd.Sym {
+			return Void, ast.ErrUnexpected(a)
+		}
+		t, err := ParseSym(fst.Raw, fst.Src, hist)
 		if err != nil {
 			return t, err
 		}
