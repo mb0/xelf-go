@@ -66,6 +66,7 @@ func ParseSym(raw string, src ast.Src, hist []Type) (Type, error) {
 			}
 		}
 		var tid int32
+		var tr string
 		var tb Body
 		vi := strings.IndexByte(s, '@')
 		if vi >= 0 {
@@ -87,8 +88,7 @@ func ParseSym(raw string, src ast.Src, hist []Type) (Type, error) {
 				}
 				tid = int32(id)
 			} else {
-				tk |= knd.Ref
-				tb = &RefBody{Ref: v}
+				tr = v
 			}
 		}
 		if s != "" {
@@ -112,7 +112,10 @@ func ParseSym(raw string, src ast.Src, hist []Type) (Type, error) {
 				tb = &ElBody{El: res}
 			}
 		}
-		res = Type{tk, tid, tb}
+		if tr != "" && tk&knd.All == 0 {
+			tk |= knd.Ref
+		}
+		res = Type{tk, tid, tr, tb}
 	}
 	return res, nil
 }
@@ -121,27 +124,19 @@ func parseBody(a ast.Ast, args []ast.Ast, t Type, hist []Type) (_ Type, err erro
 	if len(args) == 0 {
 		return t, nil
 	}
-	var name string
 	el := &t
 	eb, ok := el.Body.(*ElBody)
 	for ok {
 		el = &eb.El
 		eb, ok = el.Body.(*ElBody)
 	}
-	switch el.Kind &^ (knd.Var | knd.None) {
-	case knd.Bits, knd.Enum, knd.Obj:
-		name, err = parseName(args[0])
-		if err != nil {
-			return Void, err
+	switch el.Kind &^ (knd.Var | knd.Ref | knd.None) {
+	case knd.Bits, knd.Enum:
+		if len(args) > 0 {
+			// TODO parse consts
 		}
-		if el.Kind&knd.Obj == 0 {
-			if len(args) > 1 {
-				// TODO parse consts
-			}
-			el.Body = &ConstBody{Name: name}
-			return t, nil
-		}
-		args = args[1:]
+		el.Body = &ConstBody{}
+		return t, nil
 	case knd.Alt:
 		alts := make([]Type, 0, len(args))
 		for _, arg := range args {
@@ -155,13 +150,7 @@ func parseBody(a ast.Ast, args []ast.Ast, t Type, hist []Type) (_ Type, err erro
 		el.Kind = alt.Kind | (el.Kind & knd.Var)
 		el.Body = alt.Body
 		return t, nil
-	case knd.Rec, knd.Func, knd.Tupl:
-	case knd.Form:
-		name, err = parseName(args[0])
-		if err != nil {
-			return Void, err
-		}
-		args = args[1:]
+	case knd.Obj, knd.Func, knd.Tupl, knd.Form:
 	case knd.List, knd.Dict, knd.Typ:
 		b, err := parse(args[0], hist)
 		if err != nil {
@@ -179,7 +168,7 @@ func parseBody(a ast.Ast, args []ast.Ast, t Type, hist []Type) (_ Type, err erro
 	if el.Kind&knd.Tupl != 0 && len(ps) == 1 && ps[0].Name == "" {
 		el.Body = &ElBody{El: ps[0].Type}
 	} else {
-		el.Body = &ParamBody{Name: name, Params: ps}
+		el.Body = &ParamBody{Params: ps}
 	}
 	return t, nil
 }

@@ -1,8 +1,10 @@
 package typ
 
-import "xelf.org/xelf/cor"
+import (
+	"xelf.org/xelf/cor"
+)
 
-// Param describes a strc field or spec parameter.
+// Param describes a obj field or spec parameter.
 type Param struct {
 	Name string
 	Key  string
@@ -40,25 +42,18 @@ type (
 		Path string
 	}
 
-	// RefBody contains the type reference to named type.
-	RefBody struct {
-		Ref string
-	}
-
 	// AltBody contains compound type alternatives.
 	AltBody struct {
 		Alts []Type
 	}
 
-	// ParamBody contains a name and a list of parameters for spec and rec types.
+	// ParamBody contains a name and a list of parameters for obj and spec types.
 	ParamBody struct {
-		Name   string
 		Params []Param
 	}
 
 	// ConstBody contains a name and a list of constants for the enum and bits types.
 	ConstBody struct {
-		Name   string
 		Consts []Const
 	}
 )
@@ -82,11 +77,6 @@ func (b *SelBody) EqualHist(o Body, h Hist) bool {
 	return ok && b.Path == ob.Path && b.Sel.EqualHist(ob.Sel, h)
 }
 
-func (b *RefBody) EqualHist(o Body, h Hist) bool {
-	ob, ok := o.(*RefBody)
-	return ok && b.Ref == ob.Ref
-}
-
 func (b *AltBody) EqualHist(o Body, h Hist) bool {
 	ob, ok := o.(*AltBody)
 	if b == nil {
@@ -106,7 +96,7 @@ func (b *AltBody) EqualHist(o Body, h Hist) bool {
 
 func (b *ParamBody) EqualHist(o Body, h Hist) bool {
 	ob, ok := o.(*ParamBody)
-	if !ok || b.Name != ob.Name || len(b.Params) != len(ob.Params) {
+	if !ok || len(b.Params) != len(ob.Params) {
 		return false
 	}
 	for _, p := range h {
@@ -134,7 +124,7 @@ func (b *ParamBody) FindKeyIndex(key string) int {
 
 func (b *ConstBody) EqualHist(o Body, h Hist) bool {
 	ob, ok := o.(*ConstBody)
-	if !ok || b.Name != ob.Name || len(b.Consts) != len(ob.Consts) {
+	if !ok || len(b.Consts) != len(ob.Consts) {
 		return false
 	}
 	for i, p := range b.Consts {

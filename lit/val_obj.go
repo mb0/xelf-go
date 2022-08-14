@@ -9,18 +9,18 @@ import (
 	"xelf.org/xelf/typ"
 )
 
-type Strc struct {
+type Obj struct {
 	Reg  *Reg
 	Typ  typ.Type
 	Vals []Val
 }
 
-func NewStrc(reg *Reg, t typ.Type) (*Strc, error) {
-	s := &Strc{Reg: reg, Typ: t}
+func NewObj(reg *Reg, t typ.Type) (*Obj, error) {
+	s := &Obj{Reg: reg, Typ: t}
 	err := s.init(false)
 	return s, err
 }
-func (s *Strc) init(ext bool) (err error) {
+func (s *Obj) init(ext bool) (err error) {
 	ps := s.ps()
 	vs := make([]Val, len(ps))
 	if ext {
@@ -38,9 +38,9 @@ func (s *Strc) init(ext bool) (err error) {
 	s.Vals = vs
 	return
 }
-func (s *Strc) Type() typ.Type { return s.Typ }
-func (s *Strc) Nil() bool      { return len(s.Vals) == 0 }
-func (s *Strc) Zero() bool {
+func (s *Obj) Type() typ.Type { return s.Typ }
+func (s *Obj) Nil() bool      { return len(s.Vals) == 0 }
+func (s *Obj) Zero() bool {
 	for _, v := range s.Vals {
 		if v != nil && !v.Zero() {
 			return false
@@ -48,11 +48,11 @@ func (s *Strc) Zero() bool {
 	}
 	return true
 }
-func (s *Strc) Value() Val                   { return s }
-func (s *Strc) MarshalJSON() ([]byte, error) { return bfr.JSON(s) }
-func (s *Strc) UnmarshalJSON(b []byte) error { return unmarshal(b, s) }
-func (s *Strc) String() string               { return bfr.String(s) }
-func (s *Strc) Print(p *bfr.P) (err error) {
+func (s *Obj) Value() Val                   { return s }
+func (s *Obj) MarshalJSON() ([]byte, error) { return bfr.JSON(s) }
+func (s *Obj) UnmarshalJSON(b []byte) error { return unmarshal(b, s) }
+func (s *Obj) String() string               { return bfr.String(s) }
+func (s *Obj) Print(p *bfr.P) (err error) {
 	p.Byte('{')
 	for i, par := range s.ps() {
 		if i > 0 {
@@ -73,9 +73,9 @@ func (s *Strc) Print(p *bfr.P) (err error) {
 	}
 	return p.Byte('}')
 }
-func (s *Strc) New() (Mut, error) { return NewStrc(s.Reg, s.Typ) }
-func (s *Strc) Ptr() interface{}  { return s }
-func (s *Strc) Parse(a ast.Ast) error {
+func (s *Obj) New() (Mut, error) { return NewObj(s.Reg, s.Typ) }
+func (s *Obj) Ptr() interface{}  { return s }
+func (s *Obj) Parse(a ast.Ast) error {
 	if isNull(a) {
 		return s.init(false)
 	}
@@ -110,7 +110,7 @@ func (s *Strc) Parse(a ast.Ast) error {
 	}
 	return nil
 }
-func (s *Strc) Assign(p Val) error {
+func (s *Obj) Assign(p Val) error {
 	// TODO check types
 	s.init(false)
 	switch o := p.(type) {
@@ -135,8 +135,8 @@ func (s *Strc) Assign(p Val) error {
 	}
 	return nil
 }
-func (s *Strc) Len() int { return len(s.ps()) }
-func (s *Strc) Idx(i int) (Val, error) {
+func (s *Obj) Len() int { return len(s.ps()) }
+func (s *Obj) Idx(i int) (Val, error) {
 	ps, ok := s.pidx(i)
 	if !ok {
 		return nil, ErrIdxBounds
@@ -148,7 +148,7 @@ func (s *Strc) Idx(i int) (Val, error) {
 	}
 	return s.Vals[i], nil
 }
-func (s *Strc) SetIdx(idx int, el Val) error {
+func (s *Obj) SetIdx(idx int, el Val) error {
 	ps, ok := s.pidx(idx)
 	if !ok {
 		return ErrIdxNotFound
@@ -164,7 +164,7 @@ func (s *Strc) SetIdx(idx int, el Val) error {
 	s.Vals[idx] = el
 	return nil
 }
-func (s *Strc) IterIdx(it func(int, Val) error) error {
+func (s *Obj) IterIdx(it func(int, Val) error) error {
 	ps := s.ps()
 	if len(s.Vals) < len(ps) {
 		if err := s.init(true); err != nil {
@@ -181,7 +181,7 @@ func (s *Strc) IterIdx(it func(int, Val) error) error {
 	}
 	return nil
 }
-func (s *Strc) Keys() []string {
+func (s *Obj) Keys() []string {
 	ps := s.ps()
 	res := make([]string, 0, len(ps))
 	for _, p := range ps {
@@ -189,10 +189,10 @@ func (s *Strc) Keys() []string {
 	}
 	return res
 }
-func (s *Strc) Key(k string) (Val, error) {
+func (s *Obj) Key(k string) (Val, error) {
 	ps, i := s.pkey(k)
 	if i < 0 {
-		return nil, fmt.Errorf("strc %s %q: %w", s.Typ, k, ErrKeyNotFound)
+		return nil, fmt.Errorf("obj %s %q: %w", s.Typ, k, ErrKeyNotFound)
 	}
 	if len(s.Vals) < len(ps) {
 		if err := s.init(true); err != nil {
@@ -201,10 +201,10 @@ func (s *Strc) Key(k string) (Val, error) {
 	}
 	return s.Vals[i], nil
 }
-func (s *Strc) SetKey(k string, el Val) error {
+func (s *Obj) SetKey(k string, el Val) error {
 	ps, i := s.pkey(k)
 	if i < 0 {
-		return fmt.Errorf("strc %s %q: %w", s.Typ, k, ErrKeyNotFound)
+		return fmt.Errorf("obj %s %q: %w", s.Typ, k, ErrKeyNotFound)
 	}
 	if len(s.Vals) < len(ps) {
 		if err := s.init(true); err != nil {
@@ -217,7 +217,7 @@ func (s *Strc) SetKey(k string, el Val) error {
 	s.Vals[i] = el
 	return nil
 }
-func (s *Strc) IterKey(it func(string, Val) error) error {
+func (s *Obj) IterKey(it func(string, Val) error) error {
 	ps := s.ps()
 	if len(s.Vals) < len(ps) {
 		if err := s.init(true); err != nil {
@@ -234,11 +234,11 @@ func (s *Strc) IterKey(it func(string, Val) error) error {
 	}
 	return nil
 }
-func (s *Strc) ps() []typ.Param {
+func (s *Obj) ps() []typ.Param {
 	pb := s.Typ.Body.(*typ.ParamBody)
 	return pb.Params
 }
-func (s *Strc) pidx(i int) (ps []typ.Param, ok bool) {
+func (s *Obj) pidx(i int) (ps []typ.Param, ok bool) {
 	if i < 0 {
 		return nil, false
 	}
@@ -249,7 +249,7 @@ func (s *Strc) pidx(i int) (ps []typ.Param, ok bool) {
 	return ps, true
 }
 
-func (s *Strc) pkey(k string) ([]typ.Param, int) {
+func (s *Obj) pkey(k string) ([]typ.Param, int) {
 	pb := s.Typ.Body.(*typ.ParamBody)
 	i := pb.FindKeyIndex(k)
 	if i < 0 {

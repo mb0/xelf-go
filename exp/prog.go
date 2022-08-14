@@ -166,7 +166,7 @@ func (p *Prog) Eval(env Env, e Exp) (_ *Lit, err error) {
 	case *Call:
 		res, err := a.Spec.Eval(p, a)
 		if err != nil {
-			return nil, ast.ErrEval(a.Src, SigName(a.Sig), err)
+			return nil, ast.ErrEval(a.Src, a.Sig.Ref, err)
 		}
 		return res, nil
 	case *Tupl:

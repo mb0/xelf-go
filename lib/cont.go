@@ -9,7 +9,7 @@ import (
 	"xelf.org/xelf/typ"
 )
 
-var Len = &lenSpec{impl("<form len <alt@? list keyr str raw> int>")}
+var Len = &lenSpec{impl("<form@len <alt@? list keyr str raw> int>")}
 
 type lenSpec struct{ exp.SpecBase }
 
@@ -32,8 +32,8 @@ func (s *lenSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 	return &exp.Lit{Res: typ.Int, Val: lit.Int(n)}, nil
 }
 
-var Fold = &foldSpec{impl("<form fold list|@1 @2 <func @2 @1 @2> @2>"), false}
-var Foldr = &foldSpec{impl("<form foldr list|@1 @2 <func @2 @1 @2> @2>"), true}
+var Fold = &foldSpec{impl("<form@fold list|@1 @2 <func @2 @1 @2> @2>"), false}
+var Foldr = &foldSpec{impl("<form@foldr list|@1 @2 <func @2 @1 @2> @2>"), true}
 
 type foldSpec struct {
 	exp.SpecBase
@@ -70,7 +70,7 @@ func (s *foldSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 	return nil, fmt.Errorf("unexpected idxr %[1]T %[1]s", args[0])
 }
 
-var Range = &rangeSpec{impl("<form range n:int f?:<func int @1> list|@1>")}
+var Range = &rangeSpec{impl("<form@range n:int f?:<func int @1> list|@1>")}
 
 type rangeSpec struct{ exp.SpecBase }
 

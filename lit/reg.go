@@ -50,7 +50,7 @@ func (reg *Reg) RefType(ref string) (typ.Type, error) {
 // Zero returns a zero mutable value for t or an error.
 func (reg *Reg) Zero(t typ.Type) (m Mut, err error) {
 	if t.Kind&knd.List != 0 {
-		n := typ.Name(typ.ContEl(t))
+		n := typ.ContEl(t).Ref
 		if n != "" {
 			nfo := reg.refs[n]
 			if nfo.Mut != nil {
@@ -60,9 +60,8 @@ func (reg *Reg) Zero(t typ.Type) (m Mut, err error) {
 			}
 		}
 	} else {
-		n := typ.Name(t)
-		if n != "" {
-			nfo := reg.refs[n]
+		if t.Ref != "" {
+			nfo := reg.refs[t.Ref]
 			if nfo.Mut != nil {
 				return nfo.Mut.New()
 			}
@@ -107,8 +106,8 @@ func (reg *Reg) Zero(t typ.Type) (m Mut, err error) {
 			m = &List{Reg: reg, El: typ.ContEl(t)}
 		case knd.Dict:
 			m = &Dict{Reg: reg, El: typ.ContEl(t)}
-		case knd.Rec, knd.Obj:
-			m, err = NewStrc(reg, t)
+		case knd.Obj:
+			m, err = NewObj(reg, t)
 			if err != nil {
 				return nil, err
 			}

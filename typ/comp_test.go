@@ -41,9 +41,9 @@ func TestAssignable(t *testing.T) {
 		{"typ|int", "typ", true, true},
 		{"typ|int", "typ|num", true, true},
 		{"typ|int", "typ|char", false, false},
-		{"<rec x:int y:int z:int>", "<rec x:int y:int>", true, true},
-		{"<rec x:int y:int>", "<rec x:int y:int z:int>", false, true},
-		{"<rec x:int y:int>", "<rec x:int y:int z?:int>", true, true},
+		{"<obj x:int y:int z:int>", "<obj x:int y:int>", true, true},
+		{"<obj x:int y:int>", "<obj x:int y:int z:int>", false, true},
+		{"<obj x:int y:int>", "<obj x:int y:int z?:int>", true, true},
 	}
 	for _, test := range tests {
 		src, err := Parse(test.src)

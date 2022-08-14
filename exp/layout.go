@@ -66,7 +66,7 @@ func LayoutFunc(sig typ.Type, els []Exp) ([]Exp, error) {
 	ps := SigArgs(sig)
 	if len(ps) == 0 {
 		if len(els) > 0 {
-			return nil, fmt.Errorf("unexpected argument for %s", sig.Type())
+			return nil, fmt.Errorf("unexpected argument for %s", sig)
 		}
 		return nil, nil
 	}
@@ -117,13 +117,6 @@ NextEl:
 	return res, nil
 }
 
-func SigName(sig typ.Type) string {
-	pb, ok := sig.Body.(*typ.ParamBody)
-	if !ok {
-		return ""
-	}
-	return pb.Name
-}
 func SigArgs(sig typ.Type) []typ.Param {
 	pb, ok := sig.Body.(*typ.ParamBody)
 	if !ok || len(pb.Params) < 2 {

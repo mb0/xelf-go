@@ -15,11 +15,12 @@ types are most common form of type alternative and have a special prefix notatio
 
 Type variables, references and selections use the at-sign '@' to separate kind from reference.
 
-      `@`      type variable with auto id
-      `@1`     type variable with id 1
-      `num@`   type variable with constraint num
-      `@ref`   type reference
-      `.sel`   local type selection
+      `@`       type variable with auto id
+      `@1`      type variable with id 1
+      `num@1`   type variable with constraint num
+      `@ref`    type reference
+      `num@ref` type name declaration
+      `.sel`    local type selection
 
 Types with element bodies are frequently used, we therefor provide a shorthand notation that joins
 the type and element with the pipe '|' character.
@@ -27,9 +28,9 @@ the type and element with the pipe '|' character.
       (eq list|int@1? <list <alt@1 int none>>)
       sym|typ|list|dict|int
 
-Parameter types like rec and obj can have optional fields where the field names ends in a question
+Parameter types like obj can have optional fields where the field names ends in a question
 mark '?'. This means if the field has a zero value it can be omitted when serialized or sent to
 database. This is orthogonal to whether the type is optional.
 
-	(rec name?:str opt?:str? (<> explicit optional pointer to string))
+      (obj name?:str opt?:str? (<> explicit optional (pointer to) string))
 

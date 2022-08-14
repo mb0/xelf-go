@@ -221,11 +221,11 @@ func diffSub(a, b Val, pre string, idx int, d Delta) (Delta, error) {
 }
 
 func diffKeyr(a, b Keyr, pre string, d Delta) (Delta, error) {
-	// we may want different behaviour for dicts and strc
-	// dict keys can be deleted, strc keys only be set to zero
-	// dict may be unordered while strc fields are ordered
+	// we may want different behaviour for dicts and obj
+	// dict keys can be deleted, obj keys only be set to zero
+	// dict may be unordered while obj fields are ordered
 
-	// lets first figure out dicts and then think about strcs. start by getting all the keys
+	// lets first figure out dicts and then think about objs. start by getting all the keys
 	ak, bk := a.Keys(), b.Keys()
 	// the order does not matter so create a map of a's keys
 	km := make(map[string]bool, len(ak))

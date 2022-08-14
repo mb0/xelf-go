@@ -5,7 +5,7 @@ import (
 	"xelf.org/xelf/lit"
 )
 
-var If = &ifSpec{impl("<form if <tupl cond:any act:exp|@1> else:exp?|@1 @1>")}
+var If = &ifSpec{impl("<form@if <tupl cond:any then:exp|@1> else:exp?|@1 @1>")}
 
 type ifSpec struct{ exp.SpecBase }
 
@@ -33,7 +33,7 @@ func (s *ifSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 	return &exp.Lit{Res: rt, Val: res.Value()}, nil
 }
 
-var Swt = &swtSpec{impl("<form swt @1 <tupl case:@1 act:exp|@2> else:exp?|@2 @2>")}
+var Swt = &swtSpec{impl("<form@swt @1 <tupl case:@1 then:exp|@2> else:exp?|@2 @2>")}
 
 type swtSpec struct{ exp.SpecBase }
 
@@ -65,7 +65,7 @@ func (s *swtSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 	return &exp.Lit{Res: res.Type(), Val: res.Value()}, nil
 }
 
-var Df = &dfSpec{impl("<form df tupl|@1 @1!>")}
+var Df = &dfSpec{impl("<form@df tupl|@1 @1!>")}
 
 type dfSpec struct{ exp.SpecBase }
 

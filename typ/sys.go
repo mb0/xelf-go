@@ -51,9 +51,8 @@ func (sys *Sys) update(e *Editor) (Type, error) {
 		}
 	}
 	if e.Kind&knd.Ref != 0 {
-		b, ok := e.Type.Body.(*RefBody)
-		if ok {
-			r, err := sys.Reg.RefType(b.Ref)
+		if e.Ref != "" {
+			r, err := sys.Reg.RefType(e.Ref)
 			if err != nil {
 				return e.Type, nil
 			}
@@ -81,23 +80,20 @@ func (sys *Sys) inst(t Type, m map[int32]Type) (Type, error) {
 			sys.MaxID++
 			r.ID = sys.MaxID
 		}
-		switch b := r.Body.(type) {
-		case *RefBody:
-			if sys.Reg != nil {
-				n, err := sys.Reg.RefType(b.Ref)
-				if err != nil {
-					break // ignore error here
-				}
-				if r.Kind&knd.None != 0 {
-					n.Kind |= knd.None
-				}
-				return n, nil
+		if r.Kind&knd.Ref != 0 && r.Ref != "" && sys.Reg != nil {
+			n, err := sys.Reg.RefType(r.Ref)
+			if err != nil {
+				return r, nil
 			}
-		case *SelBody:
+			if r.Kind&knd.None != 0 {
+				n.Kind |= knd.None
+			}
+			r = n
+		} else if b, ok := r.Body.(*SelBody); ok {
 			// TODO resolve path or think about type selections
 			var par *Editor
 			for par = e.Parent; par != nil; par = par.Parent {
-				if par.Type.Kind&(knd.Strc|knd.Spec) != 0 {
+				if par.Type.Kind&(knd.Obj|knd.Spec) != 0 {
 					_, ok := par.Type.Body.(*ParamBody)
 					if ok {
 						break
@@ -159,7 +155,7 @@ func unify(sys *Sys, t, h Type) (Type, error) {
 		_, _ = x, y
 	}
 	if ak == bk {
-		if equalBody(a.Body, b.Body) {
+		if t.Ref == h.Ref && equalBody(a.Body, b.Body) {
 			return unibind(sys, a, b, r), nil
 		}
 		if a.Body == nil {
@@ -183,6 +179,7 @@ func unify(sys *Sys, t, h Type) (Type, error) {
 			}
 			return unibind(sys, a, b, r), nil
 		case *ParamBody:
+			r.Ref = "_"
 			bb, ok := b.Body.(*ParamBody)
 			if ak&knd.Tupl != 0 {
 				if !ok {
@@ -205,7 +202,7 @@ func unify(sys *Sys, t, h Type) (Type, error) {
 				}
 				ps = append(ps, p)
 			}
-			r.Body = &ParamBody{Name: "_", Params: ps}
+			r.Body = &ParamBody{Params: ps}
 			return unibind(sys, a, b, r), nil
 		}
 	} else {

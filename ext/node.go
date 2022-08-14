@@ -9,14 +9,14 @@ import (
 	"xelf.org/xelf/typ"
 )
 
-// Node is an interface for mutable strc literal values that have a corresponding form.
+// Node is an interface for mutable obj literal values that have a corresponding form.
 type Node interface {
 	lit.Keyr
 	lit.Idxr
 	WithReg(*lit.Reg)
 }
 
-// NewNode returns a node for val or an error. It either accepts a strc or creates a new proxy.
+// NewNode returns a node for val or an error. It either accepts a Node or creates a new proxy.
 func NewNode(reg *lit.Reg, val interface{}) (Node, error) {
 	n, ok := val.(Node)
 	if ok {

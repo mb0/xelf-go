@@ -100,7 +100,7 @@ func PrintZero(p *bfr.P, t typ.Type) error {
 		return Span(0).Print(p)
 	case knd.List:
 		return p.Fmt(`[]`)
-	case knd.Dict, knd.Rec, knd.Obj:
+	case knd.Dict, knd.Obj:
 		return p.Fmt(`{}`)
 	}
 	return p.Fmt("null")

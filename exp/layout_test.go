@@ -14,19 +14,19 @@ func TestLayout(t *testing.T) {
 		want string
 		err  string
 	}{
-		{"<form _ tupl|exp ?>", "(_ a b x:c)", "(a b x:c)", ""},
-		{"<form _ tupl? ?>", "(_)", "()", ""},
-		{"<form _ tupl ?>", "(_)", "", "missing argument 0 <any>"},
-		{"<form _ any tupl|exp ?>", "(_ a b x:c)", "(a) (b x:c)", ""},
-		{"<form _ int int tupl|tag ?>", "(_ 1 2 x:3)", "(1) (2) (x:3)", ""},
-		{"<form _ int? tupl|tag ?>", "(_ x:3)", "() (x:3)", ""},
-		{"<form _ tupl tupl|tag tupl|exp ?>", "(_ a b x:c d y:e)", "(a b) (x:c) (d y:e)", ""},
-		{"<form _ tupl tupl|tag ?>", "(_ x:c)", "", "missing argument 0 <any>"},
-		{"<form _ tupl tupl|tag ?>", "(_ a b c)", "", "missing argument 1 <tag>"},
-		{"<form _ tupl tupl?|tag ?>", "(_ a b c)", "(a b c) ()", ""},
-		{"<form _ tupl? tupl|tag ?>", "(_ x:c)", "() (x:c)", ""},
-		{"<form _ <tupl a:any b:any> c?:any ?>", "(_ 1 2 3 4 5)", "(1 2 3 4) (5)", ""},
-		{"<form _ ? <tupl a:any b:any> ?>", "(_ 1 2 3 4 5)", "(1) (2 3 4 5)", ""},
+		{"<form@_ tupl|exp ?>", "(_ a b x:c)", "(a b x:c)", ""},
+		{"<form@_ tupl? ?>", "(_)", "()", ""},
+		{"<form@_ tupl ?>", "(_)", "", "missing argument 0 <any>"},
+		{"<form@_ any tupl|exp ?>", "(_ a b x:c)", "(a) (b x:c)", ""},
+		{"<form@_ int int tupl|tag ?>", "(_ 1 2 x:3)", "(1) (2) (x:3)", ""},
+		{"<form@_ int? tupl|tag ?>", "(_ x:3)", "() (x:3)", ""},
+		{"<form@_ tupl tupl|tag tupl|exp ?>", "(_ a b x:c d y:e)", "(a b) (x:c) (d y:e)", ""},
+		{"<form@_ tupl tupl|tag ?>", "(_ x:c)", "", "missing argument 0 <any>"},
+		{"<form@_ tupl tupl|tag ?>", "(_ a b c)", "", "missing argument 1 <tag>"},
+		{"<form@_ tupl tupl?|tag ?>", "(_ a b c)", "(a b c) ()", ""},
+		{"<form@_ tupl? tupl|tag ?>", "(_ x:c)", "() (x:c)", ""},
+		{"<form@_ <tupl a:any b:any> c?:any ?>", "(_ 1 2 3 4 5)", "(1 2 3 4) (5)", ""},
+		{"<form@_ ? <tupl a:any b:any> ?>", "(_ 1 2 3 4 5)", "(1) (2 3 4 5)", ""},
 		{"<func ? list|? ?>", "(_ a b c d)", "(a) (b c d)", ""},
 	}
 	for _, test := range tests {

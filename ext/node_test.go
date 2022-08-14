@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"xelf.org/xelf/exp"
-	"xelf.org/xelf/knd"
 	"xelf.org/xelf/lib"
 	"xelf.org/xelf/lit"
 )
@@ -17,12 +16,12 @@ func TestNode(t *testing.T) {
 		t.Fatalf("parse sig error: %v", err)
 	}
 	nt := spec.Node.Type()
-	want := `<obj ext.Element>`
+	want := `<obj@ext.Element>`
 	if ts := nt.String(); ts != want {
 		t.Errorf("want %s got %s", want, ts)
 	}
-	nt.Kind = nt.Kind&^knd.Obj | knd.Rec
-	want = `<rec kind:str x?:real y?:real w?:real h?:real font:<obj? ext.Font> list?:list|.? data?:str>`
+	nt.Ref = ""
+	want = `<obj kind:str x?:real y?:real w?:real h?:real font:<obj@ext.Font?> list?:list|.? data?:str>`
 	if ts := nt.String(); ts != want {
 		t.Errorf("want %s got %s", want, ts)
 	}

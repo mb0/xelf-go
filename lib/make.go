@@ -8,7 +8,7 @@ import (
 	"xelf.org/xelf/typ"
 )
 
-var Make = &makeSpec{impl("<form make typ tupl? tupl?|tag lit|_>")}
+var Make = &makeSpec{impl("<form@make typ tupl? tupl?|tag lit|_>")}
 
 type makeSpec struct{ exp.SpecBase }
 

@@ -33,7 +33,7 @@ type Specs map[string]exp.Spec
 // Add add all specs to this spec map.
 func (sm Specs) Add(ss ...exp.Spec) Specs {
 	for _, s := range ss {
-		k := exp.SigName(s.Type())
+		k := s.Type().Ref
 		sm[k] = s
 	}
 	return sm

@@ -9,7 +9,7 @@ import (
 	"xelf.org/xelf/typ"
 )
 
-var Fn = &fnSpec{impl("<form fn tupl?|tag|typ exp|@1 func@|@1>")}
+var Fn = &fnSpec{impl("<form@fn tupl?|tag|typ exp|@1 func@|@1>")}
 
 type fnSpec struct{ exp.SpecBase }
 

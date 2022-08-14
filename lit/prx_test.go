@@ -9,7 +9,6 @@ import (
 
 	"xelf.org/xelf/bfr"
 	"xelf.org/xelf/cor"
-	"xelf.org/xelf/knd"
 	"xelf.org/xelf/typ"
 )
 
@@ -31,8 +30,8 @@ func TestEmbed(t *testing.T) {
 	reg := &Reg{}
 	o := reg.MustProxy(new(Embed)).(Keyr)
 	ot := o.Type()
-	ot.Kind = knd.Rec
-	if got, want := ot.String(), "<rec id:int name:str point?:<obj? lit.Point>>"; got != want {
+	ot.Ref = ""
+	if got, want := ot.String(), "<obj id:int name:str point?:<obj@lit.Point?>>"; got != want {
 		t.Errorf("embed want type %s got %s", want, got)
 	}
 	keys := o.Keys()
@@ -67,21 +66,21 @@ func TestProxy(t *testing.T) {
 		},
 		{new(*time.Time), "<time?>", Null{}, "null"},
 		{new(time.Duration), "<span>", Span(time.Hour), "'1:00:00'"},
-		{new(Point), "<obj lit.Point>", Null{}, "{x:0 y:0}"},
-		{new(Point), "<obj lit.Point>", &Dict{Keyed: []KeyVal{{"y", Int(5)}}}, "{x:0 y:5}"},
-		{new([]Point), "<list|obj lit.Point>", Null{}, "[]"},
-		{new([]Point), "<list|obj lit.Point>", &List{Vals: []Val{}}, "[]"},
-		{new(*[]Point), "<list?|obj lit.Point>", Null{}, "null"},
-		{new(*[]Point), "<list?|obj lit.Point>", &List{Vals: []Val{}}, "[]"},
-		{new([]Point), "<list|obj lit.Point>", &List{Vals: []Val{
+		{new(Point), "<obj@lit.Point>", Null{}, "{x:0 y:0}"},
+		{new(Point), "<obj@lit.Point>", &Dict{Keyed: []KeyVal{{"y", Int(5)}}}, "{x:0 y:5}"},
+		{new([]Point), "<list|obj@lit.Point>", Null{}, "[]"},
+		{new([]Point), "<list|obj@lit.Point>", &List{Vals: []Val{}}, "[]"},
+		{new(*[]Point), "<list?|obj@lit.Point>", Null{}, "null"},
+		{new(*[]Point), "<list?|obj@lit.Point>", &List{Vals: []Val{}}, "[]"},
+		{new([]Point), "<list|obj@lit.Point>", &List{Vals: []Val{
 			&Dict{Keyed: []KeyVal{{"y", Int(5)}}},
 		}}, "[{x:0 y:5}]"},
-		{new(*Point), "<obj? lit.Point>", Null{}, "null"},
-		{new(*Point), "<obj? lit.Point>", &Dict{Keyed: []KeyVal{{"y", Int(5)}}}, "{x:0 y:5}"},
-		{new(*POI), "<obj? lit.POI>", &Dict{Keyed: []KeyVal{{"name", Str("foo")}}}, "{name:'foo'}"},
-		{new(*POI), "<obj? lit.POI>", poi, "{name:''}"},
-		{new(map[string]Point), "<dict|obj lit.Point>", Null{}, "{}"},
-		{new(map[string]Point), "<dict|obj lit.Point>",
+		{new(*Point), "<obj@lit.Point?>", Null{}, "null"},
+		{new(*Point), "<obj@lit.Point?>", &Dict{Keyed: []KeyVal{{"y", Int(5)}}}, "{x:0 y:5}"},
+		{new(*POI), "<obj@lit.POI?>", &Dict{Keyed: []KeyVal{{"name", Str("foo")}}}, "{name:'foo'}"},
+		{new(*POI), "<obj@lit.POI?>", poi, "{name:''}"},
+		{new(map[string]Point), "<dict|obj@lit.Point>", Null{}, "{}"},
+		{new(map[string]Point), "<dict|obj@lit.Point>",
 			&Dict{Keyed: []KeyVal{{"a", &Dict{Keyed: []KeyVal{{"y", Int(5)}}}}}},
 			"{a:{x:0 y:5}}"},
 	}
@@ -135,10 +134,10 @@ func TestProxyAll(t *testing.T) {
 		{new(time.Time), "<time>", "'0001-01-01T00:00:00Z'", "'2006-01-02T15:04:05Z'"},
 		{new([16]byte), "<uuid>", "'00000000-0000-0000-0000-000000000000'", "'19f0a4d8-c728-43ec-aca0-1a1f33e2de49'"},
 		{new(time.Duration), "<span>", "'0'", "'1:00'"},
-		{new(Point), "<obj lit.Point>", "{x:0 y:0}", "{x:1 y:2}"},
-		{new([]Point), "<list|obj lit.Point>", "[]", "[{}]"},
-		{new(POI), "<obj lit.POI>", "{name:''}", "{name:'a'}"},
-		{new(map[string]Point), "<dict|obj lit.Point>", "{}", "{a:{}}"},
+		{new(Point), "<obj@lit.Point>", "{x:0 y:0}", "{x:1 y:2}"},
+		{new([]Point), "<list|obj@lit.Point>", "[]", "[{}]"},
+		{new(POI), "<obj@lit.POI>", "{name:''}", "{name:'a'}"},
+		{new(map[string]Point), "<dict|obj@lit.Point>", "{}", "{a:{}}"},
 	}
 	for _, test := range tests {
 		// test value

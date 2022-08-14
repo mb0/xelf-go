@@ -11,17 +11,17 @@ import (
 	"xelf.org/xelf/typ"
 )
 
-type StrcPrx struct {
+type ObjPrx struct {
 	proxy
 	*params
 }
 
-func (x *StrcPrx) NewWith(v reflect.Value) (Mut, error) {
-	return &StrcPrx{x.with(v), x.params}, nil
+func (x *ObjPrx) NewWith(v reflect.Value) (Mut, error) {
+	return &ObjPrx{x.with(v), x.params}, nil
 }
-func (x *StrcPrx) New() (Mut, error) { return x.NewWith(x.new()) }
+func (x *ObjPrx) New() (Mut, error) { return x.NewWith(x.new()) }
 
-func (x *StrcPrx) Zero() bool {
+func (x *ObjPrx) Zero() bool {
 	if x.Nil() {
 		return true
 	}
@@ -38,13 +38,13 @@ func (x *StrcPrx) Zero() bool {
 	}
 	return true
 }
-func (x *StrcPrx) Value() Val {
+func (x *ObjPrx) Value() Val {
 	if x.Nil() {
 		return Null{}
 	}
 	return x
 }
-func (x *StrcPrx) Parse(a ast.Ast) error {
+func (x *ObjPrx) Parse(a ast.Ast) error {
 	if isNull(a) {
 		return x.setNull()
 	}
@@ -71,7 +71,7 @@ func (x *StrcPrx) Parse(a ast.Ast) error {
 	}
 	return nil
 }
-func (x *StrcPrx) Assign(v Val) (err error) {
+func (x *ObjPrx) Assign(v Val) (err error) {
 	if v == nil || v.Nil() {
 		return x.setNull()
 	}
@@ -85,14 +85,14 @@ func (x *StrcPrx) Assign(v Val) (err error) {
 			return x.SetIdx(i, v)
 		})
 	default:
-		err = fmt.Errorf("%T %s to strc %v", v, v.Type(), ErrAssign)
+		err = fmt.Errorf("%T %s to obj %v", v, v.Type(), ErrAssign)
 	}
 	return err
 }
-func (x *StrcPrx) String() string               { return bfr.String(x) }
-func (x *StrcPrx) MarshalJSON() ([]byte, error) { return bfr.JSON(x) }
-func (x *StrcPrx) UnmarshalJSON(b []byte) error { return x.unmarshal(b, x) }
-func (x *StrcPrx) Print(p *bfr.P) error {
+func (x *ObjPrx) String() string               { return bfr.String(x) }
+func (x *ObjPrx) MarshalJSON() ([]byte, error) { return bfr.JSON(x) }
+func (x *ObjPrx) UnmarshalJSON(b []byte) error { return x.unmarshal(b, x) }
+func (x *ObjPrx) Print(p *bfr.P) error {
 	if x.Nil() {
 		return p.Fmt("null")
 	}
@@ -120,13 +120,13 @@ func (x *StrcPrx) Print(p *bfr.P) error {
 	}
 	return p.Byte('}')
 }
-func (x *StrcPrx) Len() int {
+func (x *ObjPrx) Len() int {
 	if x.Nil() {
 		return 0
 	}
 	return len(x.ps)
 }
-func (x *StrcPrx) Idx(i int) (Val, error) {
+func (x *ObjPrx) Idx(i int) (Val, error) {
 	_, idx := x.pidx(i)
 	if len(idx) == 0 {
 		return nil, ErrIdxBounds
@@ -138,7 +138,7 @@ func (x *StrcPrx) Idx(i int) (Val, error) {
 	}
 	return el, nil
 }
-func (x *StrcPrx) SetIdx(i int, v Val) error {
+func (x *ObjPrx) SetIdx(i int, v Val) error {
 	_, idx := x.pidx(i)
 	if len(idx) == 0 {
 		return ErrIdxBounds
@@ -149,7 +149,7 @@ func (x *StrcPrx) SetIdx(i int, v Val) error {
 	}
 	return el.Assign(v)
 }
-func (x *StrcPrx) IterIdx(it func(int, Val) error) error {
+func (x *ObjPrx) IterIdx(it func(int, Val) error) error {
 	if x.Nil() {
 		return nil
 	}
@@ -168,7 +168,7 @@ func (x *StrcPrx) IterIdx(it func(int, Val) error) error {
 	}
 	return nil
 }
-func (x *StrcPrx) Keys() []string {
+func (x *ObjPrx) Keys() []string {
 	if x.Nil() {
 		return nil
 	}
@@ -178,13 +178,13 @@ func (x *StrcPrx) Keys() []string {
 	}
 	return res
 }
-func (x *StrcPrx) Key(k string) (Val, error) {
+func (x *ObjPrx) Key(k string) (Val, error) {
 	if x.Nil() {
 		return Null{}, nil
 	}
 	_, idx, _ := x.pkey(k)
 	if len(idx) == 0 {
-		return nil, fmt.Errorf("strc prx %T %q: %w", x.Ptr(), k, ErrKeyNotFound)
+		return nil, fmt.Errorf("obj prx %T %q: %w", x.Ptr(), k, ErrKeyNotFound)
 	}
 	el, err := x.Reg.ProxyValue(x.elem().FieldByIndex(idx).Addr())
 	if err != nil {
@@ -192,10 +192,10 @@ func (x *StrcPrx) Key(k string) (Val, error) {
 	}
 	return el, nil
 }
-func (x *StrcPrx) SetKey(k string, v Val) error {
+func (x *ObjPrx) SetKey(k string, v Val) error {
 	_, idx, _ := x.pkey(k)
 	if len(idx) == 0 {
-		return fmt.Errorf("strc prx %T %q: %w", x.Ptr(), k, ErrKeyNotFound)
+		return fmt.Errorf("obj prx %T %q: %w", x.Ptr(), k, ErrKeyNotFound)
 	}
 	el, err := x.Reg.ProxyValue(x.elem().FieldByIndex(idx).Addr())
 	if err != nil {
@@ -203,7 +203,7 @@ func (x *StrcPrx) SetKey(k string, v Val) error {
 	}
 	return el.Assign(v)
 }
-func (x *StrcPrx) IterKey(it func(string, Val) error) error {
+func (x *ObjPrx) IterKey(it func(string, Val) error) error {
 	if x.Nil() {
 		return nil
 	}
@@ -224,7 +224,7 @@ func (x *StrcPrx) IterKey(it func(string, Val) error) error {
 	}
 	return nil
 }
-func (x *StrcPrx) pidx(i int) (p typ.Param, _ []int) {
+func (x *ObjPrx) pidx(i int) (p typ.Param, _ []int) {
 	if i < 0 {
 		return p, nil
 	}
@@ -233,7 +233,7 @@ func (x *StrcPrx) pidx(i int) (p typ.Param, _ []int) {
 	}
 	return x.ps[i], x.idx[i]
 }
-func (x *StrcPrx) pkey(k string) (p typ.Param, _ []int, _ int) {
+func (x *ObjPrx) pkey(k string) (p typ.Param, _ []int, _ int) {
 	for i, p := range x.ps {
 		if p.Key == k {
 			return p, x.idx[i], i

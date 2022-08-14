@@ -89,7 +89,8 @@ func (e *Editor) edit(f EditFunc) (res Type, err error) {
 		}
 		if e.copy && !mod {
 			old := b
-			b = &ParamBody{Name: b.Name, Params: append([]Param{}, b.Params...)}
+			res.Ref = e.Ref
+			b = &ParamBody{Params: append([]Param{}, b.Params...)}
 			res.Body, mod = b, true
 			e.seen[old] = b
 		}

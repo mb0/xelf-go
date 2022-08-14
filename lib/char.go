@@ -10,7 +10,7 @@ import (
 	"xelf.org/xelf/typ"
 )
 
-var Cat = &catSpec{impl("<form cat tupl str>")}
+var Cat = &catSpec{impl("<form@cat tupl str>")}
 
 type catSpec struct{ exp.SpecBase }
 
@@ -27,7 +27,7 @@ func (s *catSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 	return &exp.Lit{Res: typ.Str, Val: lit.Str(b.String())}, nil
 }
 
-var Sep = &sepSpec{impl("<form sep str tupl str>")}
+var Sep = &sepSpec{impl("<form@sep str tupl str>")}
 
 type sepSpec struct{ exp.SpecBase }
 
@@ -51,8 +51,8 @@ func (s *sepSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 	return &exp.Lit{Res: typ.Str, Val: lit.Str(b.String())}, nil
 }
 
-var Json = &rawSpec{impl("<form json any raw>"), true}
-var Xelf = &rawSpec{impl("<form xelf any any raw>"), false}
+var Json = &rawSpec{impl("<form@json any raw>"), true}
+var Xelf = &rawSpec{impl("<form@xelf any any raw>"), false}
 
 type rawSpec struct {
 	exp.SpecBase

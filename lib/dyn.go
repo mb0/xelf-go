@@ -10,7 +10,7 @@ import (
 	"xelf.org/xelf/typ"
 )
 
-var Dyn = &dynSpec{impl("<form dyn tupl|exp @>")}
+var Dyn = &dynSpec{impl("<form@dyn tupl|exp @>")}
 
 type dynSpec struct{ exp.SpecBase }
 

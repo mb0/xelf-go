@@ -68,14 +68,14 @@ func TestUnify(t *testing.T) {
 		{"list|@", "list", "", ListOf(Var(1, Void))},
 		{"list|@", "list|int", "", ListOf(WithID(1, Int))},
 		{"list|str", "list|int", "cannot", Void},
-		{"<rec x:int y:int>", "<rec x:int y:int>", "", Rec(P("x", Int), P("y", Int))},
-		{"<rec x:int y:int>", "any", "", Rec(P("x", Int), P("y", Int))},
+		{"<obj x:int y:int>", "<obj x:int y:int>", "", Obj("", P("x", Int), P("y", Int))},
+		{"<obj x:int y:int>", "any", "", Obj("", P("x", Int), P("y", Int))},
 		{"num@", "exp", "", Var(1, Num)},
 		{"num", "exp|@", "", Var(1, Num)},
 		{"num", "@", "", Var(1, Num)},
 		{"tupl|int", "tupl?", "", ElemTupl(Int)},
-		{"<form a int any>", "<form b int any>", "", Form("_", P("", Int), P("", Any))},
-		{"<form a int any>", "<form b int? any>", "", Form("_", P("", Int), P("", Any))},
+		{"<form@a int any>", "<form@b int any>", "", Form("_", P("", Int), P("", Any))},
+		{"<form@a int any>", "<form@b int? any>", "", Form("_", P("", Int), P("", Any))},
 	}
 	for _, test := range tests {
 		a, err := Parse(test.a)

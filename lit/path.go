@@ -73,7 +73,7 @@ func SelectList(val Val, path cor.Path) (_ Val, err error) {
 				break
 			}
 		}
-	case *Strc:
+	case *Obj:
 		res.Reg = a.Reg
 		for _, v := range a.Vals {
 			if err = collectIdxrVal(v, path, res); err != nil {
@@ -83,7 +83,7 @@ func SelectList(val Val, path cor.Path) (_ Val, err error) {
 	case *ListPrx:
 		res.Reg = a.Reg
 		err = collectIdxr(a, path, res)
-	case *StrcPrx:
+	case *ObjPrx:
 		res.Reg = a.Reg
 		err = collectIdxr(a, path, res)
 	}

@@ -137,7 +137,7 @@ func (c *Call) Source() ast.Src { return c.Src }
 func (c *Call) String() string  { return bfr.String(c) }
 func (c *Call) Print(p *bfr.P) error {
 	p.Byte('(')
-	name := SigName(c.Sig)
+	name := c.Sig.Ref
 	if name != "" {
 		p.Fmt(name)
 		p.Byte(' ')

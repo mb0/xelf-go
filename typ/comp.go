@@ -25,9 +25,6 @@ func (t Type) AssignableTo(dst Type) bool {
 		}
 	case *SelBody:
 		return db.EqualHist(t.Body, nil)
-	case *RefBody:
-		sb, ok := t.Body.(*RefBody)
-		return ok && db.Ref == sb.Ref
 	case *AltBody:
 		if dst.Kind&sk == sk {
 			return true
@@ -40,7 +37,7 @@ func (t Type) AssignableTo(dst Type) bool {
 	case *ParamBody:
 		if dst.Kind&sk != sk &&
 			(sk&knd.Spec == 0 || dst.Kind&knd.Spec == 0) &&
-			(sk&knd.Strc == 0 || dst.Kind&knd.Strc == 0) {
+			(sk&knd.Obj == 0 || dst.Kind&knd.Obj == 0) {
 			return false
 		}
 		sb, ok := t.Body.(*ParamBody)
@@ -60,8 +57,8 @@ func (t Type) AssignableTo(dst Type) bool {
 		return true
 	case *ConstBody:
 		if dst.Kind&sk != sk {
-			sb, ok := t.Body.(*ConstBody)
-			return ok && sb.Name == db.Name
+			_, ok := t.Body.(*ConstBody)
+			return ok && dst.Ref == t.Ref
 		}
 		// we can assign constant names and values
 		if sk == knd.Str {
@@ -100,9 +97,6 @@ func (t Type) ConvertibleTo(dst Type) bool {
 		}
 	case *SelBody:
 		return db.EqualHist(t.Body, nil)
-	case *RefBody:
-		sb, ok := t.Body.(*RefBody)
-		return ok && db.Ref == sb.Ref
 	case *AltBody:
 		if dst.Kind&sk == sk {
 			return true
@@ -115,7 +109,7 @@ func (t Type) ConvertibleTo(dst Type) bool {
 	case *ParamBody:
 		if dst.Kind&sk != sk &&
 			(sk&knd.Spec == 0 || dst.Kind&knd.Spec == 0) &&
-			(sk&knd.Strc == 0 || dst.Kind&knd.Strc == 0) {
+			(sk&knd.Obj == 0 || dst.Kind&knd.Obj == 0) {
 			return false
 		}
 		sb, ok := t.Body.(*ParamBody)
@@ -133,8 +127,8 @@ func (t Type) ConvertibleTo(dst Type) bool {
 		return true
 	case *ConstBody:
 		if dst.Kind&sk != sk {
-			sb, ok := t.Body.(*ConstBody)
-			return ok && sb.Name == db.Name
+			_, ok := t.Body.(*ConstBody)
+			return ok && dst.Ref == t.Ref
 		}
 		// we can assign constant names and values
 		if sk == knd.Str {

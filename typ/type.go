@@ -14,6 +14,7 @@ import (
 type Type struct {
 	Kind knd.Kind
 	ID   int32
+	Ref  string
 	Body
 }
 
@@ -28,7 +29,7 @@ type Body interface {
 // Equal returns whether type t and o are identical.
 func (t Type) Equal(o Type) bool { return t.EqualHist(o, nil) }
 func (t Type) EqualHist(o Type, h Hist) bool {
-	if t.Kind != o.Kind || t.ID != o.ID {
+	if t.Kind != o.Kind || t.ID != o.ID || t.Ref != o.Ref {
 		return false
 	}
 	if t.Body == nil {
@@ -98,14 +99,9 @@ func (t Type) print(b *bfr.P, sb *strings.Builder, enclose bool) error {
 			sb.WriteString(s)
 		}
 	}
-	if isRef {
+	if t.Ref != "" {
 		sb.WriteByte('@')
-		if rb, ok := t.Body.(*RefBody); ok {
-			sb.WriteString(rb.Ref)
-		} else {
-			b.Err = fmt.Errorf("expect type ref body")
-			return b.Err
-		}
+		sb.WriteString(t.Ref)
 	} else if isVar {
 		sb.WriteByte('@')
 		if t.ID > 0 {
@@ -125,14 +121,6 @@ func (t Type) print(b *bfr.P, sb *strings.Builder, enclose bool) error {
 		return b.Byte('>')
 	}
 	switch tb := t.Body.(type) {
-	case *RefBody:
-		if t.Kind&knd.Schm != 0 {
-			b.Byte('<')
-			b.Fmt(sb.String())
-			b.Byte(' ')
-			b.Fmt(tb.Ref)
-			return b.Byte('>')
-		}
 	case *ElBody:
 		if tb.El != Void {
 			sb.WriteByte('|')
@@ -141,17 +129,19 @@ func (t Type) print(b *bfr.P, sb *strings.Builder, enclose bool) error {
 	case *ConstBody:
 		b.Byte('<')
 		b.Fmt(sb.String())
-		b.Byte(' ')
-		b.Fmt(tb.Name)
+		if t.Ref == "" {
+			for _, c := range tb.Consts {
+				b.Byte(' ')
+				b.Fmt(c.Name)
+				b.Byte(':')
+				b.Fmt("%d", c.Val)
+			}
+		}
 		return b.Byte('>')
 	case *ParamBody:
 		b.Byte('<')
 		b.Fmt(sb.String())
-		if tb.Name != "" && t.Kind&knd.Rec == 0 {
-			b.Byte(' ')
-			b.Fmt(tb.Name)
-		}
-		if t.Kind&knd.Obj == 0 {
+		if t.Kind&knd.Spec != 0 || t.Ref == "" {
 			for _, p := range tb.Params {
 				b.Byte(' ')
 				if p.Name != "" {

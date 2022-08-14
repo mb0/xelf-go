@@ -55,17 +55,25 @@ func Var(id int32, t Type) Type {
 	return t
 }
 
-func Ref(name string) Type { return Type{knd.Ref, 0, &RefBody{Ref: name}} }
-func Sel(sel string) Type  { return Type{knd.Sel, 0, &SelBody{Path: sel}} }
+func Ref(name string) Type { return Type{Kind: knd.Ref, Ref: name} }
+func Sel(sel string) Type  { return Type{Kind: knd.Sel, Body: &SelBody{Path: sel}} }
 
-func Rec(ps ...Param) Type          { return Type{knd.Rec, 0, &ParamBody{Params: ps}} }
-func Obj(n string, ps []Param) Type { return Type{knd.Obj, 0, &ParamBody{Name: n, Params: ps}} }
+func Bits(n string, cs ...Const) Type {
+	return Type{Kind: knd.Bits, Ref: n, Body: &ConstBody{Consts: cs}}
+}
+func Enum(n string, cs ...Const) Type {
+	return Type{Kind: knd.Enum, Ref: n, Body: &ConstBody{Consts: cs}}
+}
+
+func Obj(n string, ps ...Param) Type {
+	return Type{Kind: knd.Obj, Ref: n, Body: &ParamBody{Params: ps}}
+}
 
 func elType(k knd.Kind, el Type) Type {
 	if el == Void {
 		return Type{Kind: k}
 	}
-	return Type{k, 0, &ElBody{El: el}}
+	return Type{Kind: k, Body: &ElBody{El: el}}
 }
 
 func TypOf(t Type) Type  { return elType(knd.Typ, t) }
@@ -78,11 +86,15 @@ func DictOf(t Type) Type { return elType(knd.Dict, t) }
 func IdxrOf(t Type) Type { return elType(knd.Idxr, t) }
 func KeyrOf(t Type) Type { return elType(knd.Keyr, t) }
 
-func ElemTupl(t Type) Type       { return Type{knd.Tupl, 0, &ElBody{El: t}} }
-func ParamTupl(ps ...Param) Type { return Type{knd.Tupl, 0, &ParamBody{Params: ps}} }
+func ElemTupl(t Type) Type       { return Type{Kind: knd.Tupl, Body: &ElBody{El: t}} }
+func ParamTupl(ps ...Param) Type { return Type{Kind: knd.Tupl, Body: &ParamBody{Params: ps}} }
 
-func Func(name string, ps ...Param) Type { return Type{knd.Func, 0, &ParamBody{name, ps}} }
-func Form(name string, ps ...Param) Type { return Type{knd.Form, 0, &ParamBody{name, ps}} }
+func Func(name string, ps ...Param) Type {
+	return Type{Kind: knd.Func, Ref: name, Body: &ParamBody{Params: ps}}
+}
+func Form(name string, ps ...Param) Type {
+	return Type{Kind: knd.Form, Ref: name, Body: &ParamBody{Params: ps}}
+}
 
 func El(t Type) Type {
 	if b, ok := t.Body.(*ElBody); ok && b.El.Kind != knd.Void {
@@ -134,18 +146,4 @@ func Last(t Type) Type {
 		}
 	}
 	return t
-}
-
-func Name(t Type) string {
-	if t.Kind&(knd.Schm|knd.Spec|knd.Ref) != 0 {
-		switch b := t.Body.(type) {
-		case *ParamBody:
-			return b.Name
-		case *ConstBody:
-			return b.Name
-		case *RefBody:
-			return b.Ref
-		}
-	}
-	return ""
 }

@@ -39,7 +39,7 @@ func TestParse(t *testing.T) {
 			&Sym{Sym: "bool", Src: src(1, 5)},
 			&Lit{typ.Num, lit.Int(1), src(19, 20)},
 		)},
-		{`<rec x:int y:int>`, &Lit{typ.Typ, typ.Rec(
+		{`<obj x:int y:int>`, &Lit{typ.Typ, typ.Obj("",
 			typ.P("x", typ.Int),
 			typ.P("y", typ.Int),
 		), src(0, 17)}},

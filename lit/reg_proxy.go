@@ -171,7 +171,7 @@ func (reg *Reg) ProxyValue(ptr reflect.Value) (mut Mut, err error) {
 			reg.setParam(et, nfo)
 		}
 		// we use reflect struct because the proxy also needs the param map
-		mut = &StrcPrx{proxy: newProxy(reg, nfo.Type, org), params: nfo.params}
+		mut = &ObjPrx{proxy: newProxy(reg, nfo.Type, org), params: nfo.params}
 	case reflect.Map:
 		if et.Key().Kind() != reflect.String {
 			break

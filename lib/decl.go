@@ -7,7 +7,7 @@ import (
 	"xelf.org/xelf/typ"
 )
 
-var Dot = &dotSpec{impl("<form dot any exp|@1 @1>")}
+var Dot = &dotSpec{impl("<form@dot any exp|@1 @1>")}
 
 type dotSpec struct{ exp.SpecBase }
 
@@ -40,7 +40,7 @@ func (s *dotSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 	return p.Eval(de, c.Args[1])
 }
 
-var Let = &letSpec{impl("<form let tupl|tag exp|@1 @1>")}
+var Let = &letSpec{impl("<form@let tupl|tag exp|@1 @1>")}
 
 type letSpec struct{ exp.SpecBase }
 

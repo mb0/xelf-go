@@ -19,13 +19,13 @@ Xelf literals use a superset of JSON with additional rules to make handwriting l
    helpful for templates and other pre-formatted multiline strings.
  * the comma separator is optional, whitespaces work just as well and don't clutter the output
  * tag keys do not need to be quoted if they are simple names as defined by the cor package
- * short flag tags can omit the value `(eq (rec flag;) (rec flag:true))`
+ * short flag tags can omit the value `(eq (obj flag;) (obj flag:true))`
 
 We need to fit in types and expressions and only have parenthesis and angle brackets left:
  * exp uses `()` because it is familiar to write, needs less escaping and looks like a lisp.
    exp borrows tag notation form dict literals `(let a:1 b:2 (add a b))`
  * typ uses `<>` because we don't need it much and can mostly inferred in problematic contexts
-   `<list|rec id:int name:str score:real date:time>`
+   `<list|obj id:int name:str score:real date:time>`
 
 Composite literals can only contain other literals, but no symbols or calls. Forms can be used
 to construct literals from expressions, instead of reusing the literal syntax. This makes it

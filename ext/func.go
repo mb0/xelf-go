@@ -33,8 +33,8 @@ func NewFunc(reg *lit.Reg, name string, val interface{}, names ...string) (*Func
 	}
 	t := v.Type()
 	n := t.NumIn()
-	pb := &typ.ParamBody{Name: name}
-	s := &Func{SpecBase: exp.SpecBase{Decl: typ.Type{Kind: knd.Func, Body: pb}},
+	pb := &typ.ParamBody{}
+	s := &Func{SpecBase: exp.SpecBase{Decl: typ.Type{Kind: knd.Func, Ref: name, Body: pb}},
 		val: v, rts: make([]reflect.Type, 0, n), vari: t.IsVariadic(),
 	}
 	for i := 0; i < n; i++ {

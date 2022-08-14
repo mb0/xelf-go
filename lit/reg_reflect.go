@@ -122,17 +122,15 @@ func (reg *Reg) reflectStruct(t reflect.Type, s *tstack) (typ.Type, *params, err
 	if err != nil {
 		return typ.Void, nil, err
 	}
-	k := knd.Rec
 	tn := t.Name()
 	if tn != "" {
 		if cor.IsCased(tn) {
 			tn = t.String()
-			k = knd.Obj
 		} else {
 			tn = ""
 		}
 	}
-	return typ.Type{Kind: k, Body: &typ.ParamBody{Name: tn, Params: pm.ps}}, &pm, nil
+	return typ.Type{Kind: knd.Obj, Ref: tn, Body: &typ.ParamBody{Params: pm.ps}}, &pm, nil
 }
 func (reg *Reg) reflectFields(t reflect.Type, s *tstack) (pm params, _ error) {
 	n := t.NumField()

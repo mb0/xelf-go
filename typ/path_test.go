@@ -13,7 +13,7 @@ func TestSelect(t *testing.T) {
 	}{
 		{"<>", ".", "<>"},
 		{"<dict>", ".a", "<any>"},
-		{"<rec a:str>", "a", "<str>"},
+		{"<obj a:str>", "a", "<str>"},
 		{"<list|int>", "0", "<int>"},
 		{"<list|dict|int>", "0.a", "<int>"},
 		{"<list|dict|int>", "/a", "<list|int>"},
@@ -43,8 +43,8 @@ func TestSelectErr(t *testing.T) {
 		want string
 	}{
 		{"<rect a:str>", "a", "invalid type rect"},
-		{"<rec a:string>", "a", "invalid type string"},
-		{"<rec a:str>", "b", "key b not found"},
+		{"<obj a:string>", "a", "invalid type string"},
+		{"<obj a:str>", "b", "key b not found"},
 		{"<dict|dict|int>", "/a", "want idxr got <dict|dict|int>"},
 	}
 	for _, test := range tests {

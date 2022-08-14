@@ -38,7 +38,6 @@ const (
 	// cont
 	List
 	Dict
-	Rec
 	Obj
 
 	// spec
@@ -55,17 +54,15 @@ const (
 const (
 	Void = Kind(0)
 	Exp  = Lit | Sym | Tag | Tupl | Call
-	Schm = Bits | Enum | Obj
 	Meta = Alt | Var | Ref | Sel
 
 	Num  = Int | Real | Bits
 	Char = Str | Raw | UUID | Span | Time | Enum
 	Prim = Bool | Num | Char
 	Cont = List | Dict
-	Strc = Rec | Obj
-	Idxr = List | Strc
-	Keyr = Dict | Strc
-	Data = Prim | Cont | Strc
+	Idxr = List | Obj
+	Keyr = Dict | Obj
+	Data = Prim | Cont | Obj
 	Spec = Func | Form
 	All  = Data | Typ | Spec
 	Any  = All | None
@@ -116,7 +113,6 @@ var Infos = []Info{
 	{"enum", Enum},
 	{"list", List},
 	{"dict", Dict},
-	{"rec", Rec},
 	{"obj", Obj},
 	{"func", Func},
 	{"form", Form},
@@ -126,14 +122,12 @@ var Infos = []Info{
 	{"sel", Sel},
 
 	{"exp", Exp},
-	{"schm", Schm},
 	{"meta", Meta},
 
 	{"num", Num},
 	{"char", Char},
 	{"prim", Prim},
 	{"cont", Cont},
-	{"strc", Strc},
 	{"idxr", Idxr},
 	{"keyr", Keyr},
 	{"data", Data},
