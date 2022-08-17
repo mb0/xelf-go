@@ -35,6 +35,8 @@ func (reg *Reg) SetRef(ref string, t typ.Type, mut Mut) {
 	if reg.refs == nil {
 		reg.refs = make(map[string]refInfo)
 	}
+	t.Ref = ref
+	ref = cor.Keyed(ref)
 	reg.refs[ref] = refInfo{t, mut}
 }
 

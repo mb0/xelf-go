@@ -2,6 +2,7 @@ package typ
 
 import (
 	"fmt"
+	"strings"
 
 	"xelf.org/xelf/knd"
 )
@@ -50,17 +51,15 @@ func (sys *Sys) update(e *Editor) (Type, error) {
 			return r, nil
 		}
 	}
-	if e.Kind&knd.Ref != 0 {
-		if e.Ref != "" {
-			r, err := sys.Reg.RefType(e.Ref)
-			if err != nil {
-				return e.Type, nil
-			}
-			if e.Kind&knd.None != 0 {
-				r.Kind |= knd.None
-			}
-			return r, nil
+	if e.Kind&knd.Ref != 0 && e.Ref != "" {
+		r, err := sys.resolveRef(e.Type)
+		if err != nil {
+			return e.Type, nil
 		}
+		if e.Kind&knd.None != 0 {
+			r.Kind |= knd.None
+		}
+		return r, nil
 	}
 	return e.Type, nil
 }
@@ -80,13 +79,12 @@ func (sys *Sys) inst(t Type, m map[int32]Type) (Type, error) {
 			sys.MaxID++
 			r.ID = sys.MaxID
 		}
-		if r.Kind&knd.Ref != 0 && r.Ref != "" && sys.Reg != nil {
-			n, err := sys.Reg.RefType(r.Ref)
+		if r.Kind&knd.Ref != 0 && r.Ref != "" {
+			n, err := sys.resolveRef(r)
 			if err != nil {
+				// TODO uncomment here to highlight custom references hacks
+				//return r, err
 				return r, nil
-			}
-			if r.Kind&knd.None != 0 {
-				n.Kind |= knd.None
 			}
 			r = n
 		} else if b, ok := r.Body.(*SelBody); ok {
@@ -109,6 +107,56 @@ func (sys *Sys) inst(t Type, m map[int32]Type) (Type, error) {
 		}
 		return r, nil
 	})
+}
+
+func (sys *Sys) resolveRef(t Type) (Type, error) {
+	if t.Ref[0] == '.' {
+		// skip localref
+		return t, nil
+	}
+	if sys.Reg == nil {
+		return t, fmt.Errorf("no type registry configured")
+	}
+	// try the first part
+	ref, rest, sel := strings.Cut(t.Ref, ".")
+	n, err := sys.Reg.RefType(ref)
+	if err != nil {
+		if !sel {
+			return t, err
+		}
+		// packages are not yet implemented, so check for schema qualified types
+		// we can at least expect a flat schema.model structure
+		idx := strings.IndexByte(rest, '.')
+		if idx >= 0 {
+			idx += 1 + len(ref)
+			ref, rest, sel = t.Ref[:idx], t.Ref[idx+1:], true
+		} else {
+			ref, rest, sel = t.Ref, "", false
+		}
+		n, err = sys.Reg.RefType(ref)
+		if err != nil {
+			return t, err
+		}
+	}
+	// normalize ref
+	ref = n.Ref
+	if sel {
+		ref += "." + rest
+		if n.Kind&knd.Ref != 0 {
+			n = Ref(ref)
+		} else {
+			// find selection
+			n, err = Select(n, rest)
+			if err != nil {
+				return t, err
+			}
+			n.Ref = ref
+		}
+	}
+	if t.Kind&knd.None != 0 {
+		n.Kind |= knd.None
+	}
+	return n, nil
 }
 
 // Unify unifies type t and h and returns the result or an error.

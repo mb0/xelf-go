@@ -42,7 +42,7 @@ func SelectKey(t Type, key string) (Type, error) {
 	case *ElBody:
 		return b.El, nil
 	case *ParamBody:
-		if p := b.FindKeyIndex(key); p >= 0 {
+		if p := b.FindKeyIndex(cor.Keyed(key)); p >= 0 {
 			return b.Params[p].Type, nil
 		}
 	}

@@ -52,7 +52,7 @@ func TestProgResl(t *testing.T) {
 			`<form@if <tupl cond:any then:exp|num@1> else:exp?|num@1 num@1>`},
 		{`(if true "one")`, `<char@1>`,
 			`<form@if <tupl cond:any then:exp|char@1> else:exp?|char@1 char@1>`},
-		{`(make @test.point {})`, `<obj@exp_test.Point>`, ``},
+		{`(make @test.point {})`, `<obj@test.point>`, ``},
 	}
 	reg := &lit.Reg{}
 	mut := reg.MustProxy(&Point{})
