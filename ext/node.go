@@ -96,7 +96,17 @@ func (s *NodeSpec) Resl(p *exp.Prog, env exp.Env, c *exp.Call, h typ.Type) (exp.
 		}
 		c.Env = &NodeEnv{Par: env, Node: n, Spec: s.Sub}
 	}
-	return s.SpecBase.Resl(p, env, c, h)
+	res, err := s.SpecBase.Resl(p, env, c, h)
+	if err != nil {
+		return nil, err
+	}
+	if s.ReslHook != nil {
+		err = s.ReslHook(p, c)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
 }
 
 func (s *NodeSpec) GetNode(p *exp.Prog, c *exp.Call) (Node, error) {

@@ -25,6 +25,7 @@ var Std = exp.Builtins(make(Specs).AddMap(Core).Add(
 	Mut, Append,
 	Fn,
 	Fold, Foldr, Range,
+	Use,
 ))
 
 // Specs is spec map helper that can be converted to a builtin environment.
