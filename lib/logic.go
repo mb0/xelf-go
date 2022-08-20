@@ -29,7 +29,7 @@ func (s *logicSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 			if err != nil {
 				return nil, err
 			}
-			if !e.Zero() == s.neg {
+			if !e.Val.Zero() == s.neg {
 				r = !s.init
 				break
 			}

@@ -15,7 +15,7 @@ type fnSpec struct{ exp.SpecBase }
 
 func (s *fnSpec) Value() lit.Val { return s }
 func (s *fnSpec) Resl(p *exp.Prog, env exp.Env, c *exp.Call, h typ.Type) (_ exp.Exp, err error) {
-	fe := &FuncEnv{Par: env, Def: &lit.Dict{}}
+	fe := &FuncEnv{Par: env}
 	var ft typ.Type
 	tags, ok := c.Args[0].(*exp.Tupl)
 	expl := ok && len(tags.Els) > 0
@@ -44,7 +44,7 @@ func makeFunc(fe *FuncEnv, ft typ.Type, x exp.Exp) *funcSpec {
 }
 
 func explicitFn(p *exp.Prog, fe *FuncEnv, c *exp.Call, es []exp.Exp, h typ.Type) (typ.Type, error) {
-	keys := make([]lit.KeyVal, 0, len(es))
+	keys := make(exp.Tags, 0, len(es))
 	ps := make([]typ.Param, 0, len(es)+1)
 	for _, el := range es {
 		tag := el.(*exp.Tag)
@@ -55,15 +55,17 @@ func explicitFn(p *exp.Prog, fe *FuncEnv, c *exp.Call, es []exp.Exp, h typ.Type)
 		if pa.Res.Kind&knd.Typ != 0 {
 			pv, ok := pa.Val.(typ.Type)
 			if ok {
+				t := *tag
+				t.Exp = &exp.Lit{Res: pv, Src: tag.Src, Val: lit.Null{}}
 				ps = append(ps, typ.P(tag.Tag, pv))
-				keys = append(keys, lit.KeyVal{Key: tag.Tag, Val: &exp.Lit{Res: pv, Val: lit.Null{}}})
+				keys = append(keys, t)
 				continue
 			}
 		}
 		return typ.Void, fmt.Errorf("expect type got %[1]T %[1]s", pa)
 	}
 	ps = append(ps, typ.P("", typ.Type{Kind: knd.Var}))
-	fe.Def.Keyed = keys
+	fe.Def = keys
 	fn := fmt.Sprintf("fn%d", p.NextFnID())
 	return p.Sys.Inst(typ.Func(fn, ps...))
 }
@@ -76,10 +78,10 @@ func implicitFn(p *exp.Prog, fe *FuncEnv, c *exp.Call, h typ.Type) (typ.Type, er
 	if err != nil {
 		return typ.Void, err
 	}
-	ps := make([]typ.Param, 0, len(fe.Def.Keyed)+1)
-	for _, kl := range fe.Def.Keyed {
-		a := kl.Val.(*exp.Lit)
-		ps = append(ps, typ.P(kl.Key, a.Res))
+	ps := make([]typ.Param, 0, len(fe.Def)+1)
+	for _, kl := range fe.Def {
+		a := kl.Exp.(*exp.Lit)
+		ps = append(ps, typ.P(kl.Tag, a.Res))
 	}
 	rt = p.Sys.Update(rt)
 	ps = append(ps, typ.P("", rt))
@@ -115,8 +117,8 @@ func (s *funcSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 		if err != nil {
 			return nil, err
 		}
-		kl := &s.env.Def.Keyed[i]
-		kl.Val.(*exp.Lit).Val = r.Val
+		kl := &s.env.Def[i]
+		kl.Exp.(*exp.Lit).Val = r.Val
 	}
 	return p.Eval(s.env, s.act)
 }
@@ -124,7 +126,7 @@ func (s *funcSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 type recurSpec struct {
 	exp.SpecBase
 	par  exp.Env
-	def  *lit.Dict
+	def  exp.Tags
 	act  exp.Exp
 	spec *funcSpec
 }
@@ -164,7 +166,7 @@ func (s *recurSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 
 type FuncEnv struct {
 	Par   exp.Env
-	Def   *lit.Dict
+	Def   exp.Tags
 	mock  bool
 	recur *recurSpec
 }
@@ -177,11 +179,12 @@ func (e *FuncEnv) Resl(p *exp.Prog, s *exp.Sym, k string) (exp.Exp, error) {
 		// as not to reuse values from previous calls
 		r := *e.recur
 		r.act = e.recur.act.Clone()
-		r.def = &lit.Dict{Keyed: make([]lit.KeyVal, len(e.Def.Keyed))}
-		for i, kv := range e.Def.Keyed {
-			l := kv.Val.(*exp.Lit)
-			kv.Val = &exp.Lit{Res: l.Res, Val: lit.Null{}, Src: l.Src}
-			r.def.Keyed[i] = kv
+		r.def = make(exp.Tags, len(e.Def))
+		for i, kv := range e.Def {
+			l := *(kv.Exp.(*exp.Lit))
+			l.Val = lit.Null{}
+			kv.Exp = &l
+			r.def[i] = kv
 		}
 		return &exp.Lit{Res: r.Type(), Val: &r}, nil
 	}
@@ -189,22 +192,16 @@ func (e *FuncEnv) Resl(p *exp.Prog, s *exp.Sym, k string) (exp.Exp, error) {
 	if !ok {
 		return e.Par.Resl(p, s, k)
 	}
-	l, err := lit.Select(e.Def, k)
+	l, err := e.Def.Select(k)
 	if err != nil {
 		kk := k[1:]
 		if !e.mock {
 			return s, nil
 		}
 		l = &exp.Lit{Res: p.Sys.Bind(typ.Var(0, typ.Void)), Val: lit.Null{}}
-		e.Def.Keyed = append(e.Def.Keyed, lit.KeyVal{Key: kk, Val: l})
+		e.Def = append(e.Def, exp.Tag{Tag: kk, Exp: l})
 	}
-	res, ok := l.(*exp.Lit)
-	if ok {
-		s.Type = res.Res
-	} else {
-		s.Type = l.Type()
-	}
-	s.Env, s.Rel = e, k
+	s.Type, s.Env, s.Rel = l.Res, e, k
 	return s, nil
 }
 func (e *FuncEnv) Eval(p *exp.Prog, s *exp.Sym, k string) (*exp.Lit, error) {
@@ -212,15 +209,7 @@ func (e *FuncEnv) Eval(p *exp.Prog, s *exp.Sym, k string) (*exp.Lit, error) {
 	if !ok {
 		return e.Par.Eval(p, s, k)
 	}
-	l, err := lit.Select(e.Def, k)
-	if err != nil {
-		return nil, err
-	}
-	res, ok := l.(*exp.Lit)
-	if !ok {
-		res = &exp.Lit{Res: l.Type(), Val: l}
-	}
-	return res, nil
+	return e.Def.Select(k)
 }
 func dotkey(k string) (string, bool) {
 	if k == "_" {

@@ -21,7 +21,7 @@ type Exp interface {
 // Lit is a literal expression with a literal value, which may include a type or spec.
 type Lit struct {
 	Res typ.Type
-	lit.Val
+	Val lit.Val
 	Src ast.Src
 }
 
@@ -41,6 +41,12 @@ func (a *Lit) Print(p *bfr.P) error {
 	return a.Val.Print(p)
 }
 func (a *Lit) Clone() Exp { return &Lit{a.Res, a.Val, a.Src} }
+func (a *Lit) Value() lit.Val {
+	if a == nil || a.Val == nil {
+		return lit.Null{}
+	}
+	return a.Val.Value()
+}
 
 // Sym is a symbol expression which caches the resolving environment and a relative name.
 type Sym struct {

@@ -82,7 +82,7 @@ func ListPrepper(p *exp.Prog, env exp.Env, _ Node, _ string, arg exp.Exp) (lit.V
 			if err != nil {
 				return nil, err
 			}
-			if v := aa.Value(); !v.Zero() {
+			if !aa.Val.Zero() {
 				res.Vals = append(res.Vals, aa.Val)
 			}
 		}

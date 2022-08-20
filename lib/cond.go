@@ -17,7 +17,7 @@ func (s *ifSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 		if err != nil {
 			return nil, err
 		}
-		if !res.Zero() {
+		if !res.Val.Zero() {
 			return p.Eval(c.Env, els[i+1])
 		}
 	}
@@ -50,7 +50,7 @@ func (s *swtSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 		if err != nil {
 			return nil, err
 		}
-		if ok := lit.Equal(arg.Val, res); ok {
+		if ok := lit.Equal(arg.Val, res.Val); ok {
 			return p.Eval(c.Env, els[i+1])
 		}
 	}
@@ -77,7 +77,7 @@ func (s *dfSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 		if err != nil {
 			return nil, err
 		}
-		if !res.Zero() {
+		if !res.Val.Zero() {
 			return res, nil
 		}
 	}

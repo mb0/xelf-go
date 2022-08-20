@@ -37,7 +37,7 @@ func (s *sepSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 	if err != nil {
 		return nil, err
 	}
-	sep, err := lit.ToStr(args[0])
+	sep, err := lit.ToStr(args[0].Val)
 	if err != nil {
 		return nil, err
 	}

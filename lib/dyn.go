@@ -80,7 +80,7 @@ func (s *dynSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 	}
 	spec, args := litSpec(a, d.Els)
 	if spec == nil {
-		return nil, fmt.Errorf("no spec for %[1]T %[1]s %s", a, a.Type())
+		return nil, fmt.Errorf("no spec for %[1]T %[1]s %s", a, a.Res)
 	}
 	sig, _ := p.Sys.Inst(spec.Type())
 	args, err = exp.LayoutSpec(sig, args)
