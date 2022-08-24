@@ -1,6 +1,8 @@
 Field References
 ================
 
+We want to unify schema types and references to improve utility of the type system.
+
 
 Problem
 -------
