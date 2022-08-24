@@ -20,7 +20,7 @@ var Core = exp.Builtins(make(Specs).Add(
 
 // Std extends the core environment with commonly used specs.
 var Std = exp.Builtins(make(Specs).AddMap(Core).Add(
-	Dyn,
+	Do, Dyn,
 	Dot, Let,
 	Mut, Append,
 	Fn,
