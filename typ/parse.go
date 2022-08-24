@@ -150,7 +150,7 @@ func parseBody(a ast.Ast, args []ast.Ast, t Type, hist []Type) (_ Type, err erro
 		el.Kind = alt.Kind | (el.Kind & knd.Var)
 		el.Body = alt.Body
 		return t, nil
-	case knd.Obj, knd.Func, knd.Tupl, knd.Form:
+	case knd.Obj, knd.Mod, knd.Func, knd.Tupl, knd.Form:
 	case knd.List, knd.Dict, knd.Typ:
 		b, err := parse(args[0], hist)
 		if err != nil {

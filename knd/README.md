@@ -26,7 +26,7 @@ We want specialized sub types:
  * keyr: dict, obj
 
 We have functions, type variables and references, and alternative types.
- * meta: alt, var, ref, sel
+ * meta: alt, var, ref, sel, mod
  * spec: func, form
 
 And some super types:
