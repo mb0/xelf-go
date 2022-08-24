@@ -16,8 +16,7 @@ type Builtins map[string]Spec
 func (e Builtins) Parent() Env { return nil }
 func (e Builtins) Dyn() Spec   { return e["dyn"] }
 
-func (e Builtins) Resl(p *Prog, s *Sym, k string) (Exp, error) { return e.Eval(p, s, k) }
-func (e Builtins) Eval(p *Prog, s *Sym, k string) (*Lit, error) {
+func (e Builtins) Resl(p *Prog, s *Sym, k string, eval bool) (Exp, error) {
 	if sp := e[k]; sp != nil {
 		return &Lit{Res: sp.Type(), Val: sp, Src: s.Src}, nil
 	}
@@ -42,15 +41,9 @@ type ArgEnv struct {
 func (e *ArgEnv) Parent() Env { return e.Par }
 func (e *ArgEnv) Dyn() Spec   { return e.Par.Dyn() }
 
-func (e *ArgEnv) Resl(p *Prog, s *Sym, k string) (Exp, error) {
+func (e *ArgEnv) Resl(p *Prog, s *Sym, k string, eval bool) (Exp, error) {
 	if k[0] != '$' {
-		return e.Par.Resl(p, s, k)
-	}
-	return e.Eval(p, s, k)
-}
-func (e *ArgEnv) Eval(p *Prog, s *Sym, k string) (*Lit, error) {
-	if k[0] != '$' {
-		return e.Par.Eval(p, s, k)
+		return e.Par.Resl(p, s, k, eval)
 	}
 	res, err := lit.Select(e.Val, k[1:])
 	if err != nil {
@@ -70,22 +63,18 @@ type DotEnv struct {
 func (e *DotEnv) Parent() Env { return e.Par }
 func (e *DotEnv) Dyn() Spec   { return e.Par.Dyn() }
 
-func (e *DotEnv) Resl(p *Prog, s *Sym, k string) (Exp, error) {
+func (e *DotEnv) Resl(p *Prog, s *Sym, k string, eval bool) (Exp, error) {
 	k, ok := DotKey(k)
 	if !ok {
-		return e.Par.Resl(p, s, k)
+		return e.Par.Resl(p, s, k, eval)
 	}
-	t, err := typ.Select(e.Dot.Res, k)
-	if err != nil {
-		return nil, err
-	}
-	s.Type, s.Env, s.Rel = t, e, k
-	return s, nil
-}
-func (e *DotEnv) Eval(p *Prog, s *Sym, k string) (*Lit, error) {
-	k, ok := DotKey(k)
-	if !ok {
-		return e.Par.Eval(p, s, k)
+	if !eval {
+		t, err := typ.Select(e.Dot.Res, k)
+		if err != nil {
+			return nil, err
+		}
+		s.Type, s.Env, s.Rel = t, e, k
+		return s, nil
 	}
 	v, err := lit.Select(e.Dot.Val, k)
 	if err != nil {

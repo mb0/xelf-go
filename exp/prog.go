@@ -45,10 +45,8 @@ type Env interface {
 	Dyn() Spec
 
 	// Resl resolves a part of a symbol and returns the result or an error.
-	Resl(p *Prog, s *Sym, k string) (Exp, error)
-
-	// Eval evaluates a part of a symbol and returns a literal or an error.
-	Eval(p *Prog, s *Sym, k string) (*Lit, error)
+	// If eval is true we expect a *exp.Lit result or an error.
+	Resl(p *Prog, s *Sym, k string, eval bool) (Exp, error)
 }
 
 // Prog is the entry context to resolve an expression in an environment.
@@ -95,7 +93,7 @@ func (p *Prog) Resl(env Env, e Exp, h typ.Type) (Exp, error) {
 			env = a.Env
 			k = a.Rel
 		}
-		r, err := env.Resl(p, a, k)
+		r, err := env.Resl(p, a, k, false)
 		if err != nil {
 			return nil, ast.ErrReslSym(a.Src, a.Sym, err)
 		}
@@ -158,11 +156,14 @@ func (p *Prog) Resl(env Env, e Exp, h typ.Type) (Exp, error) {
 func (p *Prog) Eval(env Env, e Exp) (_ *Lit, err error) {
 	switch a := e.(type) {
 	case *Sym:
-		res, err := env.Eval(p, a, a.Sym)
+		res, err := env.Resl(p, a, a.Sym, true)
 		if err != nil {
 			return nil, ast.ErrEval(a.Src, a.Sym, err)
 		}
-		return res, nil
+		if l, ok := res.(*Lit); ok {
+			return l, nil
+		}
+		return nil, fmt.Errorf("runtime env %T eval did return %T result", env, res)
 	case *Call:
 		res, err := a.Spec.Eval(p, a)
 		if err != nil {

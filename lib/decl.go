@@ -96,18 +96,15 @@ type LetEnv struct {
 
 func (e *LetEnv) Parent() exp.Env { return e.Par }
 func (e *LetEnv) Dyn() exp.Spec   { return e.Par.Dyn() }
-func (e *LetEnv) Resl(p *exp.Prog, s *exp.Sym, k string) (exp.Exp, error) {
+func (e *LetEnv) Resl(p *exp.Prog, s *exp.Sym, k string, eval bool) (exp.Exp, error) {
 	if a := e.Lets[k]; a != nil {
+		if eval {
+			return a, nil
+		}
 		s.Type, s.Env, s.Rel = a.Res, e, k
 		return s, nil
 	}
-	return e.Par.Resl(p, s, k)
-}
-func (e *LetEnv) Eval(p *exp.Prog, s *exp.Sym, k string) (*exp.Lit, error) {
-	if a := e.Lets[k]; a != nil {
-		return a, nil
-	}
-	return e.Par.Eval(p, s, k)
+	return e.Par.Resl(p, s, k, eval)
 }
 
 func resType(t typ.Type) typ.Type {

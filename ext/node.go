@@ -212,20 +212,12 @@ type NodeEnv struct {
 }
 
 func (e *NodeEnv) Parent() exp.Env { return e.Par }
-func (e *NodeEnv) Resl(p *exp.Prog, s *exp.Sym, k string) (exp.Exp, error) {
+func (e *NodeEnv) Resl(p *exp.Prog, s *exp.Sym, k string, eval bool) (exp.Exp, error) {
 	if e.Spec != nil {
 		if s := e.Spec(k); s != nil {
 			return &exp.Lit{Res: s.Type(), Val: s}, nil
 		}
 	}
-	return e.Par.Resl(p, s, k)
-}
-func (e *NodeEnv) Eval(p *exp.Prog, s *exp.Sym, k string) (*exp.Lit, error) {
-	if e.Spec != nil {
-		if s := e.Spec(k); s != nil {
-			return &exp.Lit{Res: s.Type(), Val: s}, nil
-		}
-	}
-	return e.Par.Eval(p, s, k)
+	return e.Par.Resl(p, s, k, eval)
 }
 func (e *NodeEnv) Dyn() exp.Spec { return e.Par.Dyn() }

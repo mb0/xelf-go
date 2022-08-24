@@ -173,7 +173,7 @@ type FuncEnv struct {
 
 func (e *FuncEnv) Parent() exp.Env { return e.Par }
 func (e *FuncEnv) Dyn() exp.Spec   { return e.Par.Dyn() }
-func (e *FuncEnv) Resl(p *exp.Prog, s *exp.Sym, k string) (exp.Exp, error) {
+func (e *FuncEnv) Resl(p *exp.Prog, s *exp.Sym, k string, eval bool) (exp.Exp, error) {
 	if k == "recur" && e.recur != nil {
 		// we want to copy the argument def when we recur
 		// as not to reuse values from previous calls
@@ -190,9 +190,12 @@ func (e *FuncEnv) Resl(p *exp.Prog, s *exp.Sym, k string) (exp.Exp, error) {
 	}
 	k, ok := dotkey(k)
 	if !ok {
-		return e.Par.Resl(p, s, k)
+		return e.Par.Resl(p, s, k, eval)
 	}
 	l, err := e.Def.Select(k)
+	if eval {
+		return l, err
+	}
 	if err != nil {
 		kk := k[1:]
 		if !e.mock {
@@ -203,13 +206,6 @@ func (e *FuncEnv) Resl(p *exp.Prog, s *exp.Sym, k string) (exp.Exp, error) {
 	}
 	s.Type, s.Env, s.Rel = l.Res, e, k
 	return s, nil
-}
-func (e *FuncEnv) Eval(p *exp.Prog, s *exp.Sym, k string) (*exp.Lit, error) {
-	k, ok := dotkey(k)
-	if !ok {
-		return e.Par.Eval(p, s, k)
-	}
-	return e.Def.Select(k)
 }
 func dotkey(k string) (string, bool) {
 	if k == "_" {
