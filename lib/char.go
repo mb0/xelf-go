@@ -52,7 +52,7 @@ func (s *sepSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 }
 
 var Json = &rawSpec{impl("<form@json any raw>"), true}
-var Xelf = &rawSpec{impl("<form@xelf any any raw>"), false}
+var Xelf = &rawSpec{impl("<form@xelf any raw>"), false}
 
 type rawSpec struct {
 	exp.SpecBase
@@ -71,7 +71,7 @@ func (s *rawSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 		b.WriteString("null")
 	} else {
 		ctx := &bfr.P{Writer: &b, JSON: s.JSON}
-		err = args[0].Val.Print(ctx)
+		err = fst.Val.Print(ctx)
 		if err != nil {
 			return nil, err
 		}
