@@ -148,6 +148,9 @@ func (reg *Reg) reflectFields(t reflect.Type, s *tstack) (pm params, _ error) {
 
 func (reg *Reg) addField(pm *params, f reflect.StructField, s *tstack, idx []int) error {
 	jtag := f.Tag.Get("json")
+	if jtag != "" && jtag[0] == '-' {
+		return nil
+	}
 	if len(idx) > 0 {
 		idx = idx[:len(idx):len(idx)]
 	}
