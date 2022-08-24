@@ -13,18 +13,34 @@ import (
 )
 
 // Parse parses str and returns an expression or an error.
-func Parse(reg *lit.Reg, str string) (Exp, error) { return Read(reg, strings.NewReader(str), "") }
+func Parse(reg *lit.Reg, str string) (Exp, error) {
+	return Read(reg, strings.NewReader(str), "")
+}
 
 // Read parses named reader r and returns an expression or an error.
 func Read(reg *lit.Reg, r io.Reader, name string) (Exp, error) {
-	a, err := ast.Read(r, name)
+	as, err := ast.ReadAll(r, name)
 	if err != nil {
 		return nil, err
 	}
 	if reg == nil {
 		reg = &lit.Reg{}
 	}
-	return ParseAst(reg, a)
+	return ParseAll(reg, as)
+}
+
+func ParseAll(reg *lit.Reg, as []ast.Ast) (Exp, error) {
+	switch len(as) {
+	case 0:
+		return &Lit{Res: typ.Void, Val: typ.Void}, nil
+	case 1:
+		return ParseAst(reg, as[0])
+	default:
+		seq := make([]ast.Ast, 0, len(as)+1)
+		seq = append(seq, ast.Ast{Tok: ast.Tok{Kind: knd.Sym, Raw: "do"}})
+		seq = append(seq, as...)
+		return ParseAst(reg, ast.Ast{Tok: ast.Tok{Kind: knd.Call, Rune: '('}, Seq: seq})
+	}
 }
 
 // ParseAst parses a as expression and returns it or an error.

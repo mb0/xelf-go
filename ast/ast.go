@@ -2,6 +2,7 @@
 package ast
 
 import (
+	"errors"
 	"io"
 
 	"xelf.org/xelf/bfr"
@@ -42,7 +43,8 @@ func (n Ast) String() string {
 }
 
 // Read returns the next ast read from r or an error.
-func Read(r io.Reader, name string) (Ast, error) { return Scan(NewLexer(r, name)) }
+func Read(r io.Reader, name string) (Ast, error)      { return Scan(NewLexer(r, name)) }
+func ReadAll(r io.Reader, name string) ([]Ast, error) { return ScanAll(NewLexer(r, name)) }
 
 // Scan returns the next Ast from l or an error.
 func Scan(l *Lexer) (Ast, error) {
@@ -51,6 +53,19 @@ func Scan(l *Lexer) (Ast, error) {
 		return Ast{}, err
 	}
 	return ScanRest(l, t)
+}
+func ScanAll(l *Lexer) (res []Ast, _ error) {
+	for {
+		a, err := Scan(l)
+		if err != nil {
+			if errors.Is(err, io.EOF) {
+				break
+			}
+			return res, err
+		}
+		res = append(res, a)
+	}
+	return res, nil
 }
 
 func ScanRest(l *Lexer, t Tok) (Ast, error) {

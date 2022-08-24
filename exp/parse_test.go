@@ -77,20 +77,27 @@ func TestParse(t *testing.T) {
 				)},
 			)},
 		)},
+		{`1 2`, call(ast.Src{},
+			&Sym{Sym: "do", Src: ast.Src{}},
+			&Lit{typ.Num, lit.Int(1), src(0, 1)},
+			&Lit{typ.Num, lit.Int(2), src(2, 3)},
+		)},
 	}
 	for _, test := range tests {
-		a, err := ast.Read(strings.NewReader(test.raw), "")
+		a, err := ast.ReadAll(strings.NewReader(test.raw), "")
 		if err != nil {
 			t.Errorf("%s read err: %v", test.raw, err)
 		}
-		fixDoc(&a, nil)
-		got, err := ParseAst(&lit.Reg{}, a)
+		for i := range a {
+			fixDoc(&a[i], nil)
+		}
+		got, err := ParseAll(&lit.Reg{}, a)
 		if err != nil {
 			t.Errorf("%s parse err: %v", test.raw, err)
 			continue
 		}
 		if !reflect.DeepEqual(got, test.want) {
-			t.Errorf("%s want:\n%#v\n\tgot:\n%#v", test.raw, test.want, got)
+			t.Errorf("%s want:\n%s\n\tgot:\n%s", test.raw, test.want, got)
 		}
 	}
 }
