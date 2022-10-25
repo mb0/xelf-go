@@ -95,7 +95,6 @@ type LetEnv struct {
 }
 
 func (e *LetEnv) Parent() exp.Env { return e.Par }
-func (e *LetEnv) Dyn() exp.Spec   { return e.Par.Dyn() }
 func (e *LetEnv) Resl(p *exp.Prog, s *exp.Sym, k string, eval bool) (exp.Exp, error) {
 	if a := e.Lets[k]; a != nil {
 		if eval {

@@ -38,8 +38,9 @@ type ArgEnv struct {
 	Val lit.Val
 }
 
+func NewArgEnv(par Env, v lit.Val) *ArgEnv { return &ArgEnv{Par: par, Typ: v.Type(), Val: v} }
+
 func (e *ArgEnv) Parent() Env { return e.Par }
-func (e *ArgEnv) Dyn() Spec   { return e.Par.Dyn() }
 
 func (e *ArgEnv) Resl(p *Prog, s *Sym, k string, eval bool) (Exp, error) {
 	if k[0] != '$' {
@@ -61,7 +62,6 @@ type DotEnv struct {
 }
 
 func (e *DotEnv) Parent() Env { return e.Par }
-func (e *DotEnv) Dyn() Spec   { return e.Par.Dyn() }
 
 func (e *DotEnv) Resl(p *Prog, s *Sym, k string, eval bool) (Exp, error) {
 	k, ok := DotKey(k)

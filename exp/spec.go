@@ -12,6 +12,7 @@ type Spec interface {
 	lit.Val
 
 	// Resl resolves a call using a type hint and returns the result or an error.
+	// The first call to Resl should setup the environment for call c.
 	Resl(p *Prog, env Env, c *Call, hint typ.Type) (Exp, error)
 
 	// Eval evaluates a resolved call and returns a literal or an error.

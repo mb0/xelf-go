@@ -220,4 +220,3 @@ func (e *NodeEnv) Resl(p *exp.Prog, s *exp.Sym, k string, eval bool) (exp.Exp, e
 	}
 	return e.Par.Resl(p, s, k, eval)
 }
-func (e *NodeEnv) Dyn() exp.Spec { return e.Par.Dyn() }

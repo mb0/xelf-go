@@ -41,9 +41,6 @@ type Env interface {
 	// Parent returns the parent environment or nil.
 	Parent() Env
 
-	// Dyn returns a dyn spec for this environment or nil.
-	Dyn() Spec
-
 	// Resl resolves a part of a symbol and returns the result or an error.
 	// If eval is true we expect a *exp.Lit result or an error.
 	Resl(p *Prog, s *Sym, k string, eval bool) (Exp, error)
@@ -58,6 +55,7 @@ type Prog struct {
 	Root Env
 	Exp  Exp
 	fnid uint
+	dyn  Spec
 }
 
 // NewProg returns a new program using the given registry, environment and expression.
@@ -69,7 +67,12 @@ func NewProg(ctx context.Context, reg *lit.Reg, env Env, exp Exp) *Prog {
 	if ctx == nil {
 		ctx = context.Background()
 	}
-	return &Prog{Ctx: ctx, Reg: reg, Sys: typ.NewSys(reg), Root: env, Exp: exp}
+	p := &Prog{Ctx: ctx, Reg: reg, Sys: typ.NewSys(reg), Root: env, Exp: exp}
+	dyn, _ := env.Resl(p, &Sym{Sym: "dyn"}, "dyn", true)
+	if l, _ := dyn.(*Lit); l != nil {
+		p.dyn, _ = l.Val.(Spec)
+	}
+	return p
 }
 
 // Resl resolves an expression using a type hint and returns the result or an error.
@@ -133,19 +136,19 @@ func (p *Prog) Resl(env Env, e Exp, h typ.Type) (Exp, error) {
 		return a, nil
 	case *Call:
 		if a.Spec == nil {
-			spec, args, err := p.reslSpec(env, a)
+			var err error
+			a.Spec, a.Args, err = p.reslSpec(env, a)
 			if err != nil {
 				return nil, err
 			}
-			sig, err := p.Sys.Inst(spec.Type())
+			a.Sig, err = p.Sys.Inst(a.Spec.Type())
 			if err != nil {
-				return nil, ast.ErrLayout(a.Src, sig, err)
+				return nil, ast.ErrLayout(a.Src, a.Sig, err)
 			}
-			args, err = LayoutSpec(sig, args)
+			a.Args, err = LayoutSpec(a.Sig, a.Args)
 			if err != nil {
-				return nil, ast.ErrLayout(a.Src, sig, err)
+				return nil, ast.ErrLayout(a.Src, a.Sig, err)
 			}
-			a.Sig, a.Spec, a.Args = sig, spec, args
 		}
 		return a.Spec.Resl(p, env, a, h)
 	}
@@ -208,7 +211,7 @@ func (p *Prog) EvalArgs(c *Call) ([]*Lit, error) {
 	return res, nil
 }
 
-// NextFnID returns a new number to identify an anonymous functions.
+// NextFnID returns a new number to identify an anonymous function.
 func (p *Prog) NextFnID() uint {
 	p.fnid++
 	return p.fnid
@@ -229,10 +232,9 @@ func (p *Prog) reslSpec(env Env, c *Call) (Spec, []Exp, error) {
 			}
 		}
 	}
-	dyn := env.Dyn()
-	if dyn == nil {
-		name := fmt.Sprintf("no dyn spec found for %s", fst)
-		return nil, nil, ast.ErrReslSpec(c.Src, name, nil)
+	if p.dyn == nil {
+		return nil, nil, ast.ErrReslSpec(c.Src, "unsupported dyn call", nil)
 	}
-	return dyn, c.Args, nil
+	c.Args[0] = fst
+	return p.dyn, c.Args, nil
 }

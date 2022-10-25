@@ -26,9 +26,9 @@ func TestProgEval(t *testing.T) {
 	reg := &lit.Reg{}
 	mut := reg.MustProxy(&Point{})
 	reg.SetRef("test.point", mut.Type(), mut)
-	env := &exp.ArgEnv{Par: extlib.Std, Typ: typ.Dict, Val: &lit.Dict{Reg: reg, Keyed: []lit.KeyVal{
+	env := exp.NewArgEnv(extlib.Std, &lit.Dict{Reg: reg, Keyed: []lit.KeyVal{
 		{Key: "now", Val: lit.Str("2021-08-19T15:00:00Z")},
-	}}}
+	}})
 	for _, test := range tests {
 		got, err := exp.Eval(nil, reg, env, test.raw)
 		if err != nil {
