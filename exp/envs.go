@@ -14,19 +14,10 @@ var ErrSymNotFound = fmt.Errorf("sym not found")
 type Builtins map[string]Spec
 
 func (e Builtins) Parent() Env { return nil }
-func (e Builtins) Dyn() Spec   { return e["dyn"] }
 
-func (e Builtins) Resl(p *Prog, s *Sym, k string, eval bool) (Exp, error) {
+func (e Builtins) Lookup(s *Sym, k string, eval bool) (Exp, error) {
 	if sp := e[k]; sp != nil {
 		return &Lit{Res: sp.Type(), Val: sp, Src: s.Src}, nil
-	}
-	t, err := typ.ParseSym(k, s.Src, nil)
-	if err == nil {
-		t, err = p.Sys.Inst(t)
-		if err != nil {
-			return nil, err
-		}
-		return &Lit{Res: typ.Typ, Val: t, Src: s.Src}, nil
 	}
 	return nil, ErrSymNotFound
 }
@@ -42,9 +33,9 @@ func NewArgEnv(par Env, v lit.Val) *ArgEnv { return &ArgEnv{Par: par, Typ: v.Typ
 
 func (e *ArgEnv) Parent() Env { return e.Par }
 
-func (e *ArgEnv) Resl(p *Prog, s *Sym, k string, eval bool) (Exp, error) {
+func (e *ArgEnv) Lookup(s *Sym, k string, eval bool) (Exp, error) {
 	if k[0] != '$' {
-		return e.Par.Resl(p, s, k, eval)
+		return e.Par.Lookup(s, k, eval)
 	}
 	res, err := lit.Select(e.Val, k[1:])
 	if err != nil {
@@ -63,10 +54,10 @@ type DotEnv struct {
 
 func (e *DotEnv) Parent() Env { return e.Par }
 
-func (e *DotEnv) Resl(p *Prog, s *Sym, k string, eval bool) (Exp, error) {
+func (e *DotEnv) Lookup(s *Sym, k string, eval bool) (Exp, error) {
 	k, ok := DotKey(k)
 	if !ok {
-		return e.Par.Resl(p, s, k, eval)
+		return e.Par.Lookup(s, k, eval)
 	}
 	if !eval {
 		t, err := typ.Select(e.Dot.Res, k)

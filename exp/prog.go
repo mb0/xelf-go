@@ -29,11 +29,11 @@ func Eval(ctx context.Context, reg *lit.Reg, env Env, str string) (*Lit, error) 
 // EvalExp creates and evaluates a new program for x and returns the result or an error.
 func EvalExp(ctx context.Context, reg *lit.Reg, env Env, x Exp) (*Lit, error) {
 	p := NewProg(ctx, reg, env, x)
-	x, err := p.Resl(env, x, typ.Void)
+	x, err := p.Resl(p, x, typ.Void)
 	if err != nil {
 		return nil, err
 	}
-	return p.Eval(env, x)
+	return p.Eval(p, x)
 }
 
 // Env is a scoped context to resolve symbols. Envs configure most of the program resolution.
@@ -41,9 +41,9 @@ type Env interface {
 	// Parent returns the parent environment or nil.
 	Parent() Env
 
-	// Resl resolves a part of a symbol and returns the result or an error.
+	// Lookup resolves a part of a symbol and returns the result or an error.
 	// If eval is true we expect a *exp.Lit result or an error.
-	Resl(p *Prog, s *Sym, k string, eval bool) (Exp, error)
+	Lookup(s *Sym, k string, eval bool) (Exp, error)
 }
 
 // Prog is the entry context to resolve an expression in an environment.
@@ -68,11 +68,36 @@ func NewProg(ctx context.Context, reg *lit.Reg, env Env, exp Exp) *Prog {
 		ctx = context.Background()
 	}
 	p := &Prog{Ctx: ctx, Reg: reg, Sys: typ.NewSys(reg), Root: env, Exp: exp}
-	dyn, _ := env.Resl(p, &Sym{Sym: "dyn"}, "dyn", true)
+	dyn, _ := env.Lookup(&Sym{Sym: "dyn"}, "dyn", true)
 	if l, _ := dyn.(*Lit); l != nil {
 		p.dyn, _ = l.Val.(Spec)
 	}
 	return p
+}
+
+func FindProg(env Env) *Prog {
+	for ; env != nil; env = env.Parent() {
+		if p, _ := env.(*Prog); p != nil {
+			return p
+		}
+	}
+	return nil
+}
+
+func (p *Prog) Parent() Env { return p.Root }
+
+func (p *Prog) Lookup(s *Sym, k string, eval bool) (Exp, error) {
+	res, err := p.Root.Lookup(s, k, eval)
+	if err != nil {
+		if t, err := typ.ParseSym(k, s.Src, nil); err == nil {
+			t, err = p.Sys.Inst(t)
+			if err != nil {
+				return nil, err
+			}
+			return &Lit{Res: typ.Typ, Val: t, Src: s.Src}, nil
+		}
+	}
+	return res, err
 }
 
 // Resl resolves an expression using a type hint and returns the result or an error.
@@ -96,7 +121,7 @@ func (p *Prog) Resl(env Env, e Exp, h typ.Type) (Exp, error) {
 			env = a.Env
 			k = a.Rel
 		}
-		r, err := env.Resl(p, a, k, false)
+		r, err := env.Lookup(a, k, false)
 		if err != nil {
 			return nil, ast.ErrReslSym(a.Src, a.Sym, err)
 		}
@@ -159,7 +184,7 @@ func (p *Prog) Resl(env Env, e Exp, h typ.Type) (Exp, error) {
 func (p *Prog) Eval(env Env, e Exp) (_ *Lit, err error) {
 	switch a := e.(type) {
 	case *Sym:
-		res, err := env.Resl(p, a, a.Sym, true)
+		res, err := env.Lookup(a, a.Sym, true)
 		if err != nil {
 			return nil, ast.ErrEval(a.Src, a.Sym, err)
 		}

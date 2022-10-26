@@ -42,7 +42,7 @@ func (s *dynSpec) Resl(p *exp.Prog, env exp.Env, c *exp.Call, h typ.Type) (exp.E
 	case *exp.Lit:
 		spec, args = litSpec(a, args)
 	case *exp.Tag:
-		got, err := env.Resl(p, &exp.Sym{Sym: ":"}, ":", false)
+		got, err := env.Lookup(&exp.Sym{Sym: ":"}, ":", false)
 		if err != nil {
 			break
 		}

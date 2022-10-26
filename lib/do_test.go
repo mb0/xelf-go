@@ -44,7 +44,7 @@ func TestDoResl(t *testing.T) {
 			continue
 		}
 		p := exp.NewProg(nil, reg, Std, x)
-		x, err = p.Resl(Std, x, typ.Void)
+		x, err = p.Resl(p, x, typ.Void)
 		if err != nil {
 			t.Errorf("resl %s failed: %v", test.raw, err)
 			continue
