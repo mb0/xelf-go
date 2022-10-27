@@ -5,9 +5,9 @@ import (
 	"testing"
 )
 
-type MapReg map[string]Type
+type MapLookup map[string]Type
 
-func (r MapReg) RefType(ref string) (Type, error) {
+func (r MapLookup) LookupType(ref string) (Type, error) {
 	t, ok := r[ref]
 	if !ok {
 		return t, fmt.Errorf("unable to resolve ref %q", ref)
@@ -16,7 +16,7 @@ func (r MapReg) RefType(ref string) (Type, error) {
 }
 
 func TestReg(t *testing.T) {
-	reg := MapReg{
+	reg := MapLookup{
 		"Test":    mustParse(`<obj@Test ID:int Name:str>`),
 		"foo.Bar": mustParse(`<obj@foo.Bar ID:int Name:str>`),
 		"Bar":     mustParse(`<obj@foo.Bar ID:int Name:str>`),
@@ -32,13 +32,13 @@ func TestReg(t *testing.T) {
 		{"<@Bar.ID>", "<int@foo.Bar.ID>"},
 	}
 	for i, test := range tests {
-		sys := NewSys(reg)
+		sys := NewSys()
 		raw, err := Parse(test.raw)
 		if err != nil {
 			t.Errorf("read %s error: %v", test.raw, err)
 			continue
 		}
-		res, err := sys.Inst(raw)
+		res, err := sys.Inst(reg.LookupType, raw)
 		if err != nil {
 			t.Errorf("inst %s error: %v", test.raw, err)
 			continue

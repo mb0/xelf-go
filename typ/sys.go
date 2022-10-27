@@ -7,22 +7,18 @@ import (
 	"xelf.org/xelf/knd"
 )
 
-// Reg is the type registry interface used to resolve type references.
-// The Reg of package lit is the only noteworthy implementation.
-type Reg interface{ RefType(string) (Type, error) }
+// Lookup is the type registry interface used to look up type references.
+type Lookup = func(string) (Type, error)
 
 // Sys is the resolution context used to instantiate, bind, update and unify types.
 // Type unification is part of sys, because it needs close access to the type variable bindings.
 type Sys struct {
 	MaxID int32
 	Map   map[int32]Type
-	Reg   Reg
 }
 
 // NewSys creates and returns an empty type system using the given type registry.
-func NewSys(reg Reg) *Sys {
-	return &Sys{Map: make(map[int32]Type), Reg: reg}
-}
+func NewSys() *Sys { return &Sys{Map: make(map[int32]Type)} }
 
 // Bind binds type t using an existing id or sets a new id and returns the update type.
 func (sys *Sys) Bind(t Type) Type {
@@ -43,30 +39,34 @@ func (sys *Sys) Get(id int32) Type {
 }
 
 // Update updates all vars and refs in t with the currently bound types and returns the result.
-func (sys *Sys) Update(t Type) Type { t, _ = Edit(t, sys.update); return t }
-func (sys *Sys) update(e *Editor) (Type, error) {
-	if e.Kind&knd.Var != 0 {
-		r := sys.Get(e.ID)
-		if r != Void {
+func (sys *Sys) Update(lup Lookup, t Type) Type {
+	t, _ = Edit(t, func(e *Editor) (Type, error) {
+		if e.Kind&knd.Var != 0 {
+			r := sys.Get(e.ID)
+			if r != Void {
+				return r, nil
+			}
+		}
+		if e.Kind&knd.Ref != 0 && e.Ref != "" {
+			r, err := sys.resolveRef(lup, e.Type)
+			if err != nil {
+				return e.Type, nil
+			}
+			if e.Kind&knd.None != 0 {
+				r.Kind |= knd.None
+			}
 			return r, nil
 		}
-	}
-	if e.Kind&knd.Ref != 0 && e.Ref != "" {
-		r, err := sys.resolveRef(e.Type)
-		if err != nil {
-			return e.Type, nil
-		}
-		if e.Kind&knd.None != 0 {
-			r.Kind |= knd.None
-		}
-		return r, nil
-	}
-	return e.Type, nil
+		return e.Type, nil
+	})
+	return t
 }
 
 // Inst instantiates all vars in t for sys and returns the result or an error.
-func (sys *Sys) Inst(t Type) (Type, error) { return sys.inst(t, make(map[int32]Type)) }
-func (sys *Sys) inst(t Type, m map[int32]Type) (Type, error) {
+func (sys *Sys) Inst(lup Lookup, t Type) (Type, error) {
+	return sys.inst(lup, t, make(map[int32]Type))
+}
+func (sys *Sys) inst(lup Lookup, t Type, m map[int32]Type) (Type, error) {
 	return Copy(t, func(e *Editor) (Type, error) {
 		r := e.Type
 		if r.ID > 0 {
@@ -80,7 +80,7 @@ func (sys *Sys) inst(t Type, m map[int32]Type) (Type, error) {
 			r.ID = sys.MaxID
 		}
 		if r.Kind&knd.Ref != 0 && r.Ref != "" {
-			n, err := sys.resolveRef(r)
+			n, err := sys.resolveRef(lup, r)
 			if err != nil {
 				// TODO uncomment here to highlight custom references hacks
 				//return r, err
@@ -109,22 +109,22 @@ func (sys *Sys) inst(t Type, m map[int32]Type) (Type, error) {
 	})
 }
 
-func (sys *Sys) resolveRef(t Type) (Type, error) {
+func (sys *Sys) resolveRef(lup Lookup, t Type) (Type, error) {
 	if t.Ref[0] == '.' {
 		// skip localref
 		return t, nil
 	}
-	if sys.Reg == nil {
-		return t, fmt.Errorf("no type registry configured")
+	if lup == nil {
+		return t, fmt.Errorf("no type lookup configured")
 	}
 	// try the first part
 	ref, rest, sel := strings.Cut(t.Ref, ".")
-	n, err := sys.Reg.RefType(ref)
+	n, err := lup(ref)
 	if err != nil {
 		if !sel {
 			return t, err
 		}
-		// packages are not yet implemented, so check for schema qualified types
+		// modules are not yet implemented, so check for schema qualified types
 		// we can at least expect a flat schema.model structure
 		idx := strings.IndexByte(rest, '.')
 		if idx >= 0 {
@@ -133,7 +133,7 @@ func (sys *Sys) resolveRef(t Type) (Type, error) {
 		} else {
 			ref, rest, sel = t.Ref, "", false
 		}
-		n, err = sys.Reg.RefType(ref)
+		n, err = lup(ref)
 		if err != nil {
 			return t, err
 		}
@@ -162,13 +162,13 @@ func (sys *Sys) resolveRef(t Type) (Type, error) {
 // Unify unifies type t and h and returns the result or an error.
 // Type unification in this context means that we have two types that should describe the same type.
 // We then check where these descriptions overlap and use the result instead of the input types.
-func (sys *Sys) Unify(t, h Type) (Type, error) {
-	t = sys.Update(t)
+func (sys *Sys) Unify(lup Lookup, t, h Type) (Type, error) {
+	t = sys.Update(lup, t)
 	if h == Void {
 		return t, nil
 	}
-	h = sys.Update(h)
-	r, err := unify(sys, t, h)
+	h = sys.Update(lup, h)
+	r, err := unify(sys, lup, t, h)
 	if err != nil {
 		return t, err
 	}
@@ -176,7 +176,7 @@ func (sys *Sys) Unify(t, h Type) (Type, error) {
 	return r, nil
 }
 
-func unify(sys *Sys, t, h Type) (Type, error) {
+func unify(sys *Sys, lup Lookup, t, h Type) (Type, error) {
 	a := base(t)
 	b := base(h)
 	kk := a.Kind | b.Kind
@@ -219,7 +219,7 @@ func unify(sys *Sys, t, h Type) (Type, error) {
 				}
 			}
 			if ok {
-				el, err := sys.Unify(ab.El, bb.El)
+				el, err := sys.Unify(lup, ab.El, bb.El)
 				if err != nil {
 					return Void, err
 				}
@@ -321,7 +321,7 @@ func unibind(sys *Sys, a, b, r Type) Type {
 }
 
 // Free appends all unbound type variables in t to res and returns the result.
-func (c *Sys) Free(t Type, res []Type) []Type {
+func (c *Sys) Free(lup Lookup, t Type, res []Type) []Type {
 	if t.Kind&(knd.Var|knd.Ref|knd.Sel) != 0 {
 		if t.ID > 0 {
 			// skip if we already collect this type
@@ -331,7 +331,7 @@ func (c *Sys) Free(t Type, res []Type) []Type {
 				}
 			}
 			// update from context
-			t = c.Update(t)
+			t = c.Update(lup, t)
 		}
 		// append if still a free type
 		if t.Kind&(knd.Var|knd.Ref|knd.Sel) != 0 {
@@ -340,14 +340,14 @@ func (c *Sys) Free(t Type, res []Type) []Type {
 	}
 	switch b := t.Body.(type) {
 	case *ElBody:
-		res = c.Free(b.El, res)
+		res = c.Free(lup, b.El, res)
 	case *AltBody:
 		for _, a := range b.Alts {
-			res = c.Free(a, res)
+			res = c.Free(lup, a, res)
 		}
 	case *ParamBody:
 		for _, p := range b.Params {
-			res = c.Free(p.Type, res)
+			res = c.Free(lup, p.Type, res)
 		}
 	}
 	return res

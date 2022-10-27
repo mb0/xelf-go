@@ -67,7 +67,7 @@ func explicitFn(p *exp.Prog, fe *FuncEnv, c *exp.Call, es []exp.Exp, h typ.Type)
 	ps = append(ps, typ.P("", typ.Type{Kind: knd.Var}))
 	fe.Def = keys
 	fn := fmt.Sprintf("fn%d", p.NextFnID())
-	return p.Sys.Inst(typ.Func(fn, ps...))
+	return p.Sys.Inst(exp.LookupType(c.Env), typ.Func(fn, ps...))
 }
 
 func implicitFn(p *exp.Prog, fe *FuncEnv, c *exp.Call, h typ.Type) (typ.Type, error) {
@@ -83,7 +83,7 @@ func implicitFn(p *exp.Prog, fe *FuncEnv, c *exp.Call, h typ.Type) (typ.Type, er
 		a := kl.Exp.(*exp.Lit)
 		ps = append(ps, typ.P(kl.Tag, a.Res))
 	}
-	rt = p.Sys.Update(rt)
+	rt = p.Sys.Update(exp.LookupType(c.Env), rt)
 	ps = append(ps, typ.P("", rt))
 	fn := fmt.Sprintf("fn%d", p.NextFnID())
 	return typ.Func(fn, ps...), nil
@@ -106,7 +106,7 @@ func (s *funcSpec) Resl(p *exp.Prog, env exp.Env, c *exp.Call, h typ.Type) (exp.
 	if err != nil {
 		return c, err
 	}
-	rp.Type = p.Sys.Update(rp.Type)
+	rp.Type = p.Sys.Update(exp.LookupType(env), rp.Type)
 	return c, nil
 }
 

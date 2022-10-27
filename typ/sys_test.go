@@ -15,9 +15,9 @@ func TestCtx(t *testing.T) {
 	if got := s.String(); got != want {
 		t.Errorf("want %s\ngot %s", want, got)
 	}
-	sys := NewSys(nil)
+	sys := NewSys()
 	sys.MaxID = 5
-	s, err := sys.Inst(s)
+	s, err := sys.Inst(nil, s)
 	if err != nil {
 		t.Errorf("inst want %s got err %v", want, err)
 	}
@@ -25,16 +25,16 @@ func TestCtx(t *testing.T) {
 	if got := s.String(); got != want {
 		t.Errorf("want inst %s\ngot %s", want, got)
 	}
-	free := sys.Free(s, nil)
+	free := sys.Free(nil, s, nil)
 	if len(free) != 1 || free[0].ID != 6 {
 		t.Errorf("want free [@6] got %s", free)
 	}
 	sys.Bind(WithID(6, Int))
-	free = sys.Free(s, nil)
+	free = sys.Free(nil, s, nil)
 	if len(free) != 0 {
 		t.Errorf("want free [] got %s", free)
 	}
-	a := sys.Update(s)
+	a := sys.Update(nil, s)
 	want = `<func <func int bool> list|int list|int>`
 	if got := a.String(); got != want {
 		t.Errorf("want %s\ngot %s", want, got)
@@ -88,10 +88,10 @@ func TestUnify(t *testing.T) {
 			t.Errorf("read %s error: %v", test.b, err)
 			continue
 		}
-		sys := NewSys(nil)
-		a, _ = sys.Inst(a)
-		b, _ = sys.Inst(b)
-		r, err := sys.Unify(a, b)
+		sys := NewSys()
+		a, _ = sys.Inst(nil, a)
+		b, _ = sys.Inst(nil, b)
+		r, err := sys.Unify(nil, a, b)
 		if err != nil {
 			if test.err == "" {
 				t.Errorf("unify ab error for %s %s: %v", r, test.b, err)
@@ -122,18 +122,18 @@ func TestUnifyError(t *testing.T) {
 		{ListOf(Alt(Num)), ListOf(Char)},
 	}
 	for _, test := range tests {
-		sys := NewSys(nil)
+		sys := NewSys()
 		m := make(map[int32]Type)
-		a, _ := sys.inst(test.a, m)
-		b, _ := sys.inst(test.b, m)
+		a, _ := sys.inst(nil, test.a, m)
+		b, _ := sys.inst(nil, test.b, m)
 		r := sys.Bind(Var(0, Void))
 		var err error
-		r, err = sys.Unify(r, a)
+		r, err = sys.Unify(nil, r, a)
 		if err != nil {
 			t.Errorf("unify a error for %s %s: %+v", a, b, err)
 			continue
 		}
-		r, err = sys.Unify(r, b)
+		r, err = sys.Unify(nil, r, b)
 		if err == nil {
 			t.Errorf("unify b want error for %s %s got %s", a, b, r)
 		}

@@ -55,13 +55,14 @@ func (s *SpecBase) Resl(p *Prog, env Env, c *Call, h typ.Type) (Exp, error) {
 		c.Args[i] = e
 	}
 	rp := SigRes(c.Sig)
+	lup := LookupType(env)
 	if h != typ.Void {
-		ut, err := p.Sys.Unify(rp.Type, h)
+		ut, err := p.Sys.Unify(lup, rp.Type, h)
 		if err != nil {
 			return c, err
 		}
 		rp.Type = ut
 	}
-	c.Sig = p.Sys.Update(c.Sig)
+	c.Sig = p.Sys.Update(lup, c.Sig)
 	return c, nil
 }

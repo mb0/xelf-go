@@ -54,12 +54,12 @@ Kinds can be marked either as `lit|T` or `typ|T`. Kinds without prefix are treat
 One special rule for variables, selections or references is to transform the target type.
 The `lit` prefix is usually omitted except for identifying expression kinds or to transform a type.
 
-    <form@con typ|@1 … lit|@1>
+    <form@make typ|@1 … lit|@1>
     <form@typof lit|@1 typ|@1>
 
 The `none` bit and `prim` bits can be combined to a primitive alternative type that does not need
-the `alt` bit. The bit is explicitly used whenever an alternative has an id a type body or is an
-unresolved type. In that case all primitive alternatives are still combined into the kind bitset.
+the `alt` bit. The bit is explicitly used whenever an alternative has an id, ref or a type body. In
+that case all primitive alternatives are still combined into the kind bitset.
 
 The expression bits `sym`, `tag` and `call` can contain an element type. These bits are used as
 expression kinds and may in a type context be otherwise used as hints for the automatic resolution

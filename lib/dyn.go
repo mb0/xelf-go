@@ -60,7 +60,7 @@ func (s *dynSpec) Resl(p *exp.Prog, env exp.Env, c *exp.Call, h typ.Type) (exp.E
 	if spec == nil {
 		return nil, fmt.Errorf("no spec for %[1]T %[1]s", d.Els[0])
 	}
-	sig, _ := p.Sys.Inst(spec.Type())
+	sig, _ := p.Sys.Inst(exp.LookupType(env), spec.Type())
 	args, err = exp.LayoutSpec(sig, args)
 	if err != nil {
 		return nil, fmt.Errorf("layout error for %s %s: %v", sig.Type(), args, err)
@@ -82,7 +82,7 @@ func (s *dynSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 	if spec == nil {
 		return nil, fmt.Errorf("no spec for %[1]T %[1]s %s", a, a.Res)
 	}
-	sig, _ := p.Sys.Inst(spec.Type())
+	sig, _ := p.Sys.Inst(exp.LookupType(c.Env), spec.Type())
 	args, err = exp.LayoutSpec(sig, args)
 	if err != nil {
 		return nil, fmt.Errorf("layout error for %s %s: %v", sig.Type(), args, err)

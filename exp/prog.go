@@ -67,7 +67,7 @@ func NewProg(ctx context.Context, reg *lit.Reg, env Env, exp Exp) *Prog {
 	if ctx == nil {
 		ctx = context.Background()
 	}
-	p := &Prog{Ctx: ctx, Reg: reg, Sys: typ.NewSys(reg), Root: env, Exp: exp}
+	p := &Prog{Ctx: ctx, Reg: reg, Sys: typ.NewSys(), Root: env, Exp: exp}
 	dyn, _ := env.Lookup(&Sym{Sym: "dyn"}, "dyn", true)
 	if l, _ := dyn.(*Lit); l != nil {
 		p.dyn, _ = l.Val.(Spec)
@@ -88,9 +88,12 @@ func (p *Prog) Parent() Env { return p.Root }
 
 func (p *Prog) Lookup(s *Sym, k string, eval bool) (Exp, error) {
 	res, err := p.Root.Lookup(s, k, eval)
-	if err != nil {
+	if err == ErrSymNotFound {
+		if t, err := p.Reg.LookupType(k); err == nil {
+			return &Lit{Res: typ.Typ, Val: t, Src: s.Src}, nil
+		}
 		if t, err := typ.ParseSym(k, s.Src, nil); err == nil {
-			t, err = p.Sys.Inst(t)
+			t, err = p.Sys.Inst(LookupType(p), t)
 			if err != nil {
 				return nil, err
 			}
@@ -128,13 +131,14 @@ func (p *Prog) Resl(env Env, e Exp, h typ.Type) (Exp, error) {
 		// TODO check hint
 		return r, nil
 	case *Lit:
+		lup := LookupType(env)
 		if a.Res.Kind&knd.Typ != 0 {
 			t, ok := a.Val.(typ.Type)
 			if ok {
-				a.Val = p.Sys.Update(t)
+				a.Val = p.Sys.Update(lup, t)
 			}
 		}
-		rt, err := p.Sys.Unify(a.Res, h)
+		rt, err := p.Sys.Unify(lup, a.Res, h)
 		if err != nil {
 			return nil, ast.ErrUnify(a.Src, err.Error())
 		}
@@ -153,7 +157,7 @@ func (p *Prog) Resl(env Env, e Exp, h typ.Type) (Exp, error) {
 			}
 			a.Els[i] = el
 		}
-		ut, err := p.Sys.Unify(a.Type, h)
+		ut, err := p.Sys.Unify(LookupType(env), a.Type, h)
 		if err != nil {
 			return nil, ast.ErrUnify(a.Src, err.Error())
 		}
@@ -166,7 +170,7 @@ func (p *Prog) Resl(env Env, e Exp, h typ.Type) (Exp, error) {
 			if err != nil {
 				return nil, err
 			}
-			a.Sig, err = p.Sys.Inst(a.Spec.Type())
+			a.Sig, err = p.Sys.Inst(LookupType(env), a.Spec.Type())
 			if err != nil {
 				return nil, ast.ErrLayout(a.Src, a.Sig, err)
 			}
@@ -211,7 +215,7 @@ func (p *Prog) Eval(env Env, e Exp) (_ *Lit, err error) {
 	case *Lit:
 		if a.Res.Kind&knd.Typ != 0 {
 			if t, ok := a.Val.(typ.Type); ok {
-				a.Val = p.Sys.Update(t)
+				a.Val = p.Sys.Update(LookupType(env), t)
 			}
 		}
 		return a, nil

@@ -5,12 +5,11 @@ import (
 	"testing"
 
 	"xelf.org/xelf/exp"
+	"xelf.org/xelf/lib"
 	"xelf.org/xelf/lib/extlib"
 	"xelf.org/xelf/lit"
 	"xelf.org/xelf/typ"
 )
-
-type Point struct{ X, Y int }
 
 func TestProgEval(t *testing.T) {
 	tests := []struct {
@@ -24,9 +23,11 @@ func TestProgEval(t *testing.T) {
 		{`(dyn (month $now))`, `8`},
 	}
 	reg := &lit.Reg{}
-	mut := reg.MustProxy(&Point{})
-	reg.SetRef("test.point", mut.Type(), mut)
-	env := exp.NewArgEnv(extlib.Std, &lit.Dict{Reg: reg, Keyed: []lit.KeyVal{
+	tval, _ := typ.Parse("<obj@test.point x:int y:int>")
+	lenv := &lib.LetEnv{Par: extlib.Std, Lets: map[string]*exp.Lit{
+		"test.point": {Res: typ.Typ, Val: tval},
+	}}
+	env := exp.NewArgEnv(lenv, &lit.Dict{Reg: reg, Keyed: []lit.KeyVal{
 		{Key: "now", Val: lit.Str("2021-08-19T15:00:00Z")},
 	}})
 	for _, test := range tests {
@@ -55,15 +56,17 @@ func TestProgResl(t *testing.T) {
 		{`(make @test.point {})`, `<obj@test.point>`, ``},
 	}
 	reg := &lit.Reg{}
-	mut := reg.MustProxy(&Point{})
-	reg.SetRef("test.point", mut.Type(), mut)
+	tval, _ := typ.Parse("<obj@test.point x:int y:int>")
+	env := &lib.LetEnv{Par: extlib.Std, Lets: map[string]*exp.Lit{
+		"test.point": {Res: typ.Typ, Val: tval},
+	}}
 	for _, test := range tests {
 		e, err := exp.Read(reg, strings.NewReader(test.raw), "test")
 		if err != nil {
 			t.Errorf("read %s failed: %v", test.raw, err)
 			continue
 		}
-		p := exp.NewProg(nil, reg, extlib.Std, e)
+		p := exp.NewProg(nil, reg, env, e)
 		got, err := p.Resl(p, p.Exp, typ.Void)
 		if err != nil {
 			t.Errorf("resl %s failed: %v", test.raw, err)

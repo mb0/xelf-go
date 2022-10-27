@@ -40,8 +40,8 @@ func (reg *Reg) SetRef(ref string, t typ.Type, mut Mut) {
 	reg.refs[ref] = refInfo{t, mut}
 }
 
-// RefType returns a type for ref or an error.
-func (reg *Reg) RefType(ref string) (typ.Type, error) {
+// LookupType returns a type for ref or an error.
+func (reg *Reg) LookupType(ref string) (typ.Type, error) {
 	nfo, ok := reg.refs[cor.Keyed(ref)]
 	if ok && nfo.Type != typ.Void {
 		return nfo.Type, nil

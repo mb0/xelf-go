@@ -3,6 +3,7 @@ package lib
 import (
 	"fmt"
 
+	"xelf.org/xelf/ast"
 	"xelf.org/xelf/exp"
 	"xelf.org/xelf/lit"
 	"xelf.org/xelf/typ"
@@ -37,7 +38,7 @@ func (s *makeSpec) Resl(p *exp.Prog, env exp.Env, c *exp.Call, h typ.Type) (exp.
 	}
 	rp := exp.SigRes(c.Sig)
 	rp.Type = t
-	c.Sig = p.Sys.Update(c.Sig)
+	c.Sig = p.Sys.Update(exp.LookupType(env), c.Sig)
 	return s.SpecBase.Resl(p, env, c, h)
 }
 func (s *makeSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
@@ -65,7 +66,7 @@ func (s *makeSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 	if tok {
 		keyr, ok := res.(lit.Keyr)
 		if !ok {
-			return nil, fmt.Errorf("make non-keyr type %s for tags", t)
+			return nil, ast.ErrEval(c.Src, c.Sig.Ref, fmt.Errorf("make non-keyr type %s for tags", t))
 		}
 		// eval tags and set keyr
 		for _, el := range tags.Els {
