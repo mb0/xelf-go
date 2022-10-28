@@ -54,6 +54,8 @@ type Prog struct {
 	Sys  *typ.Sys
 	Root Env
 	Exp  Exp
+	File File
+
 	fnid uint
 	dyn  Spec
 }
@@ -86,8 +88,16 @@ func FindProg(env Env) *Prog {
 
 func (p *Prog) Parent() Env { return p.Root }
 
-func (p *Prog) Lookup(s *Sym, k string, eval bool) (Exp, error) {
-	res, err := p.Root.Lookup(s, k, eval)
+func (p *Prog) Lookup(s *Sym, k string, eval bool) (res Exp, err error) {
+	ml, err := p.File.Uses.Lookup(k)
+	if err == nil {
+		if !eval {
+			s.Type, s.Env, s.Rel = ml.Res, p, k
+			return s, nil
+		}
+		return ml, nil
+	}
+	res, err = p.Root.Lookup(s, k, eval)
 	if err == ErrSymNotFound {
 		if t, err := p.Reg.LookupType(k); err == nil {
 			return &Lit{Res: typ.Typ, Val: t, Src: s.Src}, nil

@@ -49,16 +49,13 @@ Special modules that require platform support must be registered into a module r
 a setup hook that is called once to add themselves to a program environment.
 
 A loader environment adds module awareness to the program environment and provides the foundational
-specs to interact with modules. The loader env has a user supplied loader and a cache of loaded
-modules (optionally pre-populated).
+specs to interact with modules. The loader env has a user supplied list of loaders and a cache of
+loaded modules. The loader implementations loads module file sources for specific protocols. The raw
+input is then evaluated and cached by the loader env. The module evaluation environment is isolated
+from the loading program.
 
-The loader implementation resolves modules usually from the module registry and external files. The
-raw input is then evaluated to register declared modules with a new file env that isolates the
-loaded module from the program file env.
-
-A file environment is created for each source input. It collects locals and export. The module
-specs find or create a parent file env, newly created root file envs wrap the programs parent
-environment. The file environment resolves qualified module symbols.
+The basic module and file data structures are part of exp package. Every program environment stores
+a module file with reference to used and declared modules and resolves qualified module symbols.
 
 The `mod` form creates and registers a simple module with a module name and tags of named values and
 returns void. This form creates a mod scope, that resolves its definitions as unqualified names. The
@@ -114,3 +111,5 @@ proxies and module types. We instead want to separate the lit and typ registry a
 ref lookup using the program environment. (We drop the typ.Reg interface in favor of a simple lookup
 function type. Then we can use the module name alias to resolve the type without the need for any
 special handling.
+
+Think about how registered named proxy types fit into the new separation of lit registry.

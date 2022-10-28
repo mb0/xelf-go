@@ -70,6 +70,9 @@ func (t Type) print(b *bfr.P, sb *strings.Builder, enclose bool) error {
 	}
 	var isRef, isVar, isNone, isSel, isAlt bool
 	k := t.Kind
+	if k&knd.Mod != 0 {
+		k &^= knd.Obj
+	}
 	if isRef = k&knd.Ref != 0; isRef {
 		k &^= knd.Ref
 	}
