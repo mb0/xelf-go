@@ -20,6 +20,17 @@ func NewObj(reg *Reg, t typ.Type) (*Obj, error) {
 	err := s.init(false)
 	return s, err
 }
+
+func MakeObj(reg *Reg, kvs []KeyVal) *Obj {
+	vs := make([]Val, 0, len(kvs))
+	ps := make([]typ.Param, 0, len(kvs))
+	for _, kv := range kvs {
+		ps = append(ps, typ.P(kv.Key, kv.Val.Type()))
+		vs = append(vs, kv.Val)
+	}
+	return &Obj{Reg: reg, Typ: typ.Obj("", ps...), Vals: vs}
+}
+
 func (s *Obj) init(ext bool) (err error) {
 	ps := s.ps()
 	vs := make([]Val, len(ps))
@@ -36,7 +47,7 @@ func (s *Obj) init(ext bool) (err error) {
 		}
 	}
 	s.Vals = vs
-	return
+	return err
 }
 func (s *Obj) Type() typ.Type { return s.Typ }
 func (s *Obj) Nil() bool      { return len(s.Vals) == 0 }
