@@ -48,11 +48,12 @@ itself as dependency.
 Special modules that require platform support must be registered into a module registry and may have
 a setup hook that is called once to add themselves to a program environment.
 
-A loader environment adds module awareness to the program environment and provides the foundational
-specs to interact with modules. The loader env has a user supplied list of loaders and a cache of
-loaded modules. The loader implementations loads module file sources for specific protocols. The raw
-input is then evaluated and cached by the loader env. The module evaluation environment is isolated
-from the loading program.
+A loader environment adds module awareness to the [program environment](./prog_env.md) and provides
+the foundational specs to interact with modules. The loader env has a user supplied list of loaders
+and a cache of loaded modules. The loader implementations loads module file sources for specific
+protocols. The raw input is then evaluated and cached by the loader env. Source modules are
+evaluated in isolation of any loading program. All module dependencies are then registered with the
+loading program.
 
 The basic module and file data structures are part of exp package. Every program environment stores
 a module file with reference to used and declared modules and resolves qualified module symbols.
@@ -104,12 +105,10 @@ Daql and layla use the corresponding file name extension to indicate the expecte
 maybe we should converge on the xelf file with a use header. The idea is that we would make things
 easier for composing different extensions, tooling, being more explicit about requirements.
 
-We may want to import two versions of the same module. This would be especially handy for migrations
+We want to import two versions of the same module. This would be especially handy for migrations
 where we may want to import both the old and new schema. The thing that complicates multiple type
 versions is that we currently use a program scoped type registry that uses the declaration name for
-proxies and module types. We instead want to separate the lit and typ registry and implement the
-ref lookup using the program environment. (We drop the typ.Reg interface in favor of a simple lookup
-function type. Then we can use the module name alias to resolve the type without the need for any
-special handling.
+proxies and module types. We describe the [task in more detail](./lit_reg_split.md).
 
-Think about how registered named proxy types fit into the new separation of lit registry.
+If we restrict the module loading environment to be independent of the loading program or arguments
+(ideally immutable and static), would allow us to cache and reuse the results for that environment.

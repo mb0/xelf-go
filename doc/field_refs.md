@@ -35,13 +35,15 @@ replaces the type name of const, obj and spec types; this changes the type name 
 `<func@atoi str int>`. Reference resolution specializes the type, sets a type id and normalizes the
 reference. The reference must always resolve to a assignable super-type.
 
-Type declaration is only possible outside the type context for now. We first implement the schema
-type registry, but must think about program scoped type references.
+Work on a [Module System](./modules.md) will introduce a clean concept for qualified names.
+
+Type ref lookup api was changed to allow references to the whole environment. This adds lots of
+power and flexibility, but we need to revisit keeping which reference around. We want to ensure that
+all publicly visible references are resolvable from the program scope.
 
 Printing resolved type refs omits the type body for non-spec types, but keeps the kind if available.
 This allows some local decisions and potentially avoids a registry lookup completely for types
 without body.
-
 
 Discussion
 ----------
@@ -51,23 +53,25 @@ like `Prod:@prod.Prod.ID` or embeds `@Common;`. We should pull these concepts in
 field refs available and add a custom syntax for self referential primary keys: `<obj@prod.Prod
 ID:uuid@@>` equals `<obj@prod.Prod ID:uuid@prod.Prod.ID>`.
 
-Program scoped type declaration must be possible. The question is if we use the scoped environment
-or have special forms to declare types directly into a program global type registry.
+Module uses allow local aliases that effect the local reference name, but store enough information
+to resolve the original reference. That however makes qualified type names file-scoped and not
+globally scoped, we may want to decide that each input must itself be evaluated as a separate
+program as it is now, and separate the environment even more and then instantiate the module results
+in the main program. We add a feature to the mod spec to accept named types as declarations with a
+module local name to avoid stutter in any case.
 
-Registry management is required for schema references. There are three layers of named types:
-
- * Hard-coded schema types per process are part of the program code
- * Dynamic session scoped schema types, can be queried from any daql endpoint
- * Program scoped types, probably a form to declare globally scoped named types.
+We need to better define type name declaration. It seems that we have two distinct contexts:
+ * The type context where names are not exported, but can be referenced locally in that type literal
+ * The program context where names must explicitly be registered (usually reusing, sometimes
+   qualifying the type name).
 
 Tasks
 -----
 
   * [x] Unify obj and rec kinds and drop unused rec, strc and schm kinds
   * [x] Add and use ref field instead of body names and drop name helpers
-  * [ ] Update type ref resolution
-  * [ ] Factor out filter routine for obj types that keeps references
+  * [x] Update type ref resolution
+  * [x] Implement and use a layered type registry
   * [ ] Pull special reference notation for obj types into the xelf type syntax
   * [ ] Add pk flag to kind bitset and self referential syntax-sugar
-  * [ ] Implement and use a layered type registry
   * [ ] Update typescript port
