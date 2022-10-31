@@ -22,7 +22,7 @@ func TestDynEval(t *testing.T) {
 		{`((if false add sub) 1 2)`, `-1`, "<int>"},
 	}
 	for _, test := range tests {
-		got, err := exp.Eval(nil, nil, Std, test.raw)
+		got, err := exp.NewProg(nil, nil, Std).RunStr(test.raw, nil)
 		if err != nil {
 			t.Errorf("eval %s failed\n\t%v", test.raw, err)
 			continue

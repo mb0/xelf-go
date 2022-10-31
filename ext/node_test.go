@@ -41,7 +41,7 @@ func TestNode(t *testing.T) {
 			`[{kind:'el' w:3 font:{size:4}} {kind:'el' w:3 font:{size:5}}]`},
 	}
 	for _, test := range tests {
-		got, err := exp.Eval(nil, reg, env, test.raw)
+		got, err := exp.NewProg(nil, reg, env).RunStr(test.raw, nil)
 		if err != nil {
 			t.Errorf("eval %s failed: %v", test.raw, err)
 			continue

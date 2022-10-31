@@ -4,11 +4,9 @@ import (
 	"testing"
 
 	"xelf.org/xelf/exp"
-	"xelf.org/xelf/lit"
 )
 
 func TestFuncEval(t *testing.T) {
-	reg := &lit.Reg{}
 	tests := []struct {
 		raw  string
 		typ  string
@@ -25,7 +23,7 @@ func TestFuncEval(t *testing.T) {
 		)`, `<list|int>`, `[144 89]`},
 	}
 	for _, test := range tests {
-		res, err := exp.Eval(nil, reg, Std, test.raw)
+		res, err := exp.NewProg(nil, nil, Std).RunStr(test.raw, nil)
 		if err != nil {
 			t.Errorf("eval %s failed: %v", test.raw, err)
 			continue

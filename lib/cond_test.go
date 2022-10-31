@@ -33,7 +33,7 @@ func TestCondEval(t *testing.T) {
 		{`(df "some" (err))`, lit.Str("some")},
 	}
 	for _, test := range tests {
-		got, err := exp.Eval(nil, nil, Core, test.raw)
+		got, err := exp.NewProg(nil, nil, Core).RunStr(test.raw, nil)
 		if err != nil {
 			t.Errorf("eval %s failed: %v", test.raw, err)
 			continue

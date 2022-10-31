@@ -17,7 +17,7 @@ func TestDoEval(t *testing.T) {
 		{`(do 2 1)`, "1"},
 	}
 	for _, test := range tests {
-		got, err := exp.Eval(nil, nil, Std, test.raw)
+		got, err := exp.NewProg(nil, nil, Std).RunStr(test.raw, nil)
 		if err != nil {
 			t.Errorf("eval %s failed: %v", test.raw, err)
 			continue
@@ -43,7 +43,7 @@ func TestDoResl(t *testing.T) {
 			t.Errorf("parse %s failed: %v", test.raw, err)
 			continue
 		}
-		p := exp.NewProg(nil, reg, Std, x)
+		p := exp.NewProg(nil, reg, Std)
 		x, err = p.Resl(p, x, typ.Void)
 		if err != nil {
 			t.Errorf("resl %s failed: %v", test.raw, err)

@@ -15,28 +15,6 @@ import (
 // The user can errors.Is(err, ErrDefer) and resume program resolution with more context provided.
 var ErrDefer = fmt.Errorf("deferred resolution")
 
-// Eval creates and evaluates a new program for str and returns the result or an error.
-func Eval(ctx context.Context, reg *lit.Reg, env Env, str string) (*Lit, error) {
-	if reg == nil {
-		reg = &lit.Reg{}
-	}
-	x, err := Parse(reg, str)
-	if err != nil {
-		return nil, err
-	}
-	return EvalExp(ctx, reg, env, x)
-}
-
-// EvalExp creates and evaluates a new program for x and returns the result or an error.
-func EvalExp(ctx context.Context, reg *lit.Reg, env Env, x Exp) (*Lit, error) {
-	p := NewProg(ctx, reg, env, x)
-	x, err := p.Resl(p, x, typ.Void)
-	if err != nil {
-		return nil, err
-	}
-	return p.Eval(p, x)
-}
-
 // Env is a scoped context to resolve symbols. Envs configure most of the program resolution.
 type Env interface {
 	// Parent returns the parent environment or nil.
@@ -63,19 +41,38 @@ type Prog struct {
 
 // NewProg returns a new program using the given registry, environment and expression.
 // The registry argument can be nil, a new registry will be used by default.
-func NewProg(ctx context.Context, reg *lit.Reg, env Env, exp Exp) *Prog {
-	if reg == nil {
-		reg = &lit.Reg{}
-	}
+func NewProg(ctx context.Context, reg *lit.Reg, env Env) *Prog {
 	if ctx == nil {
 		ctx = context.Background()
 	}
-	p := &Prog{Ctx: ctx, Reg: reg, Sys: typ.NewSys(), Root: env, Exp: exp}
+	if reg == nil {
+		reg = &lit.Reg{}
+	}
+	p := &Prog{Ctx: ctx, Reg: reg, Sys: typ.NewSys(), Root: env}
 	dyn, _ := env.Lookup(&Sym{Sym: "dyn"}, "dyn", true)
 	if l, _ := dyn.(*Lit); l != nil {
 		p.dyn, _ = l.Val.(Spec)
 	}
 	return p
+}
+
+// Run resolves and evaluates the input expression and returns the result or an error.
+func (p *Prog) Run(x Exp, arg *Lit) (res *Lit, err error) {
+	p.Arg = arg
+	x, err = p.Resl(p, x, typ.Void)
+	if err != nil {
+		return nil, err
+	}
+	return p.Eval(p, x)
+}
+
+// RunStr resolves and evaluates the input string and returns the result or an error.
+func (p *Prog) RunStr(str string, arg *Lit) (res *Lit, err error) {
+	x, err := Parse(p.Reg, str)
+	if err != nil {
+		return nil, err
+	}
+	return p.Run(x, arg)
 }
 
 func FindProg(env Env) *Prog {

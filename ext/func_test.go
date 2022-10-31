@@ -27,7 +27,7 @@ func TestFunc(t *testing.T) {
 		{`(echo "a")`, `'a'`},
 	}
 	for _, test := range tests {
-		got, err := exp.Eval(nil, reg, env, test.raw)
+		got, err := exp.NewProg(nil, reg, env).RunStr(test.raw, nil)
 		if err != nil {
 			t.Errorf("eval %s failed: %v", test.raw, err)
 			continue
@@ -106,7 +106,7 @@ func TestFuncEval(t *testing.T) {
 			continue
 		}
 		env := exp.Builtins(lib.Specs{"_": f}.AddMap(lib.Core))
-		got, err := exp.Eval(nil, reg, env, test.raw)
+		got, err := exp.NewProg(nil, reg, env).RunStr(test.raw, nil)
 		if err != nil {
 			t.Errorf("eval %s failed: %v", test.raw, err)
 			continue

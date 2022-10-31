@@ -19,7 +19,7 @@ func TestMakeEval(t *testing.T) {
 		{`(make dict a:1 b:2)`, `{a:1 b:2}`, "<dict|any>"},
 	}
 	for _, test := range tests {
-		got, err := exp.Eval(nil, nil, Core, test.raw)
+		got, err := exp.NewProg(nil, nil, Core).RunStr(test.raw, nil)
 		if err != nil {
 			t.Errorf("eval %s failed: %v", test.raw, err)
 			continue

@@ -48,7 +48,7 @@ func TestLogicEval(t *testing.T) {
 		{`(not true (err))`, false},
 	}
 	for _, test := range tests {
-		got, err := exp.Eval(nil, nil, Core, test.raw)
+		got, err := exp.NewProg(nil, nil, Core).RunStr(test.raw, nil)
 		if err != nil {
 			t.Errorf("eval %s failed: %v", test.raw, err)
 			continue
