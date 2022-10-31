@@ -3,9 +3,6 @@ package exp
 import (
 	"fmt"
 	"strings"
-
-	"xelf.org/xelf/lit"
-	"xelf.org/xelf/typ"
 )
 
 // File is a simple representation of any xelf input that store information about modules.
@@ -54,8 +51,11 @@ func (ms ModRefs) Lookup(k string) (*Lit, error) {
 		return nil, ErrSymNotFound
 	}
 	qual := k[:dot]
-	mod := ms.find(qual)
-	return ModSelect(mod, k[dot+1:])
+	m := ms.find(qual)
+	if m.Mod == nil || m.Res == nil {
+		return nil, fmt.Errorf("module %s unresolved", m.Path)
+	}
+	return Select(m.Res, k[dot+1:])
 }
 
 func (ms ModRefs) find(key string) (ref ModRef) {
@@ -65,19 +65,4 @@ func (ms ModRefs) find(key string) (ref ModRef) {
 		}
 	}
 	return
-}
-
-func ModSelect(m ModRef, k string) (*Lit, error) {
-	if m.Mod == nil || m.Res == nil {
-		return nil, fmt.Errorf("module %s unresolved", m.Path)
-	}
-	t, err := typ.Select(m.Res.Res, k)
-	if err != nil {
-		return nil, err
-	}
-	v, err := lit.Select(m.Res.Val, k)
-	if err != nil {
-		return nil, err
-	}
-	return &Lit{Res: t, Val: v}, nil
 }

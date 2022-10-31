@@ -59,19 +59,12 @@ func (e *DotEnv) Lookup(s *Sym, k string, eval bool) (Exp, error) {
 	if !ok {
 		return e.Par.Lookup(s, k, eval)
 	}
-	if !eval {
-		t, err := typ.Select(e.Dot.Res, k)
-		if err != nil {
-			return nil, err
-		}
-		s.Type, s.Env, s.Rel = t, e, k
-		return s, nil
+	l, err := SelectLookup(e.Dot, k, eval)
+	if err != nil || eval {
+		return l, err
 	}
-	v, err := lit.Select(e.Dot.Val, k)
-	if err != nil {
-		return nil, err
-	}
-	return &Lit{Res: v.Type(), Val: v, Src: s.Src}, nil
+	s.Type, s.Env, s.Rel = l.Res, e, k
+	return s, nil
 }
 
 // DotKey returns whether k is a dot key or otherwise returns k with a leading dot removed.
