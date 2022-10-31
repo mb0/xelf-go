@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"xelf.org/xelf/ast"
+	"xelf.org/xelf/cor"
 	"xelf.org/xelf/knd"
 	"xelf.org/xelf/lit"
 	"xelf.org/xelf/typ"
@@ -53,8 +54,8 @@ type Prog struct {
 	Reg  *lit.Reg
 	Sys  *typ.Sys
 	Root Env
-	Exp  Exp
 	File File
+	Arg  *Lit
 
 	fnid uint
 	dyn  Spec
@@ -89,6 +90,14 @@ func FindProg(env Env) *Prog {
 func (p *Prog) Parent() Env { return p.Root }
 
 func (p *Prog) Lookup(s *Sym, k string, eval bool) (res Exp, err error) {
+	if p.Arg != nil && k[0] == '$' {
+		l, err := SelectLookup(p.Arg, cor.Keyed(k[1:]), eval)
+		if err != nil || eval {
+			return l, err
+		}
+		s.Type, s.Env, s.Rel = l.Res, p, k
+		return s, nil
+	}
 	ml, err := p.File.Uses.Lookup(k)
 	if err == nil {
 		if !eval {
