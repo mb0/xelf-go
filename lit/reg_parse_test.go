@@ -56,7 +56,7 @@ func TestRead(t *testing.T) {
 			`{"a":1,"b c":2,"+foo":"bar"}`,
 		},
 	}
-	reg := &Reg{}
+	reg := &Reg{Cache: &Cache{}}
 	for _, test := range tests {
 		v, err := Parse(reg, test.str)
 		if err != nil {

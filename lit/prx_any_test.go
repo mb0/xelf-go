@@ -6,7 +6,7 @@ import (
 )
 
 func TestProxyAny(t *testing.T) {
-	reg := &Reg{}
+	reg := &Reg{Cache: &Cache{}}
 	var one interface{}
 	err := ParseInto(reg, `1`, &one)
 	if err != nil {
@@ -27,5 +27,4 @@ func TestProxyAny(t *testing.T) {
 	if !reflect.DeepEqual(any, wanta) {
 		t.Errorf("want %v got %v", wanta, any)
 	}
-
 }

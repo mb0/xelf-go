@@ -27,7 +27,7 @@ type Embed struct {
 }
 
 func TestEmbed(t *testing.T) {
-	reg := &Reg{}
+	reg := &Reg{Cache: &Cache{}}
 	o := reg.MustProxy(new(Embed)).(Keyr)
 	ot := o.Type()
 	ot.Ref = ""
@@ -41,7 +41,7 @@ func TestEmbed(t *testing.T) {
 }
 
 func TestProxy(t *testing.T) {
-	reg := &Reg{}
+	reg := &Reg{Cache: &Cache{}}
 	poi := reg.MustProxy(new(POI))
 	tests := []struct {
 		val  interface{}
@@ -118,7 +118,7 @@ func TestProxy(t *testing.T) {
 }
 
 func TestProxyAll(t *testing.T) {
-	reg := &Reg{}
+	reg := &Reg{Cache: &Cache{}}
 	reg.MustProxy(new(POI))
 	tests := []struct {
 		val interface{}

@@ -3,6 +3,7 @@ package lit
 import "testing"
 
 func TestDiff(t *testing.T) {
+	reg := &Reg{Cache: &Cache{}}
 	tests := []struct {
 		a, b string
 		want string
@@ -22,7 +23,6 @@ func TestDiff(t *testing.T) {
 		{`{a:[1 2]}`, `{a:[1 3 2]}`, `{'.a*':[1 [3]]}`},
 		{`{a:[[1 2]]}`, `{a:[[1 3]]}`, `{'.a.0.1':3}`},
 	}
-	reg := &Reg{}
 	for _, test := range tests {
 		a, err := Parse(reg, test.a)
 		if err != nil {

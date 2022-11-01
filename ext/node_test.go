@@ -9,7 +9,7 @@ import (
 )
 
 func TestNode(t *testing.T) {
-	reg := &lit.Reg{}
+	reg := &lit.Reg{Cache: &lit.Cache{}}
 	def := &Element{Kind: "el", Box: Box{Dim: Dim{W: 3}}}
 	spec, err := NodeSpecName(reg, "el", def, Rules{IdxKeyer: ZeroKeyer})
 	if err != nil {

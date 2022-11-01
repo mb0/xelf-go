@@ -66,6 +66,7 @@ func (reg *Reg) ProxyValue(ptr reflect.Value) (mut Mut, err error) {
 	if ptr.Kind() != reflect.Ptr {
 		return nil, fmt.Errorf("requires pointer got %s", ptr.Type())
 	}
+	reg.init()
 	pt, org := ptr.Type(), ptr
 	if isMut(pt) {
 		return checkMut(pt, ptr, ptr)
@@ -79,7 +80,7 @@ func (reg *Reg) ProxyValue(ptr reflect.Value) (mut Mut, err error) {
 		}
 		null = ptr.IsNil()
 	}
-	if prx, ok := reg.proxy[pt]; ok {
+	if prx, ok := reg.Cache.Proxy(pt); ok {
 		return prx.NewWith(org)
 	}
 	switch et.Kind() {
@@ -166,7 +167,7 @@ func (reg *Reg) ProxyValue(ptr reflect.Value) (mut Mut, err error) {
 			}
 			return mut, nil
 		}
-		nfo, ok := reg.param[et]
+		nfo, ok := reg.Cache.Param(et)
 		if !ok {
 			rt, pm, err := reg.reflectStruct(et, new(tstack))
 			if err != nil {
@@ -174,7 +175,7 @@ func (reg *Reg) ProxyValue(ptr reflect.Value) (mut Mut, err error) {
 			}
 			// because we call into reflectStruct we need to register the type
 			nfo = typInfo{rt, pm}
-			reg.setParam(et, nfo)
+			reg.Cache.SetParam(et, nfo)
 		}
 		// we use reflect struct because the proxy also needs the param map
 		mut = &ObjPrx{proxy: newProxy(reg, nfo.Type, org), params: nfo.params}
@@ -201,7 +202,7 @@ func (reg *Reg) ProxyValue(ptr reflect.Value) (mut Mut, err error) {
 			pp, _ = prx.NewWith(pv)
 			prx, rt = pp.(Prx), pv.Type()
 		}
-		reg.setProxy(rt, prx)
+		reg.Cache.SetProxy(rt, prx)
 	}
 	return mut, nil
 }

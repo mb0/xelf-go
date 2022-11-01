@@ -41,7 +41,8 @@ Implementation
 The type system was already changed to use the program environment to resolve type references and is
 discussed in the [field reference doc](./field_refs.md).
 
-We factor out the reflection caches to be process shared globals.
+We factor out a reflection cache and use a process-shared global by default. We can still provide
+isolated caches for tests.
 
 We keep the literal registry for mapping to user provided value implementations, and try to reduce
 its api to a minimum and to ideally make it optional and use it explicitly at api boundaries.

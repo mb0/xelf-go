@@ -5,6 +5,7 @@ import (
 )
 
 func TestSelect(t *testing.T) {
+	reg := &Reg{Cache: &Cache{}}
 	tests := []struct {
 		raw  string
 		path string
@@ -20,7 +21,6 @@ func TestSelect(t *testing.T) {
 		{"[{a:1} {a:2}]", "/a", "[1 2]"},
 		{"{a:[{b:1},{b:2}]}", "a/b", "[1 2]"},
 	}
-	reg := &Reg{}
 	for _, test := range tests {
 		on, err := Parse(reg, test.raw)
 		if err != nil {

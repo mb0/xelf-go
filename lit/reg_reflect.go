@@ -12,6 +12,7 @@ import (
 
 // Reflect returns the xelf type for the reflect type or an error.
 func (reg *Reg) Reflect(t reflect.Type) (typ.Type, error) {
+	reg.init()
 	return reg.reflectType(t, new(tstack))
 }
 
@@ -42,7 +43,7 @@ func (reg *Reg) reflectType(t reflect.Type, s *tstack) (res typ.Type, err error)
 		return typ.Str, nil
 	}
 	// now lets cache all other types that require more involved type checks
-	if info, ok := reg.param[t]; ok {
+	if info, ok := reg.Cache.Param(t); ok {
 		if ptr {
 			return typ.Opt(info.Type), err
 		}
@@ -106,7 +107,7 @@ func (reg *Reg) reflectType(t reflect.Type, s *tstack) (res typ.Type, err error)
 	if res.Zero() {
 		return res, fmt.Errorf("cannot reflect type of %s", t)
 	}
-	reg.setParam(t, typInfo{res, pm})
+	reg.Cache.SetParam(t, typInfo{res, pm})
 	if ptr {
 		res = typ.Opt(res)
 	}
