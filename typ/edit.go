@@ -1,5 +1,9 @@
 package typ
 
+import (
+	"fmt"
+)
+
 // EditFunc edits a type and returns the result or an error.
 // A copy editor expects returned types that differ from the input to be already copied.
 type EditFunc func(e *Editor) (Type, error)
@@ -9,63 +13,56 @@ type Editor struct {
 	Type
 	Parent *Editor
 	seen   editMap
-	copy   bool
 }
-type editMap map[*ParamBody]*ParamBody
+type editMap map[Body]Type
 
 // Copy edits type t it and all offspring types with f and returns the result or an error.
 func Edit(t Type, f EditFunc) (Type, error) {
-	e := Editor{Type: t, copy: false}
-	return e.edit(f)
-}
-
-// Copy copies type t editing it and all offspring types with f and returns the result or an error.
-func Copy(t Type, f EditFunc) (Type, error) {
-	e := Editor{Type: t, copy: true}
+	e := Editor{Type: t, seen: make(editMap)}
 	return e.edit(f)
 }
 
 // sub calls edit with a new child editor on t and returns the result or an error.
 func (e *Editor) sub(t Type, f EditFunc) (Type, error) {
-	sub := Editor{Type: t, Parent: e, seen: e.seen, copy: e.copy}
+	if t.ID > 0 && e.Type.ID == t.ID {
+		// TODO panic and investigate
+		return t, fmt.Errorf("nested id for %s", t)
+	}
+	sub := Editor{Type: t, Parent: e, seen: e.seen}
 	return sub.edit(f)
 }
 
 // edit calls f on its type and recurses on all offspring types and returns the result or an error.
 func (e *Editor) edit(f EditFunc) (res Type, err error) {
-	if f == nil {
-		res = e.Type
-	} else {
-		res, err = f(e)
-		if err != nil {
-			return
+	old := e.Body
+	if old != nil {
+		if t, ok := e.seen[old]; ok {
+			return t, nil
 		}
+	}
+	res, err = f(e)
+	if err != nil {
+		return
+	}
+	if old != nil {
+		if len(e.seen) > 127 {
+			panic("runaway type edit")
+		}
+		e.seen[old] = res
 	}
 	if res.Body == nil {
 		return res, nil
 	}
-	if e.seen == nil {
-		e.seen = make(editMap)
-	}
-	mod := e.Type.Body != res.Body
 	var sub Type
 	switch b := res.Body.(type) {
 	case *ElBody:
 		sub, err = e.sub(b.El, f)
 		if err == nil {
-			if e.copy && !mod {
-				b = &ElBody{}
-				res.Body, mod = b, true
-			}
 			b.El = sub
 		}
 	case *SelBody:
 		sub, err = e.sub(b.Sel, f)
 		if err == nil {
-			if e.copy && !mod {
-				b = &SelBody{Path: b.Path}
-				res.Body, mod = b, true
-			}
 			b.Sel = sub
 		}
 	case *AltBody:
@@ -74,27 +71,9 @@ func (e *Editor) edit(f EditFunc) (res Type, err error) {
 			if err != nil {
 				return
 			}
-			if e.copy && !mod {
-				b = &AltBody{Alts: append([]Type{}, b.Alts...)}
-				res.Body, mod = b, true
-			}
 			b.Alts[i] = sub
 		}
 	case *ParamBody:
-		if pb, ok := e.seen[b]; ok {
-			if e.copy {
-				res.Body = pb
-			}
-			return res, nil
-		}
-		if e.copy && !mod {
-			old := b
-			res.Ref = e.Ref
-			b = &ParamBody{Params: append([]Param{}, b.Params...)}
-			res.Body, mod = b, true
-			e.seen[old] = b
-		}
-		e.seen[b] = b
 		for i, p := range b.Params {
 			sub, err = e.sub(p.Type, f)
 			if err != nil {
@@ -104,4 +83,47 @@ func (e *Editor) edit(f EditFunc) (res Type, err error) {
 		}
 	}
 	return
+}
+
+func Clone(r Type) Type {
+	return clone(r, nil)
+}
+func clone(r Type, stack [][2]Body) Type {
+	if r.Body == nil {
+		return r
+	}
+	for _, o := range stack {
+		if o[0] == r.Body {
+			r.Body = o[1]
+			return r
+		}
+	}
+	switch b := r.Body.(type) {
+	case *ElBody:
+		n := &ElBody{}
+		stack = append(stack, [2]Body{b, n})
+		n.El = clone(b.El, stack)
+		r.Body = n
+	case *SelBody:
+		n := &SelBody{Path: b.Path}
+		stack = append(stack, [2]Body{b, n})
+		n.Sel = clone(b.Sel, stack)
+		r.Body = n
+	case *AltBody:
+		n := &AltBody{Alts: make([]Type, len(b.Alts))}
+		stack = append(stack, [2]Body{b, n})
+		for i, a := range b.Alts {
+			n.Alts[i] = clone(a, stack)
+		}
+		r.Body = n
+	case *ParamBody:
+		n := &ParamBody{Params: make([]Param, len(b.Params))}
+		stack = append(stack, [2]Body{b, n})
+		for i, p := range b.Params {
+			p.Type = clone(p.Type, stack)
+			n.Params[i] = p
+		}
+		r.Body = n
+	}
+	return r
 }

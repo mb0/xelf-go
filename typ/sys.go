@@ -67,7 +67,8 @@ func (sys *Sys) Inst(lup Lookup, t Type) (Type, error) {
 	return sys.inst(lup, t, make(map[int32]Type))
 }
 func (sys *Sys) inst(lup Lookup, t Type, m map[int32]Type) (Type, error) {
-	return Copy(t, func(e *Editor) (Type, error) {
+	var deferSel bool
+	res, err := Edit(Clone(t), func(e *Editor) (Type, error) {
 		r := e.Type
 		if r.ID > 0 {
 			if r, ok := m[r.ID]; ok {
@@ -84,29 +85,43 @@ func (sys *Sys) inst(lup Lookup, t Type, m map[int32]Type) (Type, error) {
 			if err != nil {
 				// TODO uncomment here to highlight custom references hacks
 				//return r, err
-				return r, nil
+			} else {
+				r = n
 			}
-			r = n
-		} else if b, ok := r.Body.(*SelBody); ok {
-			// TODO resolve path or think about type selections
-			var par *Editor
-			for par = e.Parent; par != nil; par = par.Parent {
-				if par.Type.Kind&(knd.Obj|knd.Spec) != 0 {
-					_, ok := par.Type.Body.(*ParamBody)
-					if ok {
-						break
-					}
-				}
-			}
-			if par != nil {
-				return Select(par.Type, b.Path)
-			}
+		} else if _, ok := r.Body.(*SelBody); ok {
+			deferSel = true
+			return r, nil
 		}
 		if old > 0 {
 			m[old] = r
 		}
 		return r, nil
 	})
+	if !deferSel {
+		return res, err
+	}
+	return Edit(res, func(e *Editor) (Type, error) {
+		if b, ok := e.Type.Body.(*SelBody); ok {
+			return resolveSel(e, b.Path)
+		}
+		return e.Type, nil
+	})
+}
+
+func resolveSel(e *Editor, path string) (Type, error) {
+	var par *Editor
+	for par = e.Parent; par != nil; par = par.Parent {
+		if par.Type.Kind&(knd.Obj|knd.Spec) != 0 {
+			_, ok := par.Type.Body.(*ParamBody)
+			if ok {
+				break
+			}
+		}
+	}
+	if par == nil {
+		return e.Type, fmt.Errorf("selection %s not found", path)
+	}
+	return Select(par.Type, path)
 }
 
 func (sys *Sys) resolveRef(lup Lookup, t Type) (Type, error) {

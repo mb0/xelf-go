@@ -41,6 +41,37 @@ func TestCtx(t *testing.T) {
 	}
 }
 
+func TestInst(t *testing.T) {
+	tests := []struct {
+		a string
+		w string
+	}{
+		{"<form@a num@ _>", "<form@a num@2 num@2>"},
+	}
+	for _, test := range tests {
+		a, err := Parse(test.a)
+		if err != nil {
+			t.Errorf("read %s error: %v", test.a, err)
+			continue
+		}
+		b, err := Parse(test.w)
+		if err != nil {
+			t.Errorf("read %s error: %v", test.w, err)
+			continue
+		}
+		sys := NewSys()
+		sys.MaxID = 1
+		a, err = sys.Inst(nil, a)
+		if err != nil {
+			t.Errorf("inst error for %s: %v", a, err)
+			continue
+		}
+		if !a.Equal(b) {
+			t.Errorf("inst got %s want %s", a, test.w)
+		}
+	}
+}
+
 func TestUnify(t *testing.T) {
 	tests := []struct {
 		a, b string
