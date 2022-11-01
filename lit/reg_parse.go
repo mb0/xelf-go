@@ -12,22 +12,22 @@ import (
 )
 
 // Parse parses str and returns a generic value or an error.
-func Parse(reg *Reg, str string) (Val, error) {
+func Parse(reg typ.Reg, str string) (Val, error) {
 	return Read(reg, strings.NewReader(str), "string")
 }
 
 // ParseInto parses str into ptr or returns an error.
-func ParseInto(reg *Reg, str string, ptr interface{}) error {
+func ParseInto(reg typ.Reg, str string, ptr interface{}) error {
 	return ReadInto(reg, strings.NewReader(str), "string", ptr)
 }
 
 // ParseIntoMut parses str into mut or returns an error.
-func ParseIntoMut(reg *Reg, str string, mut Mut) error {
+func ParseIntoMut(reg typ.Reg, str string, mut Mut) error {
 	return ReadIntoMut(reg, strings.NewReader(str), "string", mut)
 }
 
 // Read parses named reader r and returns a generic value or an error.
-func Read(reg *Reg, r io.Reader, name string) (Val, error) {
+func Read(reg typ.Reg, r io.Reader, name string) (Val, error) {
 	a, err := ast.Read(r, name)
 	if err != nil {
 		return nil, err
@@ -36,7 +36,7 @@ func Read(reg *Reg, r io.Reader, name string) (Val, error) {
 }
 
 // ReadInto parses named reader r into ptr or returns an error.
-func ReadInto(reg *Reg, r io.Reader, name string, ptr interface{}) error {
+func ReadInto(reg typ.Reg, r io.Reader, name string, ptr interface{}) error {
 	mut, err := reg.Proxy(ptr)
 	if err != nil {
 		return err
@@ -45,12 +45,12 @@ func ReadInto(reg *Reg, r io.Reader, name string, ptr interface{}) error {
 }
 
 // ReadIntoMut parses named reader r into mut or returns an error.
-func ReadIntoMut(reg *Reg, r io.Reader, name string, mut Mut) error {
+func ReadIntoMut(reg typ.Reg, r io.Reader, name string, mut Mut) error {
 	a, err := ast.Read(r, name)
 	if err != nil {
 		return err
 	}
-	return mut.Parse(a)
+	return mut.Parse(reg, a)
 }
 
 // ParseVal parses a as generic value and returns it or an error.
@@ -151,10 +151,10 @@ func (reg *Reg) ParseMut(a ast.Ast) (Mut, error) {
 		}
 	case knd.List:
 		li := &List{Reg: reg}
-		return li, li.Parse(a)
+		return li, li.Parse(reg, a)
 	case knd.Dict:
 		di := &Dict{Reg: reg}
-		return di, di.Parse(a)
+		return di, di.Parse(reg, a)
 	case knd.Typ:
 		t, err := typ.ParseAst(a)
 		if err != nil {
@@ -165,7 +165,7 @@ func (reg *Reg) ParseMut(a ast.Ast) (Mut, error) {
 	return nil, ast.ErrUnexpected(a)
 }
 
-func (reg *Reg) parseMutNull(a ast.Ast) (Val, error) {
+func parseMutNull(reg typ.Reg, a ast.Ast) (Val, error) {
 	m, err := reg.ParseMut(a)
 	if m == nil {
 		return Null{}, err

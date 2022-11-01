@@ -144,12 +144,12 @@ func (u *UUID) Ptr() interface{} { return u }
 func (t *Time) Ptr() interface{} { return t }
 func (s *Span) Ptr() interface{} { return s }
 
-func (r *Raw) UnmarshalJSON(b []byte) error  { return unmarshal(b, r) }
-func (u *UUID) UnmarshalJSON(b []byte) error { return unmarshal(b, u) }
-func (t *Time) UnmarshalJSON(b []byte) error { return unmarshal(b, t) }
-func (s *Span) UnmarshalJSON(b []byte) error { return unmarshal(b, s) }
+func (r *Raw) UnmarshalJSON(b []byte) error  { return unmarshal(b, r, nil) }
+func (u *UUID) UnmarshalJSON(b []byte) error { return unmarshal(b, u, nil) }
+func (t *Time) UnmarshalJSON(b []byte) error { return unmarshal(b, t, nil) }
+func (s *Span) UnmarshalJSON(b []byte) error { return unmarshal(b, s, nil) }
 
-func (v *Bool) Parse(a ast.Ast) error {
+func (v *Bool) Parse(_ typ.Reg, a ast.Ast) error {
 	if isNull(a) {
 		*v = false
 		return nil
@@ -160,7 +160,7 @@ func (v *Bool) Parse(a ast.Ast) error {
 	*v = len(a.Raw) == 4
 	return nil
 }
-func (i *Num) Parse(a ast.Ast) error {
+func (i *Num) Parse(_ typ.Reg, a ast.Ast) error {
 	if isNull(a) {
 		*i = 0
 		return nil
@@ -175,7 +175,7 @@ func (i *Num) Parse(a ast.Ast) error {
 	*i = Num(n)
 	return nil
 }
-func (i *Int) Parse(a ast.Ast) error {
+func (i *Int) Parse(_ typ.Reg, a ast.Ast) error {
 	if isNull(a) {
 		*i = 0
 		return nil
@@ -190,7 +190,7 @@ func (i *Int) Parse(a ast.Ast) error {
 	*i = Int(n)
 	return nil
 }
-func (r *Real) Parse(a ast.Ast) error {
+func (r *Real) Parse(_ typ.Reg, a ast.Ast) error {
 	if isNull(a) {
 		*r = 0
 		return nil
@@ -205,7 +205,7 @@ func (r *Real) Parse(a ast.Ast) error {
 	*r = Real(n)
 	return nil
 }
-func (s *Char) Parse(a ast.Ast) error {
+func (s *Char) Parse(_ typ.Reg, a ast.Ast) error {
 	txt, err := unquoteStr(a)
 	if err != nil {
 		return err
@@ -213,7 +213,7 @@ func (s *Char) Parse(a ast.Ast) error {
 	*s = Char(txt)
 	return nil
 }
-func (s *Str) Parse(a ast.Ast) error {
+func (s *Str) Parse(_ typ.Reg, a ast.Ast) error {
 	txt, err := unquoteStr(a)
 	if err != nil {
 		return err
@@ -221,7 +221,7 @@ func (s *Str) Parse(a ast.Ast) error {
 	*s = Str(txt)
 	return nil
 }
-func (r *Raw) Parse(a ast.Ast) error {
+func (r *Raw) Parse(_ typ.Reg, a ast.Ast) error {
 	txt, err := unquoteStr(a)
 	if err != nil {
 		return err
@@ -233,7 +233,7 @@ func (r *Raw) Parse(a ast.Ast) error {
 	*r = n
 	return nil
 }
-func (u *UUID) Parse(a ast.Ast) error {
+func (u *UUID) Parse(_ typ.Reg, a ast.Ast) error {
 	txt, err := unquoteStr(a)
 	if err != nil {
 		return err
@@ -249,7 +249,7 @@ func (u *UUID) Parse(a ast.Ast) error {
 	*u = n
 	return nil
 }
-func (t *Time) Parse(a ast.Ast) error {
+func (t *Time) Parse(_ typ.Reg, a ast.Ast) error {
 	txt, err := unquoteStr(a)
 	if err != nil {
 		return err
@@ -265,7 +265,7 @@ func (t *Time) Parse(a ast.Ast) error {
 	*t = Time(n)
 	return nil
 }
-func (s *Span) Parse(a ast.Ast) error {
+func (s *Span) Parse(_ typ.Reg, a ast.Ast) error {
 	txt, err := unquoteStr(a)
 	if err != nil {
 		return err
@@ -398,12 +398,12 @@ func unquoteStr(a ast.Ast) (string, error) {
 	}
 	return str, nil
 }
-func unmarshal(b []byte, m Mut) error {
+func unmarshal(b []byte, m Mut, reg typ.Reg) error {
 	a, err := ast.Read(bytes.NewReader(b), "")
 	if err != nil {
 		return err
 	}
-	return m.Parse(a)
+	return m.Parse(reg, a)
 }
 
 var (

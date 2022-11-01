@@ -22,7 +22,7 @@ func (l *List) Nil() bool                    { return l == nil }
 func (l *List) Zero() bool                   { return len(l.Vals) == 0 }
 func (l *List) Value() Val                   { return l }
 func (l *List) MarshalJSON() ([]byte, error) { return bfr.JSON(l) }
-func (l *List) UnmarshalJSON(b []byte) error { return unmarshal(b, l) }
+func (l *List) UnmarshalJSON(b []byte) error { return unmarshal(b, l, l.Reg) }
 func (l *List) String() string               { return bfr.String(l) }
 func (l *List) Print(p *bfr.P) (err error) {
 	p.Byte('[')
@@ -44,7 +44,7 @@ func (l *List) Print(p *bfr.P) (err error) {
 func (l *List) New() (Mut, error) { return &List{l.Reg, l.El, nil}, nil }
 func (l *List) WithReg(reg *Reg)  { l.Reg = reg }
 func (l *List) Ptr() interface{}  { return l }
-func (l *List) Parse(a ast.Ast) (err error) {
+func (l *List) Parse(reg typ.Reg, a ast.Ast) (err error) {
 	if isNull(a) {
 		l.Vals = nil
 		return nil
@@ -55,7 +55,7 @@ func (l *List) Parse(a ast.Ast) (err error) {
 	vs := make([]Val, 0, len(a.Seq))
 	for _, e := range a.Seq {
 		var el Val
-		el, err = l.Reg.parseMutNull(e)
+		el, err := parseMutNull(l.Reg, e)
 		if err != nil {
 			return err
 		}

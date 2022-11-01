@@ -82,7 +82,7 @@ func (x *IntPrx) Value() Val {
 	}
 	return Int(x.value())
 }
-func (x *IntPrx) Parse(a ast.Ast) error {
+func (x *IntPrx) Parse(_ typ.Reg, a ast.Ast) error {
 	if isNull(a) {
 		return x.setNull()
 	}
@@ -146,7 +146,7 @@ func (x *RealPrx) Value() Val {
 	}
 	return Real(x.value())
 }
-func (x *RealPrx) Parse(a ast.Ast) error {
+func (x *RealPrx) Parse(_ typ.Reg, a ast.Ast) error {
 	if isNull(a) {
 		return x.setNull()
 	}

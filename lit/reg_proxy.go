@@ -8,7 +8,7 @@ import (
 )
 
 // Conv converts val to type t and returns a reflect value or an error.
-func (reg *Reg) Conv(t reflect.Type, val Val) (reflect.Value, error) {
+func Conv(reg typ.Reg, t reflect.Type, val Val) (reflect.Value, error) {
 	ptr := reflect.New(t)
 	mut, err := reg.ProxyValue(ptr)
 	if err != nil {
@@ -23,13 +23,8 @@ func (reg *Reg) Conv(t reflect.Type, val Val) (reflect.Value, error) {
 	return ptr.Elem(), nil
 }
 
-// Proxy returns a proxy value for ptr or an error.
-func (reg *Reg) Proxy(ptr interface{}) (Mut, error) {
-	return reg.ProxyValue(reflect.ValueOf(ptr))
-}
-
 // MustProxy returns a proxy value for ptr or panics.
-func (reg *Reg) MustProxy(ptr interface{}) Mut {
+func MustProxy(reg typ.Reg, ptr interface{}) Mut {
 	mut, err := reg.Proxy(ptr)
 	if err != nil {
 		panic(err)
@@ -37,29 +32,16 @@ func (reg *Reg) MustProxy(ptr interface{}) Mut {
 	return mut
 }
 
-func isMut(t reflect.Type) bool { return t.NumMethod() > 10 && t.Implements(ptrMut.Elem()) }
-func isPrx(t reflect.Type) bool { return t.NumMethod() > 12 && t.Implements(ptrPrx.Elem()) }
-
-func checkMut(t reflect.Type, ptr, org reflect.Value) (Mut, error) {
-	if ptr.IsNil() {
-		if isPrx(t) {
-			return nil, fmt.Errorf("cannot use nil proxy %s", t)
-		}
-		ptr, _ = newPrimMut(org, ptr)
-		return &OptMut{ptr.Interface().(Mut), &org, true}, nil
-	}
-	return ptr.Interface().(Mut), nil
+// Proxy returns a proxy value for ptr or an error.
+func (reg *Reg) Proxy(ptr interface{}) (Mut, error) {
+	return reg.ProxyValue(reflect.ValueOf(ptr))
 }
 
-func newPrimMut(org, el reflect.Value) (ptr, val reflect.Value) {
-	if el.IsNil() {
-		el = reflect.New(org.Type().Elem().Elem())
-		org.Elem().Set(el)
-	}
-	return el, el.Elem()
+// Reflect returns the xelf type for the reflect type or an error.
+func (reg *Reg) Reflect(t reflect.Type) (typ.Type, error) {
+	reg.init()
+	return reg.Cache.Reflect(t)
 }
-
-var noval reflect.Value
 
 // ProxyValue returns a proxy value for the reflect value ptr or an error.
 func (reg *Reg) ProxyValue(ptr reflect.Value) (mut Mut, err error) {
@@ -139,7 +121,7 @@ func (reg *Reg) ProxyValue(ptr reflect.Value) (mut Mut, err error) {
 				return mut, nil
 			}
 		}
-		et, err := reg.Reflect(et.Elem())
+		et, err := reg.Cache.Reflect(et.Elem())
 		if err != nil {
 			return nil, err
 		}
@@ -169,7 +151,7 @@ func (reg *Reg) ProxyValue(ptr reflect.Value) (mut Mut, err error) {
 		}
 		nfo, ok := reg.Cache.Param(et)
 		if !ok {
-			rt, pm, err := reg.reflectStruct(et, new(tstack))
+			rt, pm, err := reg.Cache.ReflectStruct(et)
 			if err != nil {
 				return nil, err
 			}
@@ -183,7 +165,7 @@ func (reg *Reg) ProxyValue(ptr reflect.Value) (mut Mut, err error) {
 		if et.Key().Kind() != reflect.String {
 			break
 		}
-		et, err := reg.Reflect(et.Elem())
+		et, err := reg.Cache.Reflect(et.Elem())
 		if err != nil {
 			return nil, err
 		}
@@ -222,3 +204,27 @@ func toRef(ref reflect.Type, v, org reflect.Value) (reflect.Value, bool) {
 	}
 	return v, false
 }
+
+func isMut(t reflect.Type) bool { return t.NumMethod() > 10 && t.Implements(ptrMut.Elem()) }
+func isPrx(t reflect.Type) bool { return t.NumMethod() > 12 && t.Implements(ptrPrx.Elem()) }
+
+func checkMut(t reflect.Type, ptr, org reflect.Value) (Mut, error) {
+	if ptr.IsNil() {
+		if isPrx(t) {
+			return nil, fmt.Errorf("cannot use nil proxy %s", t)
+		}
+		ptr, _ = newPrimMut(org, ptr)
+		return &OptMut{ptr.Interface().(Mut), &org, true}, nil
+	}
+	return ptr.Interface().(Mut), nil
+}
+
+func newPrimMut(org, el reflect.Value) (ptr, val reflect.Value) {
+	if el.IsNil() {
+		el = reflect.New(org.Type().Elem().Elem())
+		org.Elem().Set(el)
+	}
+	return el, el.Elem()
+}
+
+var noval reflect.Value

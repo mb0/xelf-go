@@ -25,7 +25,7 @@ func (d *Dict) Nil() bool                    { return d == nil }
 func (d *Dict) Zero() bool                   { return len(d.Keyed) == 0 }
 func (d *Dict) Value() Val                   { return d }
 func (d *Dict) MarshalJSON() ([]byte, error) { return bfr.JSON(d) }
-func (d *Dict) UnmarshalJSON(b []byte) error { return unmarshal(b, d) }
+func (d *Dict) UnmarshalJSON(b []byte) error { return unmarshal(b, d, d.Reg) }
 func (d *Dict) String() string               { return bfr.String(d) }
 func (d *Dict) Print(p *bfr.P) (err error) {
 	p.Byte('{')
@@ -44,7 +44,7 @@ func (d *Dict) Print(p *bfr.P) (err error) {
 func (d *Dict) New() (Mut, error) { return &Dict{d.Reg, d.El, nil}, nil }
 func (d *Dict) WithReg(reg *Reg)  { d.Reg = reg }
 func (d *Dict) Ptr() interface{}  { return d }
-func (d *Dict) Parse(a ast.Ast) error {
+func (d *Dict) Parse(reg typ.Reg, a ast.Ast) error {
 	if isNull(a) {
 		d.Keyed = nil
 		return nil
@@ -58,7 +58,7 @@ func (d *Dict) Parse(a ast.Ast) error {
 		if err != nil {
 			return err
 		}
-		el, err := d.Reg.parseMutNull(val)
+		el, err := parseMutNull(d.Reg, val)
 		if err != nil {
 			return err
 		}

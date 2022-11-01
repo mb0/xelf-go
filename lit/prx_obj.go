@@ -44,7 +44,7 @@ func (x *ObjPrx) Value() Val {
 	}
 	return x
 }
-func (x *ObjPrx) Parse(a ast.Ast) error {
+func (x *ObjPrx) Parse(_ typ.Reg, a ast.Ast) error {
 	if isNull(a) {
 		return x.setNull()
 	}
@@ -64,7 +64,7 @@ func (x *ObjPrx) Parse(a ast.Ast) error {
 		if err != nil {
 			return err
 		}
-		err = el.Parse(val)
+		err = el.Parse(x.Reg, val)
 		if err != nil {
 			return err
 		}

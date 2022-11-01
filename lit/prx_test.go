@@ -28,7 +28,7 @@ type Embed struct {
 
 func TestEmbed(t *testing.T) {
 	reg := &Reg{Cache: &Cache{}}
-	o := reg.MustProxy(new(Embed)).(Keyr)
+	o := MustProxy(reg, new(Embed)).(Keyr)
 	ot := o.Type()
 	ot.Ref = ""
 	if got, want := ot.String(), "<obj id:int name:str point?:<obj@lit.Point?>>"; got != want {
@@ -42,7 +42,7 @@ func TestEmbed(t *testing.T) {
 
 func TestProxy(t *testing.T) {
 	reg := &Reg{Cache: &Cache{}}
-	poi := reg.MustProxy(new(POI))
+	poi := MustProxy(reg, new(POI))
 	tests := []struct {
 		val  interface{}
 		typ  string
@@ -119,7 +119,7 @@ func TestProxy(t *testing.T) {
 
 func TestProxyAll(t *testing.T) {
 	reg := &Reg{Cache: &Cache{}}
-	reg.MustProxy(new(POI))
+	MustProxy(reg, new(POI))
 	tests := []struct {
 		val interface{}
 		typ string

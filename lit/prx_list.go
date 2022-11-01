@@ -7,6 +7,7 @@ import (
 	"xelf.org/xelf/ast"
 	"xelf.org/xelf/bfr"
 	"xelf.org/xelf/knd"
+	"xelf.org/xelf/typ"
 )
 
 type ListPrx struct{ proxy }
@@ -21,7 +22,7 @@ func (x *ListPrx) Value() Val {
 	}
 	return x
 }
-func (x *ListPrx) Parse(a ast.Ast) error {
+func (x *ListPrx) Parse(_ typ.Reg, a ast.Ast) error {
 	if isNull(a) {
 		return x.setNull()
 	}
@@ -37,7 +38,7 @@ func (x *ListPrx) Parse(a ast.Ast) error {
 		if err != nil {
 			return err
 		}
-		err = val.Parse(e)
+		err = val.Parse(x.Reg, e)
 		if err != nil {
 			return err
 		}
@@ -56,7 +57,7 @@ func (x *ListPrx) Assign(v Val) (err error) {
 	switch o := v.(type) {
 	case Idxr:
 		err = o.IterIdx(func(i int, el Val) error {
-			val, err := x.Reg.Conv(e.Type().Elem(), el)
+			val, err := Conv(x.Reg, e.Type().Elem(), el)
 			if err != nil {
 				return err
 			}
@@ -71,7 +72,7 @@ func (x *ListPrx) Assign(v Val) (err error) {
 }
 func (x *ListPrx) Append(v Val) error {
 	e := x.elem()
-	val, err := x.Reg.Conv(e.Type().Elem(), v)
+	val, err := Conv(x.Reg, e.Type().Elem(), v)
 	if err != nil {
 		return err
 	}

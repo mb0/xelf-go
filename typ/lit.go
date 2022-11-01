@@ -2,6 +2,7 @@ package typ
 
 import (
 	"fmt"
+	"reflect"
 
 	"xelf.org/xelf/ast"
 	"xelf.org/xelf/bfr"
@@ -41,7 +42,15 @@ type LitMut interface {
 	New() (LitMut, error)
 	Ptr() interface{}
 	Assign(LitVal) error
-	Parse(ast.Ast) error
+	Parse(Reg, ast.Ast) error
+}
+
+type Reg interface {
+	Zero(Type) (LitMut, error)
+	ParseVal(ast ast.Ast) (LitVal, error)
+	ParseMut(ast ast.Ast) (LitMut, error)
+	Proxy(ptr interface{}) (LitMut, error)
+	ProxyValue(ptr reflect.Value) (LitMut, error)
 }
 
 func (Type) Type() Type            { return Typ }
@@ -62,7 +71,7 @@ func (t *Type) Assign(p LitVal) error {
 	}
 	return nil
 }
-func (t *Type) Parse(a ast.Ast) error {
+func (t *Type) Parse(reg Reg, a ast.Ast) error {
 	r, err := ParseAst(a)
 	if err != nil {
 		return err

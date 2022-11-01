@@ -4,19 +4,70 @@ import (
 	"fmt"
 	"reflect"
 	"strings"
+	"sync"
 
 	"xelf.org/xelf/cor"
 	"xelf.org/xelf/knd"
 	"xelf.org/xelf/typ"
 )
 
-// Reflect returns the xelf type for the reflect type or an error.
-func (reg *Reg) Reflect(t reflect.Type) (typ.Type, error) {
-	reg.init()
-	return reg.reflectType(t, new(tstack))
+var DefaultCache = &Cache{}
+
+// Cache holds process-shared reflection information
+type Cache struct {
+	sync.RWMutex
+	proxy map[reflect.Type]Prx
+	param map[reflect.Type]typInfo
 }
 
-func (reg *Reg) reflectType(t reflect.Type, s *tstack) (res typ.Type, err error) {
+func (c *Cache) Param(rt reflect.Type) (typInfo, bool) {
+	c.RLock()
+	defer c.RUnlock()
+	nfo, ok := c.param[rt]
+	return nfo, ok
+}
+func (c *Cache) SetParam(rt reflect.Type, nfo typInfo) {
+	c.Lock()
+	c.setParam(rt, nfo)
+	c.Unlock()
+}
+func (c *Cache) setParam(rt reflect.Type, nfo typInfo) {
+	if c.param == nil {
+		c.param = make(map[reflect.Type]typInfo)
+	}
+	c.param[rt] = nfo
+}
+func (c *Cache) Proxy(rt reflect.Type) (Prx, bool) {
+	c.RLock()
+	defer c.RUnlock()
+	p, ok := c.proxy[rt]
+	return p, ok
+}
+func (c *Cache) SetProxy(rt reflect.Type, prx Prx) {
+	c.Lock()
+	c.setProxy(rt, prx)
+	c.Unlock()
+}
+func (c *Cache) setProxy(rt reflect.Type, prx Prx) {
+	if c.proxy == nil {
+		c.proxy = make(map[reflect.Type]Prx)
+	}
+	c.proxy[rt] = prx
+}
+
+// Reflect returns the xelf type for the reflect type or an error.
+func (c *Cache) Reflect(t reflect.Type) (typ.Type, error) {
+	c.Lock()
+	defer c.Unlock()
+	return c.reflectType(t, new(tstack))
+}
+func (c *Cache) ReflectStruct(t reflect.Type) (typ.Type, *params, error) {
+	c.Lock()
+	defer c.Unlock()
+	return c.reflectStruct(t, new(tstack))
+}
+
+func (c *Cache) reflectType(t reflect.Type, s *tstack) (res typ.Type, err error) {
 	ptr := t.Kind() == reflect.Ptr
 	if ptr {
 		t = t.Elem()
@@ -43,7 +94,7 @@ func (reg *Reg) reflectType(t reflect.Type, s *tstack) (res typ.Type, err error)
 		return typ.Str, nil
 	}
 	// now lets cache all other types that require more involved type checks
-	if info, ok := reg.Cache.Param(t); ok {
+	if info, ok := c.param[t]; ok {
 		if ptr {
 			return typ.Opt(info.Type), err
 		}
@@ -74,7 +125,7 @@ func (reg *Reg) reflectType(t reflect.Type, s *tstack) (res typ.Type, err error)
 			res = typ.List
 			break
 		}
-		res, pm, err = reg.reflectStruct(t, s)
+		res, pm, err = c.reflectStruct(t, s)
 		if err != nil {
 			return res, err
 		}
@@ -86,7 +137,7 @@ func (reg *Reg) reflectType(t reflect.Type, s *tstack) (res typ.Type, err error)
 		if !isRef(t.Key(), ptrStr.Elem()) {
 			return typ.Void, fmt.Errorf("map key can only be a string type")
 		}
-		et, err := reg.reflectType(t.Elem(), s)
+		et, err := c.reflectType(t.Elem(), s)
 		if err != nil {
 			return res, err
 		}
@@ -96,7 +147,7 @@ func (reg *Reg) reflectType(t reflect.Type, s *tstack) (res typ.Type, err error)
 			res = typ.Raw
 			break
 		}
-		et, err := reg.reflectType(t.Elem(), s)
+		et, err := c.reflectType(t.Elem(), s)
 		if err != nil {
 			return typ.Void, err
 		}
@@ -107,18 +158,18 @@ func (reg *Reg) reflectType(t reflect.Type, s *tstack) (res typ.Type, err error)
 	if res.Zero() {
 		return res, fmt.Errorf("cannot reflect type of %s", t)
 	}
-	reg.Cache.SetParam(t, typInfo{res, pm})
+	c.setParam(t, typInfo{res, pm})
 	if ptr {
 		res = typ.Opt(res)
 	}
 	return res, nil
 }
-func (reg *Reg) reflectStruct(t reflect.Type, s *tstack) (typ.Type, *params, error) {
+func (c *Cache) reflectStruct(t reflect.Type, s *tstack) (typ.Type, *params, error) {
 	ref := s.add(t)
 	if ref != "" {
 		return typ.Sel(ref), nil, nil
 	}
-	pm, err := reg.reflectFields(t, s)
+	pm, err := c.reflectFields(t, s)
 	s.drop()
 	if err != nil {
 		return typ.Void, nil, err
@@ -133,13 +184,13 @@ func (reg *Reg) reflectStruct(t reflect.Type, s *tstack) (typ.Type, *params, err
 	}
 	return typ.Type{Kind: knd.Obj, Ref: tn, Body: &typ.ParamBody{Params: pm.ps}}, &pm, nil
 }
-func (reg *Reg) reflectFields(t reflect.Type, s *tstack) (pm params, _ error) {
+func (c *Cache) reflectFields(t reflect.Type, s *tstack) (pm params, _ error) {
 	n := t.NumField()
 	pm.ps = make([]typ.Param, 0, n)
 	pm.idx = make([][]int, 0, n)
 	for i := 0; i < n; i++ {
 		f := t.Field(i)
-		err := reg.addField(&pm, f, s, nil)
+		err := c.addField(&pm, f, s, nil)
 		if err != nil {
 			return pm, err
 		}
@@ -147,7 +198,7 @@ func (reg *Reg) reflectFields(t reflect.Type, s *tstack) (pm params, _ error) {
 	return pm, nil
 }
 
-func (reg *Reg) addField(pm *params, f reflect.StructField, s *tstack, idx []int) error {
+func (c *Cache) addField(pm *params, f reflect.StructField, s *tstack, idx []int) error {
 	jtag := f.Tag.Get("json")
 	if jtag != "" && jtag[0] == '-' {
 		return nil
@@ -157,12 +208,12 @@ func (reg *Reg) addField(pm *params, f reflect.StructField, s *tstack, idx []int
 	}
 	idx = append(idx, f.Index...)
 	if jtag == "" && f.Anonymous {
-		ok, err := reg.addEmbed(pm, f.Type, s, idx)
+		ok, err := c.addEmbed(pm, f.Type, s, idx)
 		if err != nil || ok {
 			return err
 		}
 	}
-	ft, err := reg.reflectType(f.Type, s)
+	ft, err := c.reflectType(f.Type, s)
 	if err != nil {
 		return err
 	}
@@ -187,7 +238,7 @@ func (reg *Reg) addField(pm *params, f reflect.StructField, s *tstack, idx []int
 	return nil
 }
 
-func (reg *Reg) addEmbed(pm *params, t reflect.Type, s *tstack, idx []int) (bool, error) {
+func (c *Cache) addEmbed(pm *params, t reflect.Type, s *tstack, idx []int) (bool, error) {
 	if t.Kind() == reflect.Ptr {
 		t = t.Elem()
 	}
@@ -196,7 +247,7 @@ func (reg *Reg) addEmbed(pm *params, t reflect.Type, s *tstack, idx []int) (bool
 		n := t.NumField()
 		for i := 0; i < n; i++ {
 			f := t.Field(i)
-			err := reg.addField(pm, f, s, idx)
+			err := c.addField(pm, f, s, idx)
 			if err != nil {
 				return false, err
 			}

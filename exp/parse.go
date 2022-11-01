@@ -74,13 +74,13 @@ func ParseAst(reg *lit.Reg, a ast.Ast) (Exp, error) {
 		return &Sym{Sym: a.Raw, Src: a.Src}, nil
 	case knd.List:
 		list := &lit.List{Reg: reg}
-		if err := list.Parse(a); err != nil {
+		if err := list.Parse(reg, a); err != nil {
 			return nil, err
 		}
 		return &Lit{Res: typ.List, Val: list, Src: a.Src}, nil
 	case knd.Dict:
 		dict := &lit.Dict{Reg: reg}
-		if err := dict.Parse(a); err != nil {
+		if err := dict.Parse(reg, a); err != nil {
 			return nil, err
 		}
 		return &Lit{Res: typ.Keyr, Val: dict, Src: a.Src}, nil

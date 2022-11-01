@@ -2,57 +2,11 @@ package lit
 
 import (
 	"fmt"
-	"reflect"
-	"sync"
 
 	"xelf.org/xelf/cor"
 	"xelf.org/xelf/knd"
 	"xelf.org/xelf/typ"
 )
-
-var DefaultCache = &Cache{}
-
-// Cache holds process-shared reflection information
-type Cache struct {
-	sync.RWMutex
-	proxy map[reflect.Type]Prx
-	param map[reflect.Type]typInfo
-}
-
-func (c *Cache) Param(rt reflect.Type) (typInfo, bool) {
-	c.RLock()
-	defer c.RUnlock()
-	nfo, ok := c.param[rt]
-	return nfo, ok
-}
-func (c *Cache) SetParam(rt reflect.Type, nfo typInfo) {
-	c.Lock()
-	c.setParam(rt, nfo)
-	c.Unlock()
-}
-func (c *Cache) setParam(rt reflect.Type, nfo typInfo) {
-	if c.param == nil {
-		c.param = make(map[reflect.Type]typInfo)
-	}
-	c.param[rt] = nfo
-}
-func (c *Cache) Proxy(rt reflect.Type) (Prx, bool) {
-	c.RLock()
-	defer c.RUnlock()
-	p, ok := c.proxy[rt]
-	return p, ok
-}
-func (c *Cache) SetProxy(rt reflect.Type, prx Prx) {
-	c.Lock()
-	c.setProxy(rt, prx)
-	c.Unlock()
-}
-func (c *Cache) setProxy(rt reflect.Type, prx Prx) {
-	if c.proxy == nil {
-		c.proxy = make(map[reflect.Type]Prx)
-	}
-	c.proxy[rt] = prx
-}
 
 // Reg is a registry context for type references, reflected types and proxies. Many functions and
 // container literals have an optional registry to aid in value conversion and construction.

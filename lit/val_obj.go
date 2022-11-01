@@ -61,7 +61,7 @@ func (s *Obj) Zero() bool {
 }
 func (s *Obj) Value() Val                   { return s }
 func (s *Obj) MarshalJSON() ([]byte, error) { return bfr.JSON(s) }
-func (s *Obj) UnmarshalJSON(b []byte) error { return unmarshal(b, s) }
+func (s *Obj) UnmarshalJSON(b []byte) error { return unmarshal(b, s, s.Reg) }
 func (s *Obj) String() string               { return bfr.String(s) }
 func (s *Obj) Print(p *bfr.P) (err error) {
 	p.Byte('{')
@@ -86,7 +86,7 @@ func (s *Obj) Print(p *bfr.P) (err error) {
 }
 func (s *Obj) New() (Mut, error) { return NewObj(s.Reg, s.Typ) }
 func (s *Obj) Ptr() interface{}  { return s }
-func (s *Obj) Parse(a ast.Ast) error {
+func (s *Obj) Parse(reg typ.Reg, a ast.Ast) error {
 	if isNull(a) {
 		return s.init(false)
 	}
@@ -100,7 +100,7 @@ func (s *Obj) Parse(a ast.Ast) error {
 		if err != nil {
 			return err
 		}
-		el, err := s.Reg.parseMutNull(val)
+		el, err := parseMutNull(s.Reg, val)
 		if err != nil {
 			return err
 		}

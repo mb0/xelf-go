@@ -90,7 +90,7 @@ func (s *Func) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 			// reflect already provides a zero value
 			continue
 		}
-		val, err := p.Reg.Conv(rt, arg.Val)
+		val, err := lit.Conv(p.Reg, rt, arg.Val)
 		if err != nil {
 			return nil, err
 		}

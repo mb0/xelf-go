@@ -47,7 +47,7 @@ func TestDiff(t *testing.T) {
 		}
 		mut, ok := a.(Mut)
 		if !ok {
-			mut = reg.MustProxy(&a)
+			mut = MustProxy(reg, &a)
 		}
 		mut = &OptMut{Mut: mut}
 		err = Apply(reg, mut, d)
