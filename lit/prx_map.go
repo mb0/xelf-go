@@ -26,8 +26,8 @@ func (x *MapPrx) Parse(_ typ.Reg, a ast.Ast) error {
 	if isNull(a) {
 		return x.setNull()
 	}
-	if a.Kind != knd.Dict {
-		return ast.ErrExpect(a, knd.Dict)
+	if a.Kind != knd.Keyr {
+		return ast.ErrExpect(a, knd.Keyr)
 	}
 	// we need to delete existing map keys to be compatible with dict implementation
 	rv := x.elem()

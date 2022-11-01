@@ -13,23 +13,18 @@ type KeyVal struct {
 	Key string
 	Val
 }
+type Keyed []KeyVal
 
-type Dict struct {
-	Reg   *Reg
-	El    typ.Type
-	Keyed []KeyVal
-}
-
-func (d *Dict) Type() typ.Type               { return typ.DictOf(d.El) }
-func (d *Dict) Nil() bool                    { return d == nil }
-func (d *Dict) Zero() bool                   { return len(d.Keyed) == 0 }
-func (d *Dict) Value() Val                   { return d }
-func (d *Dict) MarshalJSON() ([]byte, error) { return bfr.JSON(d) }
-func (d *Dict) UnmarshalJSON(b []byte) error { return unmarshal(b, d, d.Reg) }
-func (d *Dict) String() string               { return bfr.String(d) }
-func (d *Dict) Print(p *bfr.P) (err error) {
+func (d Keyed) Type() typ.Type                { return typ.Keyr }
+func (d *Keyed) Nil() bool                    { return d == nil }
+func (d *Keyed) Zero() bool                   { return d == nil || len(*d) == 0 }
+func (d *Keyed) Value() Val                   { return d }
+func (d *Keyed) UnmarshalJSON(b []byte) error { return unmarshal(b, d, nil) }
+func (d Keyed) MarshalJSON() ([]byte, error)  { return bfr.JSON(d) }
+func (d Keyed) String() string                { return bfr.String(d) }
+func (d Keyed) Print(p *bfr.P) (err error) {
 	p.Byte('{')
-	for i, v := range d.Keyed {
+	for i, v := range d {
 		if i > 0 {
 			p.Sep()
 		}
@@ -41,16 +36,16 @@ func (d *Dict) Print(p *bfr.P) (err error) {
 	return p.Byte('}')
 }
 
-func (d *Dict) New() (Mut, error) { return &Dict{d.Reg, d.El, nil}, nil }
-func (d *Dict) WithReg(reg *Reg)  { d.Reg = reg }
-func (d *Dict) Ptr() interface{}  { return d }
-func (d *Dict) Parse(reg typ.Reg, a ast.Ast) error {
+func (d *Keyed) New() (Mut, error) { return &Keyed{}, nil }
+func (d *Keyed) WithReg(reg *Reg)  {}
+func (d *Keyed) Ptr() interface{}  { return d }
+func (d *Keyed) Parse(reg typ.Reg, a ast.Ast) error {
 	if isNull(a) {
-		d.Keyed = nil
+		*d = nil
 		return nil
 	}
-	if a.Kind != knd.Dict {
-		return ast.ErrExpect(a, knd.Dict)
+	if a.Kind != knd.Keyr {
+		return ast.ErrExpect(a, knd.Keyr)
 	}
 	kvs := make([]KeyVal, 0, len(a.Seq))
 	for _, e := range a.Seq {
@@ -58,22 +53,22 @@ func (d *Dict) Parse(reg typ.Reg, a ast.Ast) error {
 		if err != nil {
 			return err
 		}
-		el, err := parseMutNull(d.Reg, val)
+		el, err := parseMutNull(reg, val)
 		if err != nil {
 			return err
 		}
 		kvs = append(kvs, KeyVal{key, el})
 	}
-	d.Keyed = kvs
+	*d = kvs
 	return nil
 }
-func (d *Dict) Assign(p Val) error {
+func (d *Keyed) Assign(p Val) error {
 	// TODO check types
 	switch o := Unwrap(p).(type) {
 	case nil:
-		d.Keyed = nil
+		*d = nil
 	case Null:
-		d.Keyed = nil
+		*d = nil
 	case Keyr:
 		// TODO check types
 		res := make([]KeyVal, 0, o.Len())
@@ -81,49 +76,48 @@ func (d *Dict) Assign(p Val) error {
 			res = append(res, KeyVal{k, Unwrap(v)})
 			return nil
 		})
-		d.Keyed = res
+		*d = res
 	default:
 		return fmt.Errorf("%w %T to %T", ErrAssign, p, d)
 	}
 	return nil
 }
 
-func (d *Dict) Len() int {
-	return len(d.Keyed)
+func (d *Keyed) Len() int {
+	return len(*d)
 }
-func (d *Dict) Idx(i int) (Val, error) {
-	if i < 0 || i >= len(d.Keyed) {
+func (d *Keyed) Idx(i int) (Val, error) {
+	if i < 0 || i >= len(*d) {
 		return nil, ErrIdxBounds
 	}
-	return d.Keyed[i].Val, nil
+	return (*d)[i].Val, nil
 }
-func (d *Dict) SetIdx(i int, el Val) error {
+func (d *Keyed) SetIdx(i int, el Val) error {
 	if i < 0 {
 		return ErrIdxBounds
 	}
 	if el == nil {
 		el = Null{}
 	}
-	if d.El != typ.Void && d.El != typ.Data {
-		// TODO check and convert el
-	}
-	if i >= len(d.Keyed) {
-		if i < cap(d.Keyed) {
-			n := d.Keyed[:i+1]
-			for j := len(d.Keyed) - 1; j < i; j++ {
+	s := *d
+	if i >= len(s) {
+		if i < cap(s) {
+			n := s[:i+1]
+			for j := len(s) - 1; j < i; j++ {
 				n[j] = KeyVal{}
 			}
 		} else {
 			n := make([]KeyVal, (i+1)*3/2)
-			copy(n, d.Keyed)
-			d.Keyed = n
+			copy(n, s)
+			s = n
 		}
 	}
-	d.Keyed[i].Val = el
+	s[i].Val = el
+	*d = s
 	return nil
 }
-func (d *Dict) IterIdx(it func(int, Val) error) error {
-	for i, kv := range d.Keyed {
+func (d *Keyed) IterIdx(it func(int, Val) error) error {
+	for i, kv := range *d {
 		if err := it(i, kv.Val); err != nil {
 			if err == BreakIter {
 				return nil
@@ -133,19 +127,19 @@ func (d *Dict) IterIdx(it func(int, Val) error) error {
 	}
 	return nil
 }
-func (d *Dict) Keys() []string {
-	if len(d.Keyed) == 0 {
+func (d *Keyed) Keys() []string {
+	if d == nil || len(*d) == 0 {
 		return nil
 	}
-	res := make([]string, 0, len(d.Keyed))
-	for _, v := range d.Keyed {
+	res := make([]string, 0, len(*d))
+	for _, v := range *d {
 		res = append(res, v.Key)
 	}
 	return res
 }
-func (d *Dict) Key(k string) (Val, error) {
+func (d *Keyed) Key(k string) (Val, error) {
 	if d != nil {
-		for _, v := range d.Keyed {
+		for _, v := range *d {
 			if k == v.Key {
 				return v.Val, nil
 			}
@@ -154,31 +148,29 @@ func (d *Dict) Key(k string) (Val, error) {
 	// TODO think about zero values of keyr go uses zero value and js undefined values
 	return Null{}, nil
 }
-func (d *Dict) SetKey(k string, el Val) error {
+func (d *Keyed) SetKey(k string, el Val) error {
+	s := *d
 	if el == nil { // if el is explicitly nil delete the value
-		for i, v := range d.Keyed {
+		for i, v := range s {
 			if k == v.Key {
-				d.Keyed = append(d.Keyed[:i], d.Keyed[i+1:]...)
+				*d = append(s[:i], s[i+1:]...)
 				return nil
 			}
 		}
 		return nil
 	}
 	el = Unwrap(el)
-	if d.El != typ.Void {
-		// TODO check and convert el
-	}
-	for i, v := range d.Keyed {
+	for i, v := range s {
 		if k == v.Key {
-			d.Keyed[i].Val = el
+			s[i].Val = el
 			return nil
 		}
 	}
-	d.Keyed = append(d.Keyed, KeyVal{Key: k, Val: el})
+	*d = append(s, KeyVal{Key: k, Val: el})
 	return nil
 }
-func (d *Dict) IterKey(it func(string, Val) error) error {
-	for _, k := range d.Keyed {
+func (d *Keyed) IterKey(it func(string, Val) error) error {
+	for _, k := range *d {
 		if err := it(k.Key, k.Val); err != nil {
 			if err == BreakIter {
 				return nil
@@ -187,4 +179,25 @@ func (d *Dict) IterKey(it func(string, Val) error) error {
 		}
 	}
 	return nil
+}
+
+type Dict struct {
+	Reg *Reg
+	El  typ.Type
+	Keyed
+}
+
+func (d *Dict) Type() typ.Type                     { return typ.DictOf(d.El) }
+func (d *Dict) Nil() bool                          { return d == nil }
+func (d *Dict) Value() Val                         { return d }
+func (d *Dict) UnmarshalJSON(b []byte) error       { return unmarshal(b, d, d.Reg) }
+func (d *Dict) New() (Mut, error)                  { return &Dict{d.Reg, d.El, nil}, nil }
+func (d *Dict) WithReg(reg *Reg)                   { d.Reg = reg }
+func (d *Dict) Ptr() interface{}                   { return d }
+func (d *Dict) Parse(reg typ.Reg, a ast.Ast) error { return d.Keyed.Parse(d.Reg, a) }
+func (d *Dict) Key(k string) (Val, error) {
+	if d != nil {
+		return d.Keyed.Key(k)
+	}
+	return Null{}, nil
 }

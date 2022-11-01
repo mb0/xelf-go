@@ -1,6 +1,8 @@
 package lib
 
 import (
+	"fmt"
+
 	"xelf.org/xelf/exp"
 	"xelf.org/xelf/lit"
 	"xelf.org/xelf/typ"
@@ -72,9 +74,26 @@ func (s *inSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 	}
 	fst := args[0].Val
 	var r bool
-	for _, v := range args[1].Val.(*lit.List).Vals {
-		l := v.(*lit.List)
-		for _, v := range l.Vals {
+	var vals *lit.Vals
+	switch v := args[1].Val.(type) {
+	case *lit.Vals:
+		vals = v
+	case *lit.List:
+		vals = &v.Vals
+	default:
+		return nil, fmt.Errorf("unexpected idxr %T", args[1].Val)
+	}
+	for _, val := range *vals {
+		var vv *lit.Vals
+		switch v := val.(type) {
+		case *lit.Vals:
+			vv = v
+		case *lit.List:
+			vv = &v.Vals
+		default:
+			return nil, fmt.Errorf("unexpected idxr %T", val)
+		}
+		for _, v := range *vv {
 			if lit.Equal(fst, v) {
 				r = true
 				break

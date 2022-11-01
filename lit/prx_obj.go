@@ -48,8 +48,8 @@ func (x *ObjPrx) Parse(_ typ.Reg, a ast.Ast) error {
 	if isNull(a) {
 		return x.setNull()
 	}
-	if a.Kind != knd.Dict {
-		return ast.ErrExpect(a, knd.Dict)
+	if a.Kind != knd.Keyr {
+		return ast.ErrExpect(a, knd.Keyr)
 	}
 	rv := x.elem()
 	rv.Set(reflect.Zero(rv.Type()))

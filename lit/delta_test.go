@@ -39,8 +39,7 @@ func TestDiff(t *testing.T) {
 			t.Errorf("delta failed %s %s: %v", test.a, test.b, err)
 			continue
 		}
-		dict := &Dict{Keyed: d}
-		got := dict.String()
+		got := Keyed(d).String()
 		if got != test.want {
 			t.Errorf("for %s and %s want %s got %s", test.a, test.b, test.want, got)
 			continue

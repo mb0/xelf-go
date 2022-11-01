@@ -65,6 +65,13 @@ func SelectIdx(val Val, idx int) (res Val, err error) {
 func SelectList(val Val, path cor.Path) (_ Val, err error) {
 	res := &List{}
 	switch a := val.(type) {
+	case *Vals:
+		res.Vals = make([]Val, 0, len(*a))
+		for _, v := range *a {
+			if err = collectIdxrVal(v, path, res); err != nil {
+				break
+			}
+		}
 	case *List:
 		res.Reg = a.Reg
 		res.Vals = make([]Val, 0, len(a.Vals))
@@ -192,9 +199,9 @@ func CreatePath(reg *Reg, mut Mut, path cor.Path, val Val) (err error) {
 	} else {
 		if isAny {
 			if npath[1].Key == "" {
-				et = typ.List
+				et = typ.Idxr
 			} else {
-				et = typ.Dict
+				et = typ.Keyr
 			}
 		}
 		z, err := reg.Zero(et)

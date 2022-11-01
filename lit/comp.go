@@ -93,35 +93,6 @@ func Equal(x, y Val) bool {
 			return false
 		}
 		return a == b
-	case k&knd.Keyr != 0:
-		xk, ok := x.(Keyr)
-		if !ok {
-			if logEqual {
-				log.Printf("expect keyr got %T", x)
-			}
-			return false
-		}
-		yk, ok := y.(Keyr)
-		if !ok || xk.Len() != yk.Len() {
-			return false
-		}
-		err := xk.IterKey(func(key string, xv Val) error {
-			yv, err := yk.Key(key)
-			if err != nil {
-				return err
-			}
-			if ok = Equal(xv, yv); !ok {
-				return BreakIter
-			}
-			return nil
-		})
-		if err != nil {
-			if logEqual {
-				log.Printf("equal keyr err: %v", err)
-			}
-			return false
-		}
-		return ok
 	case k&knd.Idxr != 0:
 		xi, ok := x.(Idxr)
 		if !ok {
@@ -147,6 +118,35 @@ func Equal(x, y Val) bool {
 		if err != nil {
 			if logEqual {
 				log.Printf("equal idxr err: %v", err)
+			}
+			return false
+		}
+		return ok
+	case k&knd.Keyr != 0:
+		xk, ok := x.(Keyr)
+		if !ok {
+			if logEqual {
+				log.Printf("expect keyr got %T", x)
+			}
+			return false
+		}
+		yk, ok := y.(Keyr)
+		if !ok || xk.Len() != yk.Len() {
+			return false
+		}
+		err := xk.IterKey(func(key string, xv Val) error {
+			yv, err := yk.Key(key)
+			if err != nil {
+				return err
+			}
+			if ok = Equal(xv, yv); !ok {
+				return BreakIter
+			}
+			return nil
+		})
+		if err != nil {
+			if logEqual {
+				log.Printf("equal keyr err: %v", err)
 			}
 			return false
 		}

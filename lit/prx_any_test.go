@@ -22,7 +22,7 @@ func TestProxyAny(t *testing.T) {
 		t.Errorf("parse %#v", err)
 	}
 	wanta := []interface{}{
-		Null{}, Num(1), Char("test"), &List{Reg: reg, Vals: []Val{}},
+		Null{}, Num(1), Char("test"), &Vals{},
 	}
 	if !reflect.DeepEqual(any, wanta) {
 		t.Errorf("want %v got %v", wanta, any)

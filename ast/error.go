@@ -113,9 +113,9 @@ func parens(k knd.Kind) (rune, rune) {
 		return '<', '>'
 	case knd.Call:
 		return '(', ')'
-	case knd.List:
+	case knd.Idxr:
 		return '[', ']'
-	case knd.Dict:
+	case knd.Keyr:
 		return '{', '}'
 	}
 	return 0, 0

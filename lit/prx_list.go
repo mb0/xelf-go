@@ -26,8 +26,8 @@ func (x *ListPrx) Parse(_ typ.Reg, a ast.Ast) error {
 	if isNull(a) {
 		return x.setNull()
 	}
-	if a.Kind != knd.List {
-		return ast.ErrExpect(a, knd.List)
+	if a.Kind != knd.Idxr {
+		return ast.ErrExpect(a, knd.Idxr)
 	}
 	rv := x.elem()
 	nv := rv.Slice(0, 0)

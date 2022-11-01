@@ -56,7 +56,7 @@ func (reg *Reg) LookupType(ref string) (typ.Type, error) {
 // Zero returns a zero mutable value for t or an error.
 func (reg *Reg) Zero(t typ.Type) (m Mut, err error) {
 	reg.init()
-	if t.Kind&knd.List != 0 {
+	if t.Kind&knd.Idxr == knd.List {
 		n := typ.ContEl(t).Ref
 		if n != "" {
 			nfo := reg.refs[n]
@@ -81,10 +81,10 @@ func (reg *Reg) Zero(t typ.Type) (m Mut, err error) {
 			m = new(Num)
 		case k&knd.Char != 0 && k&^knd.Char == 0:
 			m = new(Char)
-		case k&knd.List != 0 && k&^knd.Idxr == 0:
-			m = &List{Reg: reg, El: typ.ContEl(t)}
-		case k&knd.Dict != 0 && k&^knd.Keyr == 0:
-			m = &Dict{Reg: reg, El: typ.ContEl(t)}
+		case k&knd.Keyr != 0 && k&^knd.Keyr == 0:
+			m = &Keyed{}
+		case k&knd.Idxr != 0 && k&^knd.Idxr == 0:
+			m = &Vals{}
 		default:
 			return newAnyPrx(reg, t), nil
 		}

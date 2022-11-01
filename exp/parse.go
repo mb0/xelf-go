@@ -72,18 +72,18 @@ func ParseAst(reg *lit.Reg, a ast.Ast) (Exp, error) {
 			return &Lit{Res: typ.Bool, Val: lit.Bool(len(a.Raw) == 4), Src: a.Src}, nil
 		}
 		return &Sym{Sym: a.Raw, Src: a.Src}, nil
-	case knd.List:
-		list := &lit.List{Reg: reg}
-		if err := list.Parse(reg, a); err != nil {
+	case knd.Idxr:
+		vals := &lit.Vals{}
+		if err := vals.Parse(reg, a); err != nil {
 			return nil, err
 		}
-		return &Lit{Res: typ.List, Val: list, Src: a.Src}, nil
-	case knd.Dict:
-		dict := &lit.Dict{Reg: reg}
-		if err := dict.Parse(reg, a); err != nil {
+		return &Lit{Res: typ.Idxr, Val: vals, Src: a.Src}, nil
+	case knd.Keyr:
+		keyed := &lit.Keyed{}
+		if err := keyed.Parse(reg, a); err != nil {
 			return nil, err
 		}
-		return &Lit{Res: typ.Keyr, Val: dict, Src: a.Src}, nil
+		return &Lit{Res: typ.Keyr, Val: keyed, Src: a.Src}, nil
 	case knd.Tag:
 		if len(a.Seq) == 0 {
 			return nil, ast.ErrInvalidTag(a.Tok)

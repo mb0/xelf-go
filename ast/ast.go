@@ -70,7 +70,7 @@ func ScanAll(l *Lexer) (res []Ast, _ error) {
 
 func ScanRest(l *Lexer, t Tok) (Ast, error) {
 	res := Ast{Tok: t}
-	if t.Kind&(knd.List|knd.Keyr|knd.Typ|knd.Call) == 0 {
+	if t.Kind&(knd.Idxr|knd.Keyr|knd.Typ|knd.Call) == 0 {
 		return res, nil
 	}
 	_, end := parens(t.Kind)

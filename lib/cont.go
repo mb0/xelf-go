@@ -52,11 +52,18 @@ func (s *foldSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 		return nil, fmt.Errorf("unexpected func %[1]T %[1]s", trd)
 	}
 	res := args[1]
+	var vals *lit.Vals
 	switch v := args[0].Val.(type) {
+	case *lit.Vals:
+		vals = v
 	case *lit.List:
-		for i, el := range v.Vals {
+		vals = &v.Vals
+	}
+	if vals != nil {
+		vs := *vals
+		for i, el := range vs {
 			if s.Right {
-				el = v.Vals[len(v.Vals)-1-i]
+				el = vs[len(vs)-1-i]
 			}
 			args := []exp.Exp{res, &exp.Lit{Res: el.Type(), Val: el}}
 			r, err := callFunc(p, c, fun, args, trd.Src)

@@ -130,9 +130,9 @@ func (l *Lexer) Tok() (Tok, error) {
 	case '(', ')':
 		return l.rtok(knd.Call), nil
 	case '[', ']':
-		return l.rtok(knd.List), nil
+		return l.rtok(knd.Idxr), nil
 	case '{', '}':
-		return l.rtok(knd.Dict), nil
+		return l.rtok(knd.Keyr), nil
 	case '<', '>':
 		return l.rtok(knd.Typ), nil
 	case '"', '\'', '`':

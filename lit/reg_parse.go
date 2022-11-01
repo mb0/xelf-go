@@ -11,6 +11,8 @@ import (
 	"xelf.org/xelf/typ"
 )
 
+var DefaultReg = &Reg{Cache: &Cache{}}
+
 // Parse parses str and returns a generic value or an error.
 func Parse(reg typ.Reg, str string) (Val, error) {
 	return Read(reg, strings.NewReader(str), "string")
@@ -81,9 +83,8 @@ func (reg *Reg) ParseVal(a ast.Ast) (v Val, err error) {
 		case "false", "true":
 			return Bool(len(a.Raw) == 4), nil
 		}
-	case knd.List:
-		li := &List{Reg: reg}
-		vs := make([]Val, 0, len(a.Seq))
+	case knd.Idxr:
+		vs := make(Vals, 0, len(a.Seq))
 		for _, e := range a.Seq {
 			el, err := reg.ParseVal(e)
 			if err != nil {
@@ -91,11 +92,9 @@ func (reg *Reg) ParseVal(a ast.Ast) (v Val, err error) {
 			}
 			vs = append(vs, el)
 		}
-		li.Vals = vs
-		return li, nil
-	case knd.Dict:
-		di := &Dict{Reg: reg}
-		kvs := make([]KeyVal, 0, len(a.Seq))
+		return &vs, nil
+	case knd.Keyr:
+		kvs := make(Keyed, 0, len(a.Seq))
 		for _, e := range a.Seq {
 			key, val, err := ast.UnquotePair(e)
 			if err != nil {
@@ -107,8 +106,7 @@ func (reg *Reg) ParseVal(a ast.Ast) (v Val, err error) {
 			}
 			kvs = append(kvs, KeyVal{key, el})
 		}
-		di.Keyed = kvs
-		return di, nil
+		return &kvs, nil
 	case knd.Typ:
 		t, err := typ.ParseAst(a)
 		if err != nil {
@@ -149,11 +147,11 @@ func (reg *Reg) ParseMut(a ast.Ast) (Mut, error) {
 			ok := Bool(len(a.Raw) == 4)
 			return &ok, nil
 		}
-	case knd.List:
-		li := &List{Reg: reg}
+	case knd.Idxr:
+		li := &Vals{}
 		return li, li.Parse(reg, a)
-	case knd.Dict:
-		di := &Dict{Reg: reg}
+	case knd.Keyr:
+		di := &Keyed{}
 		return di, di.Parse(reg, a)
 	case knd.Typ:
 		t, err := typ.ParseAst(a)
@@ -166,6 +164,9 @@ func (reg *Reg) ParseMut(a ast.Ast) (Mut, error) {
 }
 
 func parseMutNull(reg typ.Reg, a ast.Ast) (Val, error) {
+	if reg == nil {
+		reg = DefaultReg
+	}
 	m, err := reg.ParseMut(a)
 	if m == nil {
 		return Null{}, err
