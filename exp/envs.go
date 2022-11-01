@@ -3,7 +3,6 @@ package exp
 import (
 	"fmt"
 
-	"xelf.org/xelf/lit"
 	"xelf.org/xelf/typ"
 )
 
@@ -20,30 +19,6 @@ func (e Builtins) Lookup(s *Sym, k string, eval bool) (Exp, error) {
 		return &Lit{Res: sp.Type(), Val: sp, Src: s.Src}, nil
 	}
 	return nil, ErrSymNotFound
-}
-
-// ArgEnv is a child scope that supports special paths starting with '$' into a literal value.
-type ArgEnv struct {
-	Par Env
-	Typ typ.Type
-	Val lit.Val
-}
-
-func NewArgEnv(par Env, v lit.Val) *ArgEnv { return &ArgEnv{Par: par, Typ: v.Type(), Val: v} }
-
-func (e *ArgEnv) Parent() Env { return e.Par }
-
-func (e *ArgEnv) Lookup(s *Sym, k string, eval bool) (Exp, error) {
-	if k[0] != '$' {
-		return e.Par.Lookup(s, k, eval)
-	}
-	res, err := lit.Select(e.Val, k[1:])
-	if err != nil {
-		return nil, err
-	}
-	// TODO introduce exp Select to sort out correct literal type
-	// this is a stop-gap hack only for arg env
-	return &Lit{Res: typ.Abstract(res.Type()), Val: res, Src: s.Src}, nil
 }
 
 // DotEnv is a child scope that supports relative paths into a literal.
