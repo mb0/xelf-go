@@ -73,9 +73,9 @@ func (reg *Reg) Zero(t typ.Type) (m Mut, err error) {
 	if k.Count() != 1 {
 		switch {
 		case k&knd.Num != 0 && k&^knd.Num == 0:
-			m = new(Int)
-		case k&knd.Str != 0 && k&^knd.Char == 0:
-			m = new(Str)
+			m = new(Num)
+		case k&knd.Char != 0 && k&^knd.Char == 0:
+			m = new(Char)
 		case k&knd.List != 0 && k&^knd.Idxr == 0:
 			m = &List{Reg: reg, El: typ.ContEl(t)}
 		case k&knd.Dict != 0 && k&^knd.Keyr == 0:

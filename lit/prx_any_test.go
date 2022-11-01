@@ -12,7 +12,7 @@ func TestProxyAny(t *testing.T) {
 	if err != nil {
 		t.Errorf("parse one %#v", err)
 	}
-	var want interface{} = Int(1)
+	var want interface{} = Num(1)
 	if !reflect.DeepEqual(one, want) {
 		t.Errorf("want %#v got %#v", want, one)
 	}
@@ -22,7 +22,7 @@ func TestProxyAny(t *testing.T) {
 		t.Errorf("parse %#v", err)
 	}
 	wanta := []interface{}{
-		Null{}, Int(1), Str("test"), &List{Reg: reg, Vals: []Val{}},
+		Null{}, Num(1), Char("test"), &List{Reg: reg, Vals: []Val{}},
 	}
 	if !reflect.DeepEqual(any, wanta) {
 		t.Errorf("want %v got %v", wanta, any)

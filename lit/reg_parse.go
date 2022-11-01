@@ -56,24 +56,24 @@ func ReadIntoMut(reg *Reg, r io.Reader, name string, mut Mut) error {
 // ParseVal parses a as generic value and returns it or an error.
 func (reg *Reg) ParseVal(a ast.Ast) (v Val, err error) {
 	switch a.Kind {
-	case knd.Int:
+	case knd.Num:
 		n, err := strconv.ParseInt(a.Raw, 10, 64)
 		if err != nil {
-			return nil, ast.ErrInvalid(a, knd.Int, err)
+			return nil, ast.ErrInvalid(a, knd.Num, err)
 		}
-		return Int(n), nil
+		return Num(n), nil
 	case knd.Real:
 		n, err := strconv.ParseFloat(a.Raw, 64)
 		if err != nil {
 			return nil, ast.ErrInvalid(a, knd.Real, err)
 		}
 		return Real(n), nil
-	case knd.Str:
+	case knd.Char:
 		txt, err := cor.Unquote(a.Raw)
 		if err != nil {
-			return nil, ast.ErrInvalid(a, knd.Str, err)
+			return nil, ast.ErrInvalid(a, knd.Char, err)
 		}
-		return Str(txt), nil
+		return Char(txt), nil
 	case knd.Sym:
 		switch a.Raw {
 		case "null":
@@ -123,24 +123,24 @@ func (reg *Reg) ParseVal(a ast.Ast) (v Val, err error) {
 // If the null symbol is parsed nil mutable is returned.
 func (reg *Reg) ParseMut(a ast.Ast) (Mut, error) {
 	switch a.Kind {
-	case knd.Int:
+	case knd.Num:
 		n, err := strconv.ParseInt(a.Raw, 10, 64)
 		if err != nil {
-			return nil, ast.ErrInvalid(a, knd.Int, err)
+			return nil, ast.ErrInvalid(a, knd.Num, err)
 		}
-		return (*Int)(&n), nil
+		return (*Num)(&n), nil
 	case knd.Real:
 		n, err := strconv.ParseFloat(a.Raw, 64)
 		if err != nil {
 			return nil, ast.ErrInvalid(a, knd.Real, err)
 		}
 		return (*Real)(&n), nil
-	case knd.Str:
+	case knd.Char:
 		txt, err := cor.Unquote(a.Raw)
 		if err != nil {
-			return nil, ast.ErrInvalid(a, knd.Str, err)
+			return nil, ast.ErrInvalid(a, knd.Char, err)
 		}
-		return (*Str)(&txt), nil
+		return (*Char)(&txt), nil
 	case knd.Sym:
 		switch a.Raw {
 		case "null":

@@ -18,8 +18,8 @@ func TestScan(t *testing.T) {
 	}{
 		{"0.12", Ast{Tok{Kind: knd.Real, Src: src(0, 4), Raw: "0.12"}, nil}, ""},
 		{"[0 0]", Ast{Tok{Kind: knd.List, Rune: '[', Src: src(0, 5)}, []Ast{
-			{Tok{Kind: knd.Int, Src: src(1, 1), Raw: "0"}, nil},
-			{Tok{Kind: knd.Int, Src: src(3, 1), Raw: "0"}, nil},
+			{Tok{Kind: knd.Num, Src: src(1, 1), Raw: "0"}, nil},
+			{Tok{Kind: knd.Num, Src: src(3, 1), Raw: "0"}, nil},
 		}}, ""},
 		{"[1 00]", noast, "test2:1:3: adjacent zeros"},
 		{":", Ast{Tok{Kind: knd.Tag, Rune: ':', Src: src(0, 1)}, nil}, ""},
@@ -35,13 +35,13 @@ func TestScan(t *testing.T) {
 		{"{a:0}", Ast{Tok{Kind: knd.Dict, Rune: '{', Src: src(0, 5)}, []Ast{
 			{Tok{Kind: knd.Tag, Src: src(1, 3), Rune: ':'}, []Ast{
 				{Tok{Kind: knd.Sym, Src: src(1, 1), Raw: "a"}, nil},
-				{Tok{Kind: knd.Int, Src: src(3, 1), Raw: "0"}, nil},
+				{Tok{Kind: knd.Num, Src: src(3, 1), Raw: "0"}, nil},
 			}},
 		}}, ""},
 		{"{\"a\":0}", Ast{Tok{Kind: knd.Dict, Rune: '{', Src: src(0, 7)}, []Ast{
 			{Tok{Kind: knd.Tag, Src: src(1, 5), Rune: ':'}, []Ast{
-				{Tok{Kind: knd.Str, Src: src(1, 3), Raw: "\"a\""}, nil},
-				{Tok{Kind: knd.Int, Src: src(5, 1), Raw: "0"}, nil},
+				{Tok{Kind: knd.Char, Src: src(1, 3), Raw: "\"a\""}, nil},
+				{Tok{Kind: knd.Num, Src: src(5, 1), Raw: "0"}, nil},
 			}},
 		}}, ""},
 		{"{a:0:}", noast, "test11:1:4: invalid tag"},

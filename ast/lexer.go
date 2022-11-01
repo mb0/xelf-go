@@ -158,7 +158,7 @@ func (l *Lexer) lexString() (Tok, error) {
 	var esc bool
 	for c != eof && c != q || esc {
 		if c == '\n' && q != '`' {
-			t := l.tok(knd.Str, p, b.String())
+			t := l.tok(knd.Char, p, b.String())
 			return t, ErrStrTerm(t)
 		}
 		esc = !esc && c == '\\' && q != '`'
@@ -166,11 +166,11 @@ func (l *Lexer) lexString() (Tok, error) {
 		c = l.next()
 	}
 	if c == eof {
-		t := l.tok(knd.Str, p, b.String())
+		t := l.tok(knd.Char, p, b.String())
 		return t, ErrStrTerm(t)
 	}
 	b.WriteRune(q)
-	return l.tok(knd.Str, p, b.String()), nil
+	return l.tok(knd.Char, p, b.String()), nil
 }
 
 // lexSymbol reads and returns a symbol token starting at the current offset.
@@ -187,7 +187,7 @@ func (l *Lexer) lexSymbol() (Tok, error) {
 // lexNumber reads and returns a number token starting at the current offset.
 func (l *Lexer) lexNumber() (Tok, error) {
 	p := l.pos()
-	k := knd.Int
+	k := knd.Num
 	var b strings.Builder
 	if l.cur == '-' {
 		b.WriteRune(l.cur)

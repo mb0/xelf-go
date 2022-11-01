@@ -46,10 +46,16 @@ func ToInt(v Val) (n Int, err error) {
 	switch v := v.(type) {
 	case nil:
 	case Null:
+	case Num:
+		n = Int(v)
 	case Int:
 		n = v
 	case Real:
 		n = Int(v)
+	case *Num:
+		if v != nil {
+			n = Int(*v)
+		}
 	case *Int:
 		if v != nil {
 			n = *v
@@ -60,6 +66,8 @@ func ToInt(v Val) (n Int, err error) {
 		}
 	default:
 		switch v := v.Value().(type) {
+		case Num:
+			n = Int(v)
 		case Int:
 			n = v
 		case Real:
@@ -75,10 +83,16 @@ func ToReal(v Val) (n Real, err error) {
 	switch v := v.(type) {
 	case nil:
 	case Null:
+	case Num:
+		n = Real(v)
 	case Int:
 		n = Real(v)
 	case Real:
 		n = v
+	case *Num:
+		if v != nil {
+			n = Real(*v)
+		}
 	case *Int:
 		if v != nil {
 			n = Real(*v)
@@ -89,6 +103,8 @@ func ToReal(v Val) (n Real, err error) {
 		}
 	default:
 		switch v := v.Value().(type) {
+		case Num:
+			n = Real(v)
 		case Int:
 			n = Real(v)
 		case Real:
@@ -106,14 +122,22 @@ func ToStr(v Val) (s Str, err error) {
 	case Null:
 	case Str:
 		s = v
+	case Char:
+		s = Str(v)
 	case *Str:
 		if v != nil {
 			s = *v
+		}
+	case *Char:
+		if v != nil {
+			s = Str(*v)
 		}
 	default:
 		switch v := v.Value().(type) {
 		case Str:
 			s = v
+		case Char:
+			s = Str(v)
 		case Raw:
 			s = Str(cor.FormatRaw(v))
 		case UUID:
@@ -143,6 +167,9 @@ func ToRaw(v Val) (r Raw, err error) {
 		switch v := v.Value().(type) {
 		case Raw:
 			r = v
+		case Char:
+			n, err := cor.ParseRaw(string(v))
+			return Raw(n), err
 		case Str:
 			n, err := cor.ParseRaw(string(v))
 			return Raw(n), err
@@ -173,6 +200,9 @@ func ToUUID(v Val) (u UUID, err error) {
 		switch v := v.Value().(type) {
 		case UUID:
 			u = v
+		case Char:
+			n, err := cor.ParseUUID(string(v))
+			return UUID(n), err
 		case Str:
 			n, err := cor.ParseUUID(string(v))
 			return UUID(n), err
@@ -200,6 +230,9 @@ func ToTime(v Val) (t Time, err error) {
 		switch v := v.Value().(type) {
 		case Time:
 			t = v
+		case Char:
+			n, err := cor.ParseTime(string(v))
+			return Time(n), err
 		case Str:
 			n, err := cor.ParseTime(string(v))
 			return Time(n), err
@@ -224,6 +257,9 @@ func ToSpan(v Val) (s Span, err error) {
 		switch v := v.Value().(type) {
 		case Span:
 			s = v
+		case Char:
+			n, err := cor.ParseSpan(string(v))
+			return Span(n), err
 		case Str:
 			n, err := cor.ParseSpan(string(v))
 			return Span(n), err

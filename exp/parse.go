@@ -46,24 +46,24 @@ func ParseAll(reg *lit.Reg, as []ast.Ast) (Exp, error) {
 // ParseAst parses a as expression and returns it or an error.
 func ParseAst(reg *lit.Reg, a ast.Ast) (Exp, error) {
 	switch a.Kind {
-	case knd.Int:
+	case knd.Num:
 		n, err := strconv.ParseInt(a.Raw, 10, 64)
 		if err != nil {
-			return nil, ast.ErrInvalid(a, knd.Int, err)
+			return nil, ast.ErrInvalid(a, knd.Num, err)
 		}
-		return &Lit{Res: typ.Num, Val: lit.Int(n), Src: a.Src}, nil
+		return &Lit{Res: typ.Num, Val: lit.Num(n), Src: a.Src}, nil
 	case knd.Real:
 		n, err := strconv.ParseFloat(a.Raw, 64)
 		if err != nil {
 			return nil, ast.ErrInvalid(a, knd.Real, err)
 		}
 		return &Lit{Res: typ.Real, Val: lit.Real(n), Src: a.Src}, nil
-	case knd.Str:
+	case knd.Char:
 		txt, err := cor.Unquote(a.Raw)
 		if err != nil {
-			return nil, ast.ErrInvalid(a, knd.Str, err)
+			return nil, ast.ErrInvalid(a, knd.Char, err)
 		}
-		return &Lit{Res: typ.Char, Val: lit.Str(txt), Src: a.Src}, nil
+		return &Lit{Res: typ.Char, Val: lit.Char(txt), Src: a.Src}, nil
 	case knd.Sym:
 		switch a.Raw {
 		case "null":
@@ -91,10 +91,10 @@ func ParseAst(reg *lit.Reg, a ast.Ast) (Exp, error) {
 		t := a.Seq[0]
 		tag := t.Raw
 		var err error
-		if t.Kind == knd.Str {
+		if t.Kind == knd.Char {
 			tag, err = cor.Unquote(a.Raw)
 			if err != nil {
-				return nil, ast.ErrInvalid(a, knd.Str, err)
+				return nil, ast.ErrInvalid(a, knd.Char, err)
 			}
 		}
 		var e Exp

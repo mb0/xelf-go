@@ -105,6 +105,9 @@ func (reg *Reg) ProxyValue(ptr reflect.Value) (mut Mut, err error) {
 			if v, ok := toRef(ptrInt, ptr, noval); ok {
 				return v.Interface().(*Int), nil
 			}
+			if v, ok := toRef(ptrNum, ptr, noval); ok {
+				return v.Interface().(*Num), nil
+			}
 		}
 		fallthrough
 	case reflect.Int, reflect.Int32, reflect.Int16, reflect.Uint64, reflect.Uint32, reflect.Uint16:
@@ -121,6 +124,9 @@ func (reg *Reg) ProxyValue(ptr reflect.Value) (mut Mut, err error) {
 	case reflect.String:
 		if v, ok := toRef(ptrStr, ptr, org); ok {
 			mut = v.Interface().(*Str)
+		}
+		if v, ok := toRef(ptrChar, ptr, org); ok {
+			mut = v.Interface().(*Char)
 		}
 	case reflect.Slice:
 		if et.Elem().Kind() == reflect.Uint8 {

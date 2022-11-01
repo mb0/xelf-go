@@ -76,5 +76,5 @@ func (s *rawSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 			return nil, err
 		}
 	}
-	return &exp.Lit{Res: typ.Str, Val: lit.Raw(b.Bytes())}, nil
+	return &exp.Lit{Res: typ.Raw, Val: lit.Raw(b.Bytes())}, nil
 }

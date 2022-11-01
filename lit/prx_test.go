@@ -77,7 +77,7 @@ func TestProxy(t *testing.T) {
 		}}, "[{x:0 y:5}]"},
 		{new(*Point), "<obj@lit.Point?>", Null{}, "null"},
 		{new(*Point), "<obj@lit.Point?>", &Dict{Keyed: []KeyVal{{"y", Int(5)}}}, "{x:0 y:5}"},
-		{new(*POI), "<obj@lit.POI?>", &Dict{Keyed: []KeyVal{{"name", Str("foo")}}}, "{name:'foo'}"},
+		{new(*POI), "<obj@lit.POI?>", &Dict{Keyed: []KeyVal{{"name", Char("foo")}}}, "{name:'foo'}"},
 		{new(*POI), "<obj@lit.POI?>", poi, "{name:''}"},
 		{new(map[string]Point), "<dict|obj@lit.Point>", Null{}, "{}"},
 		{new(map[string]Point), "<dict|obj@lit.Point>",
