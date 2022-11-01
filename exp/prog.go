@@ -144,7 +144,11 @@ func (p *Prog) Resl(env Env, e Exp, h typ.Type) (Exp, error) {
 		if err != nil {
 			return nil, ast.ErrReslSym(a.Src, a.Sym, err)
 		}
-		// TODO check hint
+		ut, err := p.Sys.Unify(LookupType(env), r.Resl(), h)
+		if err != nil {
+			return nil, ast.ErrUnify(a.Src, err.Error())
+		}
+		a.Type = ut
 		return r, nil
 	case *Lit:
 		lup := LookupType(env)
@@ -173,11 +177,10 @@ func (p *Prog) Resl(env Env, e Exp, h typ.Type) (Exp, error) {
 			}
 			a.Els[i] = el
 		}
-		ut, err := p.Sys.Unify(LookupType(env), a.Type, h)
+		_, err := p.Sys.Unify(LookupType(env), a.Type, h)
 		if err != nil {
 			return nil, ast.ErrUnify(a.Src, err.Error())
 		}
-		a.Type = ut
 		return a, nil
 	case *Call:
 		if a.Spec == nil {

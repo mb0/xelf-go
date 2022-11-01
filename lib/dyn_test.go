@@ -12,14 +12,14 @@ func TestDynEval(t *testing.T) {
 		want string
 		typ  string
 	}{
-		{`(1 2 3)`, `6`, "<int>"},
+		{`(1 2 3)`, `6`, "<num>"},
 		{`(real 1)`, `1`, "<real>"},
 		{`(raw 'test')`, `test`, "<raw>"},
 		{`('a' 'b' 'c')`, `abc`, "<str>"},
 		{`('a' (json ['b']) (xelf 'c'))`, "a[\"b\"]'c'", "<str>"},
 		{`(let addone:(fn n:int (add .n 1)) (addone 2))`, `3`, "<int>"},
-		{`(let addone:(fn (_ 1)) (addone (int 2)))`, `3`, "<int>"},
-		{`((if false add sub) 1 2)`, `-1`, "<int>"},
+		{`(let addone:(fn (_ 1)) (addone 2))`, `3`, "<num>"},
+		{`((if false add sub) 1 2)`, `-1`, "<num>"},
 	}
 	for _, test := range tests {
 		got, err := exp.NewProg(nil, nil, Std).RunStr(test.raw, nil)

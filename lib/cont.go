@@ -97,7 +97,7 @@ func (s *rangeSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 	for i := range res {
 		var r lit.Val = lit.Int(i)
 		if fun != nil {
-			arg := &exp.Lit{Val: r, Src: snd.Src}
+			arg := &exp.Lit{Res: typ.Int, Val: r, Src: snd.Src}
 			r, err = callFunc(p, c, fun, []exp.Exp{arg}, snd.Src)
 			if err != nil {
 				return nil, err

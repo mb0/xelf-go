@@ -13,9 +13,9 @@ type compSpec struct {
 }
 
 var (
-	Eq    = &compSpec{impl("<form@eq any tupl|_ bool>"), 0, false}
-	Equal = &compSpec{impl("<form@equal any tupl|_ bool>"), 0, false}
-	Ne    = &compSpec{impl("<form@ne any tupl|_ bool>"), 0, true}
+	Eq    = &compSpec{impl("<form@eq any tupl bool>"), 0, false}
+	Equal = &compSpec{impl("<form@equal any tupl bool>"), 0, false}
+	Ne    = &compSpec{impl("<form@ne any tupl bool>"), 0, true}
 	Lt    = &compSpec{impl("<form@lt <alt num str span time> tupl|_ bool>"), -1, false}
 	Ge    = &compSpec{impl("<form@ge <alt num str span time> tupl|_ bool>"), -1, true}
 	Gt    = &compSpec{impl("<form@gt <alt num str span time> tupl|_ bool>"), 1, false}
@@ -55,8 +55,8 @@ func (s *compSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 }
 
 var (
-	In = &inSpec{impl("<form@in any tupl|list|_ bool>"), false}
-	Ni = &inSpec{impl("<form@ni any tupl|list|_ bool>"), true}
+	In = &inSpec{impl("<form@in any tupl|list bool>"), false}
+	Ni = &inSpec{impl("<form@ni any tupl|list bool>"), true}
 )
 
 type inSpec struct {

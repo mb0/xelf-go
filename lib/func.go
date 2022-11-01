@@ -2,6 +2,7 @@ package lib
 
 import (
 	"fmt"
+	"strconv"
 
 	"xelf.org/xelf/exp"
 	"xelf.org/xelf/knd"
@@ -16,20 +17,30 @@ type fnSpec struct{ exp.SpecBase }
 func (s *fnSpec) Value() lit.Val { return s }
 func (s *fnSpec) Resl(p *exp.Prog, env exp.Env, c *exp.Call, h typ.Type) (_ exp.Exp, err error) {
 	fe := &FuncEnv{Par: env}
-	var ft typ.Type
 	tags, ok := c.Args[0].(*exp.Tupl)
-	expl := ok && len(tags.Els) > 0
-	if !expl {
-		ft, err = implicitFn(p, fe, c, h)
-	} else {
-		ft, err = explicitFn(p, fe, c, tags.Els, h)
+	if ok && len(tags.Els) > 0 {
+		explicitArgs(p, fe, tags.Els)
 	}
+
+	fe.mock = true
+	x, err := p.Resl(fe, c.Args[1], typ.Void)
+	fe.mock = false
 	if err != nil {
 		return c, err
 	}
-	x := c.Args[1]
+
+	ps := make([]typ.Param, 0, len(fe.Def)+1)
+	for _, kl := range fe.Def {
+		a := kl.Exp.(*exp.Lit)
+		ps = append(ps, typ.P(kl.Tag, a.Res))
+	}
+	ps = append(ps, typ.P("", x.Resl()))
+
+	ft := typ.Func(fmt.Sprintf("fn%d", p.NextFnID()), ps...)
+	ft = p.Sys.Update(exp.LookupType(c.Env), ft)
+
 	spec := makeFunc(fe, ft, x)
-	if expl {
+	if fe.rec {
 		fe.recur = &recurSpec{exp.SpecBase{Decl: ft}, fe, fe.Def, x.Clone(), nil}
 	}
 	return &exp.Lit{Res: ft, Val: spec}, nil
@@ -43,50 +54,28 @@ func makeFunc(fe *FuncEnv, ft typ.Type, x exp.Exp) *funcSpec {
 	return &funcSpec{SpecBase: exp.SpecBase{Decl: ft}, env: fe, act: x}
 }
 
-func explicitFn(p *exp.Prog, fe *FuncEnv, c *exp.Call, es []exp.Exp, h typ.Type) (typ.Type, error) {
+func explicitArgs(p *exp.Prog, fe *FuncEnv, es []exp.Exp) error {
 	keys := make(exp.Tags, 0, len(es))
-	ps := make([]typ.Param, 0, len(es)+1)
 	for _, el := range es {
 		tag := el.(*exp.Tag)
 		pa, err := p.Eval(fe.Par, tag.Exp)
 		if err != nil {
-			return typ.Void, err
+			return err
 		}
 		if pa.Res.Kind&knd.Typ != 0 {
 			pv, ok := pa.Val.(typ.Type)
 			if ok {
 				t := *tag
 				t.Exp = &exp.Lit{Res: pv, Src: tag.Src, Val: lit.Null{}}
-				ps = append(ps, typ.P(tag.Tag, pv))
 				keys = append(keys, t)
 				continue
 			}
 		}
-		return typ.Void, fmt.Errorf("expect type got %[1]T %[1]s", pa)
+		return fmt.Errorf("expect type got %[1]T %[1]s", pa)
 	}
-	ps = append(ps, typ.P("", typ.Type{Kind: knd.Var}))
+	fe.expl = true
 	fe.Def = keys
-	fn := fmt.Sprintf("fn%d", p.NextFnID())
-	return p.Sys.Inst(exp.LookupType(c.Env), typ.Func(fn, ps...))
-}
-
-func implicitFn(p *exp.Prog, fe *FuncEnv, c *exp.Call, h typ.Type) (typ.Type, error) {
-	rt := p.Sys.Bind(typ.Var(0, typ.Void))
-	fe.mock = true
-	_, err := p.Resl(fe, c.Args[1], rt)
-	fe.mock = false
-	if err != nil {
-		return typ.Void, err
-	}
-	ps := make([]typ.Param, 0, len(fe.Def)+1)
-	for _, kl := range fe.Def {
-		a := kl.Exp.(*exp.Lit)
-		ps = append(ps, typ.P(kl.Tag, a.Res))
-	}
-	rt = p.Sys.Update(exp.LookupType(c.Env), rt)
-	ps = append(ps, typ.P("", rt))
-	fn := fmt.Sprintf("fn%d", p.NextFnID())
-	return typ.Func(fn, ps...), nil
+	return nil
 }
 
 type funcSpec struct {
@@ -110,15 +99,30 @@ func (s *funcSpec) Resl(p *exp.Prog, env exp.Env, c *exp.Call, h typ.Type) (exp.
 	return c, nil
 }
 
-func (s *funcSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
+func (s *funcSpec) Eval(p *exp.Prog, c *exp.Call) (l *exp.Lit, err error) {
 	for i, arg := range c.Args {
 		// set arg vals in env
-		r, err := p.Eval(c.Env, arg)
-		if err != nil {
-			return nil, err
+		kl := s.env.Def[i].Exp.(*exp.Lit)
+		switch a := arg.(type) {
+		case *exp.Tupl:
+			switch len(a.Els) {
+			case 0:
+			case 1:
+				l, err = p.Eval(c.Env, a.Els[0])
+				if err != nil {
+					return nil, err
+				}
+				kl.Val = l.Val
+			default:
+				return nil, fmt.Errorf("unexpected tupl")
+			}
+		default:
+			l, err = p.Eval(c.Env, arg)
+			if err != nil {
+				return nil, err
+			}
+			kl.Val = l.Val
 		}
-		kl := &s.env.Def[i]
-		kl.Exp.(*exp.Lit).Val = r.Val
 	}
 	return p.Eval(s.env, s.act)
 }
@@ -167,47 +171,69 @@ func (s *recurSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 type FuncEnv struct {
 	Par   exp.Env
 	Def   exp.Tags
+	expl  bool
 	mock  bool
+	rec   bool
 	recur *recurSpec
 }
 
 func (e *FuncEnv) Parent() exp.Env { return e.Par }
 func (e *FuncEnv) Lookup(s *exp.Sym, k string, eval bool) (exp.Exp, error) {
-	if k == "recur" && e.recur != nil {
-		// we want to copy the argument def when we recur
-		// as not to reuse values from previous calls
-		r := *e.recur
-		r.act = e.recur.act.Clone()
-		r.def = make(exp.Tags, len(e.Def))
-		for i, kv := range e.Def {
-			l := *(kv.Exp.(*exp.Lit))
-			l.Val = lit.Null{}
-			kv.Exp = &l
-			r.def[i] = kv
+	if k == "recur" {
+		if e.mock {
+			e.rec = true
+			return s, nil
 		}
-		return &exp.Lit{Res: r.Type(), Val: &r}, nil
+		if e.recur != nil {
+			// we want to copy the argument def when we recur
+			// as not to reuse values from previous calls
+			r := *e.recur
+			r.act = e.recur.act.Clone()
+			r.def = make(exp.Tags, len(e.Def))
+			for i, kv := range e.Def {
+				l := *(kv.Exp.(*exp.Lit))
+				l.Val = lit.Null{}
+				kv.Exp = &l
+				r.def[i] = kv
+			}
+			return &exp.Lit{Res: r.Type(), Val: &r}, nil
+		}
 	}
 	k, ok := dotkey(k)
 	if !ok {
 		return e.Par.Lookup(s, k, eval)
 	}
+
 	l, err := e.Def.Select(k)
 	if eval {
 		return l, err
 	}
 	if err != nil {
-		kk := k[1:]
-		if !e.mock {
-			return s, nil
+		if !e.mock || e.expl {
+			return s, err
+		}
+		idx, kk := -1, k[1:]
+		if b := kk[0]; b >= '0' && b <= '9' {
+			i, err := strconv.Atoi(kk)
+			if err == nil {
+				idx = i
+			}
 		}
 		p := exp.FindProg(e.Par)
-		t := p.Sys.Bind(typ.Var(0, typ.Void))
+		t := p.Sys.Bind(typ.Var(-1, typ.Void))
 		l = &exp.Lit{Res: t, Val: lit.Null{}}
-		e.Def = append(e.Def, exp.Tag{Tag: kk, Exp: l})
+		if idx >= 0 {
+			if idx >= len(e.Def) {
+				for len(e.Def) <= idx {
+					e.Def = append(e.Def, exp.Tag{})
+				}
+			}
+			e.Def[idx].Exp = l
+		} else {
+			e.Def = append(e.Def, exp.Tag{Tag: kk, Exp: l})
+		}
 	}
-	if !eval {
-		s.Type, s.Env, s.Rel = l.Res, e, k
-	}
+	s.Type, s.Env, s.Rel = l.Res, e, k
 	return s, nil
 }
 func dotkey(k string) (string, bool) {
