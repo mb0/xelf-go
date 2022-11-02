@@ -14,8 +14,8 @@ import (
 var DefaultReg = &Reg{Cache: &Cache{}}
 
 // Parse parses str and returns a generic value or an error.
-func Parse(reg typ.Reg, str string) (Val, error) {
-	return Read(reg, strings.NewReader(str), "string")
+func Parse(str string) (Val, error) {
+	return Read(strings.NewReader(str), "string")
 }
 
 // ParseInto parses str into ptr or returns an error.
@@ -29,12 +29,12 @@ func ParseIntoMut(reg typ.Reg, str string, mut Mut) error {
 }
 
 // Read parses named reader r and returns a generic value or an error.
-func Read(reg typ.Reg, r io.Reader, name string) (Val, error) {
+func Read(r io.Reader, name string) (Val, error) {
 	a, err := ast.Read(r, name)
 	if err != nil {
 		return nil, err
 	}
-	return reg.ParseVal(a)
+	return ParseVal(a)
 }
 
 // ReadInto parses named reader r into ptr or returns an error.
@@ -56,7 +56,7 @@ func ReadIntoMut(reg typ.Reg, r io.Reader, name string, mut Mut) error {
 }
 
 // ParseVal parses a as generic value and returns it or an error.
-func (reg *Reg) ParseVal(a ast.Ast) (v Val, err error) {
+func ParseVal(a ast.Ast) (v Val, err error) {
 	switch a.Kind {
 	case knd.Num:
 		n, err := strconv.ParseInt(a.Raw, 10, 64)
@@ -86,7 +86,7 @@ func (reg *Reg) ParseVal(a ast.Ast) (v Val, err error) {
 	case knd.Idxr:
 		vs := make(Vals, 0, len(a.Seq))
 		for _, e := range a.Seq {
-			el, err := reg.ParseVal(e)
+			el, err := ParseVal(e)
 			if err != nil {
 				return nil, err
 			}
@@ -100,7 +100,7 @@ func (reg *Reg) ParseVal(a ast.Ast) (v Val, err error) {
 			if err != nil {
 				return nil, err
 			}
-			el, err := reg.ParseVal(val)
+			el, err := ParseVal(val)
 			if err != nil {
 				return nil, err
 			}
@@ -119,7 +119,7 @@ func (reg *Reg) ParseVal(a ast.Ast) (v Val, err error) {
 
 // ParseMut parses a as mutable value and returns it or an error.
 // If the null symbol is parsed nil mutable is returned.
-func (reg *Reg) ParseMut(a ast.Ast) (Mut, error) {
+func ParseMut(reg typ.Reg, a ast.Ast) (Mut, error) {
 	switch a.Kind {
 	case knd.Num:
 		n, err := strconv.ParseInt(a.Raw, 10, 64)
@@ -167,7 +167,7 @@ func parseMutNull(reg typ.Reg, a ast.Ast) (Val, error) {
 	if reg == nil {
 		reg = DefaultReg
 	}
-	m, err := reg.ParseMut(a)
+	m, err := ParseMut(reg, a)
 	if m == nil {
 		return Null{}, err
 	}

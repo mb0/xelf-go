@@ -56,15 +56,11 @@ func TestRead(t *testing.T) {
 			`{"a":1,"b c":2,"+foo":"bar"}`,
 		},
 	}
-	reg := &Reg{Cache: &Cache{}}
 	for _, test := range tests {
-		v, err := Parse(reg, test.str)
+		v, err := Parse(test.str)
 		if err != nil {
 			t.Errorf("read %s err %v", test.str, err)
 			continue
-		}
-		if wreg, ok := test.Val.(interface{ WithReg(*Reg) }); ok {
-			wreg.WithReg(reg)
 		}
 		if !reflect.DeepEqual(test.Val, v) {
 			t.Errorf("%s want %+v got %+v", test.str, test.Val, v)

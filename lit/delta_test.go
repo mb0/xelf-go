@@ -24,12 +24,12 @@ func TestDiff(t *testing.T) {
 		{`{a:[[1 2]]}`, `{a:[[1 3]]}`, `{'.a.0.1':3}`},
 	}
 	for _, test := range tests {
-		a, err := Parse(reg, test.a)
+		a, err := Parse(test.a)
 		if err != nil {
 			t.Errorf("parse a %s: %v", test.a, err)
 			continue
 		}
-		b, err := Parse(reg, test.b)
+		b, err := Parse(test.b)
 		if err != nil {
 			t.Errorf("parse b %s: %v", test.b, err)
 			continue

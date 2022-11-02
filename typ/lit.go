@@ -47,8 +47,6 @@ type LitMut interface {
 
 type Reg interface {
 	Zero(Type) (LitMut, error)
-	ParseVal(ast ast.Ast) (LitVal, error)
-	ParseMut(ast ast.Ast) (LitMut, error)
 	Proxy(ptr interface{}) (LitMut, error)
 	ProxyValue(ptr reflect.Value) (LitMut, error)
 }

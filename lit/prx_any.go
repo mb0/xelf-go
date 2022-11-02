@@ -45,7 +45,7 @@ func (x *AnyPrx) Parse(_ typ.Reg, a ast.Ast) (err error) {
 	if isNull(a) {
 		x.val = Null{}
 	} else {
-		x.val, err = x.Reg.ParseVal(a)
+		x.val, err = ParseVal(a)
 		if err != nil {
 			return err
 		}

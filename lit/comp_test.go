@@ -6,7 +6,6 @@ import (
 )
 
 func TestEqual(t *testing.T) {
-	reg := &Reg{Cache: &Cache{}}
 	tests := []struct {
 		a, b string
 		want bool
@@ -28,7 +27,7 @@ func TestEqual(t *testing.T) {
 		{`{a:1}`, `{a:2}`, false},
 	}
 	for _, test := range tests {
-		a, b, err := parsePair(reg, test.a, test.b)
+		a, b, err := parsePair(test.a, test.b)
 		if err != nil {
 			t.Errorf("parse %v", err)
 			continue
@@ -40,12 +39,12 @@ func TestEqual(t *testing.T) {
 	}
 }
 
-func parsePair(reg *Reg, astr, bstr string) (a, b Val, err error) {
-	a, err = Parse(reg, astr)
+func parsePair(astr, bstr string) (a, b Val, err error) {
+	a, err = Parse(astr)
 	if err != nil {
 		return nil, nil, fmt.Errorf("parse a %s: %w", astr, err)
 	}
-	b, err = Parse(reg, bstr)
+	b, err = Parse(bstr)
 	if err != nil {
 		return nil, nil, fmt.Errorf("parse b %s: %w", bstr, err)
 	}
