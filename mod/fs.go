@@ -96,7 +96,7 @@ Outer:
 	return f, nil
 }
 func (fm *FSMods) readFile(prog *exp.Prog, f []byte, url string) (*File, error) {
-	e, err := exp.Read(prog.Reg, bytes.NewReader(f), url)
+	e, err := exp.Read(bytes.NewReader(f), url)
 	if err != nil {
 		return nil, err
 	}

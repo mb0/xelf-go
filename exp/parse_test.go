@@ -91,7 +91,7 @@ func TestParse(t *testing.T) {
 		for i := range a {
 			fixDoc(&a[i], nil)
 		}
-		got, err := ParseAll(&lit.Reg{}, a)
+		got, err := ParseAll(a)
 		if err != nil {
 			t.Errorf("%s parse err: %v", test.raw, err)
 			continue

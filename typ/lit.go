@@ -2,7 +2,6 @@ package typ
 
 import (
 	"fmt"
-	"reflect"
 
 	"xelf.org/xelf/ast"
 	"xelf.org/xelf/bfr"
@@ -39,16 +38,15 @@ type LitVal interface {
 // This interface does in principle belong to the lit package.
 type LitMut interface {
 	LitVal
+	// New returns a fresh mutable value of the same type or an error.
 	New() (LitMut, error)
+	// Ptr returns a pointer to the underlying value for interfacing with other go tools.
 	Ptr() interface{}
+	// Assign assigns the given value to this mutable or returns an error.
 	Assign(LitVal) error
-	Parse(Reg, ast.Ast) error
-}
-
-type Reg interface {
-	Zero(Type) (LitMut, error)
-	Proxy(ptr interface{}) (LitMut, error)
-	ProxyValue(ptr reflect.Value) (LitMut, error)
+	// Parse reads the given ast into this mutable or returns an error.
+	// The registry parameter is stricly optinal, proxies should bring a registry if required.
+	Parse(ast.Ast) error
 }
 
 func (Type) Type() Type            { return Typ }
@@ -69,7 +67,7 @@ func (t *Type) Assign(p LitVal) error {
 	}
 	return nil
 }
-func (t *Type) Parse(reg Reg, a ast.Ast) error {
+func (t *Type) Parse(a ast.Ast) error {
 	r, err := ParseAst(a)
 	if err != nil {
 		return err

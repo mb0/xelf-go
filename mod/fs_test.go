@@ -45,7 +45,7 @@ func TestFSMods(t *testing.T) {
 	}
 	for _, test := range tests {
 		reg := &lit.Reg{Cache: &lit.Cache{}}
-		x, err := exp.Parse(reg, test.raw)
+		x, err := exp.Parse(test.raw)
 		if err != nil {
 			t.Errorf("%s parse failed: %v", test.name, err)
 			continue

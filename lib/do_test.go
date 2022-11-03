@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"xelf.org/xelf/exp"
-	"xelf.org/xelf/lit"
 	"xelf.org/xelf/typ"
 )
 
@@ -37,13 +36,12 @@ func TestDoResl(t *testing.T) {
 		{`(do 1 2)`, "(do 1 2)"},
 	}
 	for _, test := range tests {
-		reg := &lit.Reg{}
-		x, err := exp.Parse(reg, test.raw)
+		x, err := exp.Parse(test.raw)
 		if err != nil {
 			t.Errorf("parse %s failed: %v", test.raw, err)
 			continue
 		}
-		p := exp.NewProg(nil, reg, Std)
+		p := exp.NewProg(nil, nil, Std)
 		x, err = p.Resl(p, x, typ.Void)
 		if err != nil {
 			t.Errorf("resl %s failed: %v", test.raw, err)

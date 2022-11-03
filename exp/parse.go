@@ -13,38 +13,35 @@ import (
 )
 
 // Parse parses str and returns an expression or an error.
-func Parse(reg *lit.Reg, str string) (Exp, error) {
-	return Read(reg, strings.NewReader(str), "")
+func Parse(str string) (Exp, error) {
+	return Read(strings.NewReader(str), "")
 }
 
 // Read parses named reader r and returns an expression or an error.
-func Read(reg *lit.Reg, r io.Reader, name string) (Exp, error) {
+func Read(r io.Reader, name string) (Exp, error) {
 	as, err := ast.ReadAll(r, name)
 	if err != nil {
 		return nil, err
 	}
-	if reg == nil {
-		reg = &lit.Reg{}
-	}
-	return ParseAll(reg, as)
+	return ParseAll(as)
 }
 
-func ParseAll(reg *lit.Reg, as []ast.Ast) (Exp, error) {
+func ParseAll(as []ast.Ast) (Exp, error) {
 	switch len(as) {
 	case 0:
 		return &Lit{Res: typ.Void, Val: typ.Void}, nil
 	case 1:
-		return ParseAst(reg, as[0])
+		return ParseAst(as[0])
 	default:
 		seq := make([]ast.Ast, 0, len(as)+1)
 		seq = append(seq, ast.Ast{Tok: ast.Tok{Kind: knd.Sym, Raw: "do"}})
 		seq = append(seq, as...)
-		return ParseAst(reg, ast.Ast{Tok: ast.Tok{Kind: knd.Call, Rune: '('}, Seq: seq})
+		return ParseAst(ast.Ast{Tok: ast.Tok{Kind: knd.Call, Rune: '('}, Seq: seq})
 	}
 }
 
 // ParseAst parses a as expression and returns it or an error.
-func ParseAst(reg *lit.Reg, a ast.Ast) (Exp, error) {
+func ParseAst(a ast.Ast) (Exp, error) {
 	switch a.Kind {
 	case knd.Num:
 		n, err := strconv.ParseInt(a.Raw, 10, 64)
@@ -74,13 +71,13 @@ func ParseAst(reg *lit.Reg, a ast.Ast) (Exp, error) {
 		return &Sym{Sym: a.Raw, Src: a.Src}, nil
 	case knd.Idxr:
 		vals := &lit.Vals{}
-		if err := vals.Parse(reg, a); err != nil {
+		if err := vals.Parse(a); err != nil {
 			return nil, err
 		}
 		return &Lit{Res: typ.Idxr, Val: vals, Src: a.Src}, nil
 	case knd.Keyr:
 		keyed := &lit.Keyed{}
-		if err := keyed.Parse(reg, a); err != nil {
+		if err := keyed.Parse(a); err != nil {
 			return nil, err
 		}
 		return &Lit{Res: typ.Keyr, Val: keyed, Src: a.Src}, nil
@@ -99,7 +96,7 @@ func ParseAst(reg *lit.Reg, a ast.Ast) (Exp, error) {
 		}
 		var e Exp
 		if len(a.Seq) > 1 {
-			e, err = ParseAst(reg, a.Seq[1])
+			e, err = ParseAst(a.Seq[1])
 			if err != nil {
 				return nil, err
 			}
@@ -113,7 +110,7 @@ func ParseAst(reg *lit.Reg, a ast.Ast) (Exp, error) {
 		}
 		res := &Call{Src: a.Src, Args: make([]Exp, 0, len(a.Seq))}
 		for _, e := range a.Seq {
-			el, err := ParseAst(reg, e)
+			el, err := ParseAst(e)
 			if err != nil {
 				return nil, err
 			}

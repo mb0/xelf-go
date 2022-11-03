@@ -45,20 +45,16 @@ We factor out a reflection cache and use a process-shared global by default. We 
 isolated caches for tests. The new cache encapsulates the type reflection code for coarser grained
 locking.
 
-We keep the literal registry for mapping to user provided value implementations, and try to reduce
-its api to a minimum and to ideally make it optional and use it explicitly at api boundaries.
+We keep the literal registry for mapping to user provided value implementations, and reduce its api
+to zero and proxy methods and use it explicitly at api boundaries.
 
-ParseVal and ParseMut are now already independent from the registry because we use the primitive
-Vals and Keyed literals, we can change the api to make the registry optional and pass it explicitly
-to request custom value implementations. That also means the we can pass in a different registry to
-have explicit control over which implementations are used when parsing or converting primitives. We
-may want to explicitly thread the registry at every step of the api.
+ParseVal and ParseMut are already independent from the registry because we use the new primitive
+Vals and Keyed literals.
 
 The proxy methods and values do inherently need the implementation cache to reduce the overhead of
 wrapping elements in mutable proxy implementations. It makes sense for proxies to keep a reference
-to the origin registry and it might make to keep the origin and program registry separate, so we can
-use shared values that can provide contained proxies and maybe event contribute these
-implementations to interacting programs on demand or automatically.
+to the origin registry where all required types are already registered by definition. If we complete
+the separation from the type reference lookup, we can then use shared proxy values without worrying
+about managing registries, as long as we use concrete types everywhere.
 
-We can live with the fact that we limit json unmarshal support to built-in value implementations.
-We can however instantiate a proxy for json unmarshal to have access to all registered proxies.
+We still need to investigate in what circumstances we want to use the registered proxies.

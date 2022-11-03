@@ -8,7 +8,7 @@ import (
 )
 
 // Conv converts val to type t and returns a reflect value or an error.
-func Conv(reg typ.Reg, t reflect.Type, val Val) (reflect.Value, error) {
+func Conv(reg *Reg, t reflect.Type, val Val) (reflect.Value, error) {
 	ptr := reflect.New(t)
 	mut, err := reg.ProxyValue(ptr)
 	if err != nil {
@@ -24,7 +24,7 @@ func Conv(reg typ.Reg, t reflect.Type, val Val) (reflect.Value, error) {
 }
 
 // MustProxy returns a proxy value for ptr or panics.
-func MustProxy(reg typ.Reg, ptr interface{}) Mut {
+func MustProxy(reg *Reg, ptr interface{}) Mut {
 	mut, err := reg.Proxy(ptr)
 	if err != nil {
 		panic(err)

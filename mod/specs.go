@@ -26,7 +26,7 @@ func (s *modSpec) Resl(p *exp.Prog, env exp.Env, c *exp.Call, _ typ.Type) (_ exp
 	tags := c.Args[1].(*exp.Tupl)
 	// create module type
 	pb := &typ.ParamBody{Params: make([]typ.Param, 0, len(tags.Els))}
-	val := &lit.Obj{Reg: p.Reg, Vals: make([]lit.Val, 0, len(tags.Els)),
+	val := &lit.Obj{Vals: make([]lit.Val, 0, len(tags.Els)),
 		Typ: typ.Type{Kind: knd.Mod | knd.Obj, Ref: name, Body: pb},
 	}
 	m.Res = &exp.Lit{Res: val.Typ, Val: val, Src: c.Src}

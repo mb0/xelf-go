@@ -10,25 +10,24 @@ import (
 )
 
 type Obj struct {
-	Reg  *Reg
 	Typ  typ.Type
 	Vals []Val
 }
 
-func NewObj(reg *Reg, t typ.Type) (*Obj, error) {
-	s := &Obj{Reg: reg, Typ: t}
+func NewObj(t typ.Type) (*Obj, error) {
+	s := &Obj{Typ: t}
 	err := s.init(false)
 	return s, err
 }
 
-func MakeObj(reg *Reg, kvs []KeyVal) *Obj {
+func MakeObj(kvs []KeyVal) *Obj {
 	vs := make([]Val, 0, len(kvs))
 	ps := make([]typ.Param, 0, len(kvs))
 	for _, kv := range kvs {
 		ps = append(ps, typ.P(kv.Key, kv.Val.Type()))
 		vs = append(vs, kv.Val)
 	}
-	return &Obj{Reg: reg, Typ: typ.Obj("", ps...), Vals: vs}
+	return &Obj{Typ: typ.Obj("", ps...), Vals: vs}
 }
 
 func (s *Obj) init(ext bool) (err error) {
@@ -41,10 +40,7 @@ func (s *Obj) init(ext bool) (err error) {
 		if ext && vs[i] != nil {
 			continue
 		}
-		vs[i], err = s.Reg.Zero(p.Type)
-		if err != nil {
-			break
-		}
+		vs[i] = Zero(p.Type)
 	}
 	s.Vals = vs
 	return err
@@ -61,7 +57,7 @@ func (s *Obj) Zero() bool {
 }
 func (s *Obj) Value() Val                   { return s }
 func (s *Obj) MarshalJSON() ([]byte, error) { return bfr.JSON(s) }
-func (s *Obj) UnmarshalJSON(b []byte) error { return unmarshal(b, s, s.Reg) }
+func (s *Obj) UnmarshalJSON(b []byte) error { return unmarshal(b, s) }
 func (s *Obj) String() string               { return bfr.String(s) }
 func (s *Obj) Print(p *bfr.P) (err error) {
 	p.Byte('{')
@@ -84,9 +80,9 @@ func (s *Obj) Print(p *bfr.P) (err error) {
 	}
 	return p.Byte('}')
 }
-func (s *Obj) New() (Mut, error) { return NewObj(s.Reg, s.Typ) }
+func (s *Obj) New() (Mut, error) { return NewObj(s.Typ) }
 func (s *Obj) Ptr() interface{}  { return s }
-func (s *Obj) Parse(reg typ.Reg, a ast.Ast) error {
+func (s *Obj) Parse(a ast.Ast) error {
 	if isNull(a) {
 		return s.init(false)
 	}
@@ -100,7 +96,7 @@ func (s *Obj) Parse(reg typ.Reg, a ast.Ast) error {
 		if err != nil {
 			return err
 		}
-		el, err := parseMutNull(s.Reg, val)
+		el, err := parseMutNull(val)
 		if err != nil {
 			return err
 		}
@@ -113,11 +109,7 @@ func (s *Obj) Parse(reg typ.Reg, a ast.Ast) error {
 		if v != nil {
 			continue
 		}
-		z, err := s.Reg.Zero(pb.Params[i].Type)
-		if err != nil {
-			return err
-		}
-		vs[i] = z
+		vs[i] = Zero(pb.Params[i].Type)
 	}
 	return nil
 }

@@ -41,7 +41,7 @@ func (x *AnyPrx) New() (Mut, error) { return x.NewWith(x.new()) }
 
 func (x *AnyPrx) Zero() bool { return x.Nil() || x.val.Zero() }
 func (x *AnyPrx) Value() Val { return x.val.Value() }
-func (x *AnyPrx) Parse(_ typ.Reg, a ast.Ast) (err error) {
+func (x *AnyPrx) Parse(a ast.Ast) (err error) {
 	if isNull(a) {
 		x.val = Null{}
 	} else {
@@ -65,5 +65,5 @@ func (x *AnyPrx) Assign(v Val) (err error) {
 }
 func (x *AnyPrx) String() string               { return x.val.String() }
 func (x *AnyPrx) MarshalJSON() ([]byte, error) { return x.val.MarshalJSON() }
-func (x *AnyPrx) UnmarshalJSON(b []byte) error { return unmarshal(b, x, x.Reg) }
+func (x *AnyPrx) UnmarshalJSON(b []byte) error { return unmarshal(b, x) }
 func (x *AnyPrx) Print(b *bfr.P) error         { return x.val.Print(b) }

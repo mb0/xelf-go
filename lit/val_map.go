@@ -10,9 +10,8 @@ import (
 )
 
 type Map struct {
-	Reg *Reg
-	El  typ.Type
-	M   map[string]Val
+	El typ.Type
+	M  map[string]Val
 }
 
 func (h *Map) Type() typ.Type               { return typ.DictOf(h.El) }
@@ -20,7 +19,7 @@ func (h *Map) Nil() bool                    { return h == nil }
 func (h *Map) Zero() bool                   { return len(h.M) == 0 }
 func (h *Map) Value() Val                   { return h }
 func (h *Map) MarshalJSON() ([]byte, error) { return bfr.JSON(h) }
-func (h *Map) UnmarshalJSON(b []byte) error { return unmarshal(b, h, h.Reg) }
+func (h *Map) UnmarshalJSON(b []byte) error { return unmarshal(b, h) }
 func (h *Map) String() string               { return bfr.String(h) }
 func (h *Map) Print(p *bfr.P) (err error) {
 	keys := h.Keys()
@@ -38,10 +37,9 @@ func (h *Map) Print(p *bfr.P) (err error) {
 	return p.Byte('}')
 }
 
-func (h *Map) New() (Mut, error) { return &Map{h.Reg, h.El, nil}, nil }
-func (h *Map) WithReg(reg *Reg)  { h.Reg = reg }
+func (h *Map) New() (Mut, error) { return &Map{h.El, nil}, nil }
 func (h *Map) Ptr() interface{}  { return h }
-func (h *Map) Parse(reg typ.Reg, a ast.Ast) error {
+func (h *Map) Parse(a ast.Ast) error {
 	if isNull(a) {
 		h.M = nil
 		return nil
@@ -61,7 +59,7 @@ func (h *Map) Parse(reg typ.Reg, a ast.Ast) error {
 		if err != nil {
 			return err
 		}
-		el, err := parseMutNull(h.Reg, val)
+		el, err := parseMutNull(val)
 		if err != nil {
 			return err
 		}

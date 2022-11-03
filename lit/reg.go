@@ -53,7 +53,44 @@ func (reg *Reg) LookupType(ref string) (typ.Type, error) {
 	return typ.Void, fmt.Errorf("no type found named %s", ref)
 }
 
-// Zero returns a zero mutable value for t or an error.
+// Zero returns a primitive mutable assignable to a value of type t or null.
+func Zero(t typ.Type) Mut {
+	if k := t.Kind & knd.All; k != 0 {
+		switch k {
+		case knd.Typ:
+			return new(typ.Type)
+		case knd.Bool:
+			return new(Bool)
+		case knd.Int:
+			return new(Int)
+		case knd.Real:
+			return new(Real)
+		case knd.Str:
+			return new(Str)
+		case knd.Raw:
+			return &Raw{}
+		case knd.UUID:
+			return &UUID{}
+		case knd.Time:
+			return &Time{}
+		case knd.Span:
+			return new(Span)
+		}
+		switch {
+		case k&knd.Num != 0 && k&^knd.Num == 0:
+			return new(Num)
+		case k&knd.Char != 0 && k&^knd.Char == 0:
+			return new(Num)
+		case k&knd.Keyr != 0 && k&^knd.Keyr == 0:
+			return &Keyed{}
+		case k&knd.Idxr != 0 && k&^knd.Idxr == 0:
+			return &Vals{}
+		}
+	}
+	return nil
+}
+
+// Zero returns a mutable zero value for t or an error.
 func (reg *Reg) Zero(t typ.Type) (m Mut, err error) {
 	reg.init()
 	if t.Kind&knd.Idxr == knd.List {
@@ -110,11 +147,11 @@ func (reg *Reg) Zero(t typ.Type) (m Mut, err error) {
 		case knd.Span:
 			m = new(Span)
 		case knd.List:
-			m = &List{Reg: reg, El: typ.ContEl(t)}
+			m = &List{El: typ.ContEl(t)}
 		case knd.Dict:
-			m = &Dict{Reg: reg, El: typ.ContEl(t)}
+			m = &Dict{El: typ.ContEl(t)}
 		case knd.Obj:
-			m, err = NewObj(reg, t)
+			m, err = NewObj(t)
 			if err != nil {
 				return nil, err
 			}

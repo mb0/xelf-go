@@ -35,7 +35,7 @@ func (o *OptMut) MarshalJSON() ([]byte, error) {
 	}
 	return o.Mut.MarshalJSON()
 }
-func (o *OptMut) UnmarshalJSON(b []byte) error { return unmarshal(b, o, nil) }
+func (o *OptMut) UnmarshalJSON(b []byte) error { return unmarshal(b, o) }
 
 func (o *OptMut) Print(p *bfr.P) error {
 	if o.Null {
@@ -50,11 +50,11 @@ func (o *OptMut) New() (Mut, error) {
 	}
 	return &OptMut{mut, nil, true}, nil
 }
-func (o *OptMut) Parse(reg typ.Reg, a ast.Ast) error {
+func (o *OptMut) Parse(a ast.Ast) error {
 	if isNull(a) {
 		o.Null = true
 	}
-	return o.Mut.Parse(reg, a)
+	return o.Mut.Parse(a)
 }
 func (o *OptMut) Assign(v Val) error {
 	switch v.(type) {

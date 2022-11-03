@@ -68,7 +68,7 @@ func (p *Prog) Run(x Exp, arg *Lit) (res *Lit, err error) {
 
 // RunStr resolves and evaluates the input string and returns the result or an error.
 func (p *Prog) RunStr(str string, arg *Lit) (res *Lit, err error) {
-	x, err := Parse(p.Reg, str)
+	x, err := Parse(str)
 	if err != nil {
 		return nil, err
 	}

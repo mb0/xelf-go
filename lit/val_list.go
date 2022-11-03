@@ -15,7 +15,7 @@ func (v Vals) Type() typ.Type                { return typ.Idxr }
 func (v *Vals) Nil() bool                    { return v == nil }
 func (v *Vals) Zero() bool                   { return v == nil || len(*v) == 0 }
 func (v *Vals) Value() Val                   { return v }
-func (v *Vals) UnmarshalJSON(b []byte) error { return unmarshal(b, v, nil) }
+func (v *Vals) UnmarshalJSON(b []byte) error { return unmarshal(b, v) }
 func (v Vals) MarshalJSON() ([]byte, error)  { return bfr.JSON(v) }
 func (v Vals) String() string                { return bfr.String(v) }
 func (v Vals) Print(p *bfr.P) (err error) {
@@ -37,9 +37,8 @@ func (v Vals) Print(p *bfr.P) (err error) {
 }
 
 func (*Vals) New() (Mut, error)  { return &Vals{}, nil }
-func (*Vals) WithReg(reg *Reg)   {}
 func (v *Vals) Ptr() interface{} { return v }
-func (v *Vals) Parse(reg typ.Reg, a ast.Ast) (err error) {
+func (v *Vals) Parse(a ast.Ast) (err error) {
 	if isNull(a) {
 		*v = nil
 		return nil
@@ -50,7 +49,7 @@ func (v *Vals) Parse(reg typ.Reg, a ast.Ast) (err error) {
 	vs := make([]Val, 0, len(a.Seq))
 	for _, e := range a.Seq {
 		var el Val
-		el, err = parseMutNull(reg, e)
+		el, err = parseMutNull(e)
 		if err != nil {
 			return err
 		}
@@ -128,20 +127,15 @@ func (v Vals) IterIdx(it func(int, Val) error) error {
 }
 
 type List struct {
-	Reg *Reg
-	El  typ.Type
+	El typ.Type
 	Vals
 }
 
-func NewList(reg *Reg, el typ.Type) *List                { return &List{Reg: reg, El: el} }
-func (l *List) Type() typ.Type                           { return typ.ListOf(l.El) }
-func (l *List) Nil() bool                                { return l == nil }
-func (l *List) Value() Val                               { return l }
-func (l *List) UnmarshalJSON(b []byte) error             { return unmarshal(b, l, l.Reg) }
-func (l *List) New() (Mut, error)                        { return &List{l.Reg, l.El, nil}, nil }
-func (l *List) WithReg(reg *Reg)                         { l.Reg = reg }
-func (l *List) Ptr() interface{}                         { return l }
-func (l *List) Parse(reg typ.Reg, a ast.Ast) (err error) { return l.Vals.Parse(l.Reg, a) }
+func (l *List) Type() typ.Type    { return typ.ListOf(l.El) }
+func (l *List) Nil() bool         { return l == nil }
+func (l *List) Value() Val        { return l }
+func (l *List) New() (Mut, error) { return &List{l.El, nil}, nil }
+func (l *List) Ptr() interface{}  { return l }
 
 func checkIdx(idx, l int) (int, error) {
 	i := idx

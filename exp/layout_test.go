@@ -35,7 +35,7 @@ func TestLayout(t *testing.T) {
 			t.Errorf("failed to parse typ %s: %v", test.sig, err)
 			continue
 		}
-		e, err := Parse(nil, test.args)
+		e, err := Parse(test.args)
 		if err != nil {
 			t.Errorf("failed to parse args %s: %v", test.args, err)
 			continue

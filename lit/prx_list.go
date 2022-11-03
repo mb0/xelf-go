@@ -7,7 +7,6 @@ import (
 	"xelf.org/xelf/ast"
 	"xelf.org/xelf/bfr"
 	"xelf.org/xelf/knd"
-	"xelf.org/xelf/typ"
 )
 
 type ListPrx struct{ proxy }
@@ -22,7 +21,7 @@ func (x *ListPrx) Value() Val {
 	}
 	return x
 }
-func (x *ListPrx) Parse(_ typ.Reg, a ast.Ast) error {
+func (x *ListPrx) Parse(a ast.Ast) error {
 	if isNull(a) {
 		return x.setNull()
 	}
@@ -38,7 +37,7 @@ func (x *ListPrx) Parse(_ typ.Reg, a ast.Ast) error {
 		if err != nil {
 			return err
 		}
-		err = val.Parse(x.Reg, e)
+		err = val.Parse(e)
 		if err != nil {
 			return err
 		}

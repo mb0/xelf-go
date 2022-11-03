@@ -19,7 +19,7 @@ func (d Keyed) Type() typ.Type                { return typ.Keyr }
 func (d *Keyed) Nil() bool                    { return d == nil }
 func (d *Keyed) Zero() bool                   { return d == nil || len(*d) == 0 }
 func (d *Keyed) Value() Val                   { return d }
-func (d *Keyed) UnmarshalJSON(b []byte) error { return unmarshal(b, d, nil) }
+func (d *Keyed) UnmarshalJSON(b []byte) error { return unmarshal(b, d) }
 func (d Keyed) MarshalJSON() ([]byte, error)  { return bfr.JSON(d) }
 func (d Keyed) String() string                { return bfr.String(d) }
 func (d Keyed) Print(p *bfr.P) (err error) {
@@ -37,9 +37,8 @@ func (d Keyed) Print(p *bfr.P) (err error) {
 }
 
 func (d *Keyed) New() (Mut, error) { return &Keyed{}, nil }
-func (d *Keyed) WithReg(reg *Reg)  {}
 func (d *Keyed) Ptr() interface{}  { return d }
-func (d *Keyed) Parse(reg typ.Reg, a ast.Ast) error {
+func (d *Keyed) Parse(a ast.Ast) error {
 	if isNull(a) {
 		*d = nil
 		return nil
@@ -53,7 +52,7 @@ func (d *Keyed) Parse(reg typ.Reg, a ast.Ast) error {
 		if err != nil {
 			return err
 		}
-		el, err := parseMutNull(reg, val)
+		el, err := parseMutNull(val)
 		if err != nil {
 			return err
 		}
@@ -182,19 +181,15 @@ func (d *Keyed) IterKey(it func(string, Val) error) error {
 }
 
 type Dict struct {
-	Reg *Reg
-	El  typ.Type
+	El typ.Type
 	Keyed
 }
 
-func (d *Dict) Type() typ.Type                     { return typ.DictOf(d.El) }
-func (d *Dict) Nil() bool                          { return d == nil }
-func (d *Dict) Value() Val                         { return d }
-func (d *Dict) UnmarshalJSON(b []byte) error       { return unmarshal(b, d, d.Reg) }
-func (d *Dict) New() (Mut, error)                  { return &Dict{d.Reg, d.El, nil}, nil }
-func (d *Dict) WithReg(reg *Reg)                   { d.Reg = reg }
-func (d *Dict) Ptr() interface{}                   { return d }
-func (d *Dict) Parse(reg typ.Reg, a ast.Ast) error { return d.Keyed.Parse(d.Reg, a) }
+func (d *Dict) Type() typ.Type    { return typ.DictOf(d.El) }
+func (d *Dict) Nil() bool         { return d == nil }
+func (d *Dict) Value() Val        { return d }
+func (d *Dict) New() (Mut, error) { return &Dict{d.El, nil}, nil }
+func (d *Dict) Ptr() interface{}  { return d }
 func (d *Dict) Key(k string) (Val, error) {
 	if d != nil {
 		return d.Keyed.Key(k)

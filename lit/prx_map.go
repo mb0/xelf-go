@@ -7,7 +7,6 @@ import (
 	"xelf.org/xelf/ast"
 	"xelf.org/xelf/bfr"
 	"xelf.org/xelf/knd"
-	"xelf.org/xelf/typ"
 )
 
 type MapPrx struct{ proxy }
@@ -22,7 +21,7 @@ func (x *MapPrx) Value() Val {
 	}
 	return x
 }
-func (x *MapPrx) Parse(_ typ.Reg, a ast.Ast) error {
+func (x *MapPrx) Parse(a ast.Ast) error {
 	if isNull(a) {
 		return x.setNull()
 	}
@@ -43,7 +42,7 @@ func (x *MapPrx) Parse(_ typ.Reg, a ast.Ast) error {
 		if err != nil {
 			return err
 		}
-		err = el.Parse(x.Reg, val)
+		err = el.Parse(val)
 		if err != nil {
 			return err
 		}
