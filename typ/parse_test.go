@@ -9,6 +9,14 @@ import (
 )
 
 func TestParse(t *testing.T) {
+	rec1 := Obj("")
+	pb := rec1.Body.(*ParamBody)
+	pb.Params = append(pb.Params, P("child", ListOf(rec1)))
+
+	rec2 := Obj("")
+	pb = rec2.Body.(*ParamBody)
+	pb.Params = append(pb.Params, P("body", Obj("", P("child", ListOf(rec2)))))
+
 	tests := []struct {
 		typ Type
 		raw string
@@ -65,11 +73,15 @@ func TestParse(t *testing.T) {
 			`<form@abs num _>`, ``},
 		{Form("abs", P(``, Var(-1, Num)), P("", Sel(`.0`))),
 			`<form@abs num@ _>`, ``},
+		{Obj("", P("child", ListOf(Sel(`.`)))),
+			`<obj child:list|.>`, ``},
+		{rec1, `<obj child:list|.>`, `-`},
+		{rec2, `<obj body:<obj child:list|..>>`, `-`},
 	}
 	for _, test := range tests {
 		raw := test.typ.String()
 		want := test.std
-		if want == "" {
+		if want == "" || want == "-" {
 			want = test.raw
 		}
 		if raw != want {
@@ -80,7 +92,7 @@ func TestParse(t *testing.T) {
 			t.Errorf("%s parse error: %v", test.raw, err)
 			continue
 		}
-		if !typ.Equal(test.typ) {
+		if test.std != "-" && !typ.Equal(test.typ) {
 			t.Errorf("%s parse\n\twant %v\n\t got %v", test.raw, test.typ, typ)
 		}
 		rawb, err := json.Marshal(test.typ)
@@ -98,7 +110,7 @@ func TestParse(t *testing.T) {
 			t.Errorf("%s unmarshal error: %v", want, err)
 			continue
 		}
-		if !typ.Equal(test.typ) {
+		if test.std != "-" && !typ.Equal(test.typ) {
 			t.Errorf("%s unmarshal want %v got %v", want, test.typ, typ)
 		}
 	}

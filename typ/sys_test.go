@@ -47,16 +47,14 @@ func TestInst(t *testing.T) {
 		w string
 	}{
 		{"<form@a num@ _>", "<form@a num@2 num@2>"},
+		{"<obj id:int@ par:.id child:list|.>", "<obj id:int@2 par:int@2 child:list|.>"},
+		{"<obj id:int@ body:<obj child:list|..>>", "<obj id:int@2 body:<obj child:list|..>>"},
+		{"<form@make typ@ lit|_>", "<form@make typ@2 lit|typ@2>"},
 	}
 	for _, test := range tests {
 		a, err := Parse(test.a)
 		if err != nil {
 			t.Errorf("read %s error: %v", test.a, err)
-			continue
-		}
-		b, err := Parse(test.w)
-		if err != nil {
-			t.Errorf("read %s error: %v", test.w, err)
 			continue
 		}
 		sys := NewSys()
@@ -66,8 +64,8 @@ func TestInst(t *testing.T) {
 			t.Errorf("inst error for %s: %v", a, err)
 			continue
 		}
-		if !a.Equal(b) {
-			t.Errorf("inst got %s want %s", a, test.w)
+		if got := a.String(); got != test.w {
+			t.Errorf("inst got %s want %s", got, test.w)
 		}
 	}
 }

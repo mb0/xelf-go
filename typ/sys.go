@@ -109,19 +109,22 @@ func (sys *Sys) inst(lup Lookup, t Type, m map[int32]Type) (Type, error) {
 }
 
 func resolveSel(e *Editor, path string) (Type, error) {
-	var par *Editor
-	for par = e.Parent; par != nil; par = par.Parent {
-		if par.Type.Kind&(knd.Obj|knd.Spec) != 0 {
-			_, ok := par.Type.Body.(*ParamBody)
-			if ok {
+	cur := e
+	rest := path
+	for rest != "" && rest[0] == '.' {
+		for cur != nil {
+			cur = cur.Parent
+			if cur.Type.Kind&(knd.Obj|knd.Spec) != 0 {
 				break
 			}
 		}
+		if cur == nil {
+			return e.Type, fmt.Errorf("selection %s not found in %v", path, e.Type)
+		}
+		rest = rest[1:]
 	}
-	if par == nil {
-		return e.Type, fmt.Errorf("selection %s not found", path)
-	}
-	return Select(par.Type, path)
+	p := path[len(path)-len(rest)-1:]
+	return Select(cur.Type, p)
 }
 
 func (sys *Sys) resolveRef(lup Lookup, t Type) (Type, error) {

@@ -57,14 +57,14 @@ func (t Type) Print(b *bfr.P) error {
 	if b.JSON {
 		b.Byte('"')
 		b.JSON = false
-		t.print(b, nil, true)
+		t.print(b, nil, nil, true)
 		b.JSON = true
 		return b.Byte('"')
 	}
-	return t.print(b, nil, true)
+	return t.print(b, nil, nil, true)
 }
 
-func (t Type) print(b *bfr.P, sb *strings.Builder, enclose bool) error {
+func (t Type) print(b *bfr.P, sb *strings.Builder, stack []Body, enclose bool) error {
 	if t.Kind == knd.Void {
 		return b.Fmt("<>")
 	}
@@ -87,6 +87,21 @@ func (t Type) print(b *bfr.P, sb *strings.Builder, enclose bool) error {
 	}
 	if sb == nil {
 		sb = &strings.Builder{}
+	}
+	if _, ok := t.Body.(*ParamBody); ok {
+		for i := len(stack) - 1; i >= 0; i-- {
+			if t.Body != stack[i] {
+				continue
+			}
+			b.Fmt(sb.String())
+			for n := i; n < len(stack); n++ {
+				b.Byte('.')
+			}
+			if isNone {
+				b.Byte('?')
+			}
+			return nil
+		}
 	}
 	if isSel {
 		path := t.Body.(*SelBody).Path
@@ -119,7 +134,7 @@ func (t Type) print(b *bfr.P, sb *strings.Builder, enclose bool) error {
 		b.Fmt(sb.String())
 		for _, e := range altTypes(t) {
 			b.Byte(' ')
-			e.print(b, nil, false)
+			e.print(b, nil, stack, false)
 		}
 		return b.Byte('>')
 	}
@@ -127,7 +142,7 @@ func (t Type) print(b *bfr.P, sb *strings.Builder, enclose bool) error {
 	case *ElBody:
 		if tb.El != Void {
 			sb.WriteByte('|')
-			return tb.El.print(b, sb, enclose)
+			return tb.El.print(b, sb, stack, enclose)
 		}
 	case *ConstBody:
 		b.Byte('<')
@@ -145,6 +160,7 @@ func (t Type) print(b *bfr.P, sb *strings.Builder, enclose bool) error {
 		b.Byte('<')
 		b.Fmt(sb.String())
 		if t.Kind&knd.Spec != 0 || t.Ref == "" {
+			stack = append(stack, tb)
 			for _, p := range tb.Params {
 				b.Byte(' ')
 				if p.Name != "" {
@@ -155,7 +171,7 @@ func (t Type) print(b *bfr.P, sb *strings.Builder, enclose bool) error {
 					}
 					b.Byte(':')
 				}
-				p.Type.print(b, nil, false)
+				p.Type.print(b, nil, stack, false)
 			}
 		}
 		return b.Byte('>')
