@@ -14,86 +14,81 @@ import (
 
 func FileMods(roots ...string) *FSMods {
 	fm := &FSMods{
-		Roots:  make([]PathFS, 0, len(roots)),
-		Tries:  DefaultTries,
-		cache:  make(map[string]*File),
-		lookup: make(map[string]*File),
+		Roots: make([]*PathFS, 0, len(roots)),
+		Ext:   []string{".xelf"},
+		Index: []string{"mod.xelf"},
 	}
 	for _, root := range roots {
-		fm.Roots = append(fm.Roots, PathFS{Path: root, FS: os.DirFS(root)})
+		fm.Roots = append(fm.Roots, &PathFS{Path: root, FS: os.DirFS(root)})
 	}
 	return fm
 }
 
 type PathFS struct {
-	Path string
-	FS   fs.FS
+	Path  string
+	FS    fs.FS
+	Rel   string
+	cache map[string]*File
 }
 
 type FSMods struct {
-	Roots []PathFS
-	Tries func(string) (string, []string)
+	Roots []*PathFS
+	Ext   []string
+	Index []string
 
-	lookup map[string]*File // by use path
-	cache  map[string]*File // by abs file path
+	log   func(root, path string)
+	local map[string]*PathFS
 }
 
 func (fm *FSMods) LoadFile(prog *exp.Prog, raw string) (*File, error) {
-	var rel string
-	key, sym, roots := raw, raw, fm.Roots
+	sym, roots := raw, fm.Roots
 	if strings.HasPrefix(raw, "./") {
-		rel = path.Dir(prog.File.URL)
-		if rel == "" {
-			return nil, fmt.Errorf("relative mod path not allowed here")
-		}
 		sym = raw[2:]
-		key = path.Join(rel, raw)
-		roots = []PathFS{{rel, os.DirFS(rel)}}
-	}
-	if f := fm.lookup[key]; f != nil {
-		return f, nil
-	}
-	_, tries := fm.Tries(sym)
-	// try cache
-	for _, r := range roots {
-		for _, try := range tries {
-			tp := path.Join(r.Path, try)
-			if f := fm.cache[tp]; f != nil {
-				return f, nil
-			}
+		r, err := fm.relRoot(prog, sym)
+		if err != nil {
+			return nil, err
 		}
+		return fm.try(prog, r, sym)
 	}
-	var root PathFS
-	var found string
-Outer:
 	for _, r := range roots {
-		// try each root
-		for _, try := range tries {
-			_, err := fs.Stat(r.FS, try)
-			if err != nil {
+		f, err := fm.try(prog, r, sym)
+		if err != nil {
+			if err == ErrFileNotFound {
 				continue
 			}
-			// found file
-			root = r
-			found = try
-			break Outer
+		}
+		return f, err
+	}
+	return nil, ErrFileNotFound
+}
+func (fm *FSMods) relRoot(prog *exp.Prog, sym string) (*PathFS, error) {
+	rel := path.Dir(prog.File.URL)
+	if rel == "" {
+		return nil, fmt.Errorf("relative mod path not allowed here")
+	}
+	if fm.local == nil {
+		fm.local = make(map[string]*PathFS)
+	} else if r := fm.local[rel]; r != nil {
+		return r, nil
+	}
+	for _, r := range fm.Roots {
+		rp := path.Clean(r.Path)
+		if rel == rp {
+			return r, nil
+		}
+		if strings.HasPrefix(rel, rp) {
+			if r.cache == nil {
+				r.cache = make(map[string]*File)
+			}
+			tmp := *r
+			tmp.Rel = rel[len(rp)+1:]
+			fm.local[rel] = &tmp
+			return &tmp, nil
 		}
 	}
-	if root.FS == nil {
-		return nil, ErrFileNotFound
-	}
-	b, err := fs.ReadFile(root.FS, found)
-	if err != nil {
-		return nil, err
-	}
-	abs := path.Join(root.Path, found)
-	f, err := fm.readFile(prog, b, abs)
-	if err != nil {
-		return nil, err
-	}
-	fm.cache[abs] = f
-	fm.lookup[key] = f
-	return f, nil
+	r := &PathFS{Path: rel, FS: os.DirFS(rel)}
+	fm.local[rel] = r
+	return r, nil
 }
 func (fm *FSMods) readFile(prog *exp.Prog, f []byte, url string) (*File, error) {
 	e, err := exp.Read(bytes.NewReader(f), url)
@@ -110,23 +105,72 @@ func (fm *FSMods) readFile(prog *exp.Prog, f []byte, url string) (*File, error) 
 	_, err = p.Eval(&p, e)
 	return &p.File, err
 }
-
-func DefaultTries(sym string) (name string, res []string) {
-	var dir, fn string
-	// inspect path
-	idx := strings.LastIndexByte(sym, '/')
-	if idx < 0 {
-		fn = sym
+func (fm *FSMods) try(prog *exp.Prog, r *PathFS, sym string) (f *File, err error) {
+	p := sym
+	if r.Rel != "" {
+		p = path.Join(r.Rel, sym)
+	}
+	if r.cache == nil {
+		r.cache = make(map[string]*File)
+	} else if f, ok := r.cache[p]; ok {
+		if f == nil {
+			return nil, ErrFileNotFound
+		}
+		return f, nil
+	}
+	// always try sym as is
+	fi, err := fs.Stat(r.FS, p)
+	var found string
+	if err != nil {
+		for _, ext := range fm.Ext {
+			pp := p + ext
+			_, err := fs.Stat(r.FS, pp)
+			if err == nil {
+				found = pp
+				break
+			}
+		}
+	} else if fi.IsDir() {
+		for _, name := range fm.Index {
+			pp := path.Join(p, name)
+			_, err := fs.Stat(r.FS, pp)
+			if err == nil {
+				found = pp
+				break
+			}
+		}
+		for _, ext := range fm.Ext {
+			pp := path.Join(p, fi.Name()+ext)
+			_, err := fs.Stat(r.FS, pp)
+			if err == nil {
+				found = pp
+				break
+			}
+		}
 	} else {
-		dir, fn = sym[:idx], sym[idx+1:]
+		found = p
 	}
-	if strings.HasSuffix(sym, ".xelf") {
-		return fn[:len(fn)-5], []string{sym}
+	if found == "" {
+		r.cache[p] = nil
+		return nil, ErrFileNotFound
 	}
-	name = fn
-	fn += ".xelf"
-	if dir != "" {
-		return name, []string{path.Join(dir, fn)}
+	if p != found {
+		f := r.cache[found]
+		if f != nil {
+			return f, nil
+		}
 	}
-	return name, []string{fn, path.Join(name, fn), path.Join(name, "mod.xelf")}
+	if fm.log != nil {
+		fm.log(r.Path, found)
+	}
+	b, err := fs.ReadFile(r.FS, found)
+	if err != nil {
+		return nil, err
+	}
+	f, err = fm.readFile(prog, b, path.Join(r.Path, found))
+	r.cache[p] = f
+	if p != found {
+		r.cache[found] = f
+	}
+	return f, err
 }

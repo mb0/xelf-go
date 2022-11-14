@@ -1,6 +1,7 @@
 package mod
 
 import (
+	"fmt"
 	"reflect"
 	"sort"
 	"testing"
@@ -17,6 +18,10 @@ func TestFSMods(t *testing.T) {
 		"sys": {Decls: []ModRef{{Mod: &Mod{Name: "sys"}}}},
 	}}
 	lenv := NewLoaderEnv(exp.Builtins(lib.Std), sysmods, fsmods)
+	var reads string
+	fsmods.log = func(root, path string) {
+		reads += fmt.Sprintf("\n\tread %s %s", root, path)
+	}
 	tests := []struct {
 		name  string
 		raw   string
@@ -74,5 +79,14 @@ func TestFSMods(t *testing.T) {
 		if string(got) != test.want {
 			t.Errorf("%s got result %s want %s", test.name, got, test.want)
 		}
+	}
+	want := `
+	read testdata foo.xelf
+	read testdata multi.xelf
+	read testdata/lib name.org/liba.xelf
+	read testdata/lib name.org/libb.xelf
+	read testdata/lib name.org/mod.xelf`
+	if reads != want {
+		t.Errorf("reads got %s want %s", reads, want)
 	}
 }

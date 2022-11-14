@@ -1,2 +1,2 @@
-(export "./liba" "./libb")
+(export "./liba" "./libb.xelf")
 (mod prod name:("my product with " liba.name " and " libb.name))

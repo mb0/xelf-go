@@ -9,7 +9,7 @@ import (
 
 var ErrFileNotFound = errors.New("mod file not found")
 
-// Registry provides a central global module registry for convinience.
+// Registry provides a central global module registry for convenience.
 var Registry = new(SysMods)
 
 type (
@@ -23,7 +23,7 @@ type Loader interface {
 	LoadFile(p *exp.Prog, path string) (*File, error)
 }
 
-// SysMods is a threadsafe module registry that implements the module loader interface.
+// SysMods is a thread-safe module registry that implements the module loader interface.
 type SysMods struct {
 	sync.RWMutex
 	files map[string]*File
