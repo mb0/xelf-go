@@ -2,24 +2,22 @@ package mod
 
 import (
 	"net/url"
-	"strings"
 
 	"xelf.org/xelf/exp"
 	"xelf.org/xelf/lit"
 )
 
 // LoaderEnv adds module awareness to a program environment.
-// It provides the mod and use forms and holds the module loader and cache.
+// It provides the mod and use forms and holds the module loaders.
 type LoaderEnv struct {
 	Par     exp.Env
 	Loaders []Loader
-	Files   map[string]*File
 }
 
 // NewLoaderEnv create a new module loader environment with the given parent env and loader.
 // The parent env should be used as basis for external module loads.
 func NewLoaderEnv(par exp.Env, ls ...Loader) *LoaderEnv {
-	return &LoaderEnv{Par: par, Loaders: ls, Files: make(map[string]*File)}
+	return &LoaderEnv{Par: par, Loaders: ls}
 }
 
 func FindLoaderEnv(env exp.Env) *LoaderEnv {
@@ -36,20 +34,14 @@ func (le *LoaderEnv) LoadFile(p *exp.Prog, raw string) (f *File, err error) {
 	if err != nil {
 		return nil, err
 	}
-	if !strings.HasPrefix(url.Path, "./") {
-		if f := le.Files[raw]; f != nil {
-			return f, nil
-		}
-	}
 	for _, l := range le.Loaders {
-		f, err = l.LoadFile(p, raw)
+		f, err = l.LoadFile(p, url)
 		if err != nil {
 			if err == ErrFileNotFound {
 				continue
 			}
 			return nil, err
 		}
-		le.Files[raw] = f
 		for _, m := range f.Decls {
 			if m.Setup != nil {
 				err := m.Setup(p, m.Mod)

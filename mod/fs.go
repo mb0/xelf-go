@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io/fs"
+	"net/url"
 	"os"
 	"path"
 	"strings"
@@ -40,10 +41,13 @@ type FSMods struct {
 	local map[string]*PathFS
 }
 
-func (fm *FSMods) LoadFile(prog *exp.Prog, raw string) (*File, error) {
-	sym, roots := raw, fm.Roots
-	if strings.HasPrefix(raw, "./") {
-		sym = raw[2:]
+func (fm *FSMods) LoadFile(prog *exp.Prog, raw *url.URL) (*File, error) {
+	if raw.Scheme != "" && raw.Scheme != "file:" {
+		return nil, ErrFileNotFound
+	}
+	sym, roots := raw.Path, fm.Roots
+	if strings.HasPrefix(sym, "./") {
+		sym = sym[2:]
 		r, err := fm.relRoot(prog, sym)
 		if err != nil {
 			return nil, err

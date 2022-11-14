@@ -49,11 +49,10 @@ Special modules that require platform support must be registered into a module r
 a setup hook that is called once to add themselves to a program environment.
 
 A loader environment adds module awareness to the [program environment](./prog_env.md) and provides
-the foundational specs to interact with modules. The loader env has a user supplied list of loaders
-and a cache of loaded modules. The loader implementations loads module file sources for specific
-protocols. The raw input is then evaluated and cached by the loader env. Source modules are
-evaluated in isolation of any loading program. All module dependencies are then registered with the
-loading program.
+the foundational specs to interact with modules. The loader env has a user supplied list of loaders.
+The loader implementations loads module file sources for specific protocols. The raw input is then
+evaluated and cached by the loader. Source mods are evaluated in isolation of any loading program.
+All module dependencies are then registered with the loading program.
 
 The basic module and file data structures are part of exp package. Every program environment stores
 a module file with reference to used and declared modules and resolves qualified module symbols.
