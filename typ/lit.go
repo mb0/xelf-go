@@ -45,7 +45,7 @@ type LitMut interface {
 	// Assign assigns the given value to this mutable or returns an error.
 	Assign(LitVal) error
 	// Parse reads the given ast into this mutable or returns an error.
-	// The registry parameter is stricly optinal, proxies should bring a registry if required.
+	// The registry parameter is stricly optional, proxies should bring a registry if required.
 	Parse(ast.Ast) error
 }
 
