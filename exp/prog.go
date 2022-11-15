@@ -35,8 +35,9 @@ type Prog struct {
 	File File
 	Arg  *Lit
 
-	fnid uint
-	dyn  Spec
+	fnid  uint
+	dyn   Spec
+	cache map[*Mod]*Lit
 }
 
 // NewProg returns a new program using the given registry, environment and expression.
@@ -95,7 +96,7 @@ func (p *Prog) Lookup(s *Sym, k string, eval bool) (res Exp, err error) {
 		s.Type, s.Env, s.Rel = l.Res, p, k
 		return s, nil
 	}
-	ml, err := p.File.Uses.Lookup(k)
+	ml, err := p.File.Uses.Lookup(p, k)
 	if err == nil {
 		if !eval {
 			s.Type, s.Env, s.Rel = ml.Res, p, k

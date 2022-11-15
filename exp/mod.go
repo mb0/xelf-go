@@ -3,6 +3,8 @@ package exp
 import (
 	"fmt"
 	"strings"
+
+	"xelf.org/xelf/lit"
 )
 
 // File is a simple representation of any xelf input that store information about modules.
@@ -26,8 +28,8 @@ type Mod struct {
 	// Name is the declare module name.
 	Name string
 
-	// Res holds the exported module declarations.
-	Res *Lit
+	// Decl holds the exported module declarations, that are copied for each program.
+	Decl *Lit
 
 	// Optional setup hook for platform support.
 	Setup func(p *Prog, m *Mod) error
@@ -42,7 +44,7 @@ type ModRef struct {
 
 type ModRefs []ModRef
 
-func (ms ModRefs) Lookup(k string) (*Lit, error) {
+func (ms ModRefs) Lookup(p *Prog, k string) (*Lit, error) {
 	if len(ms) == 0 {
 		return nil, ErrSymNotFound
 	}
@@ -52,10 +54,26 @@ func (ms ModRefs) Lookup(k string) (*Lit, error) {
 	}
 	qual := k[:dot]
 	m := ms.find(qual)
-	if m.Mod == nil || m.Res == nil {
+	if m.Mod == nil || m.Decl == nil {
 		return nil, fmt.Errorf("module %s unresolved", m.Path)
 	}
-	return Select(m.Res, k[dot+1:])
+	got, ok := p.cache[m.Mod]
+	if !ok {
+		t, err := p.Sys.Inst(LookupType(p), m.Decl.Res)
+		if err != nil {
+			return nil, err
+		}
+		n, err := lit.Copy(m.Decl.Val)
+		if err != nil {
+			return nil, err
+		}
+		got = &Lit{Res: t, Val: n}
+		if p.cache == nil {
+			p.cache = make(map[*Mod]*Lit)
+		}
+		p.cache[m.Mod] = got
+	}
+	return Select(got, k[dot+1:])
 }
 
 func (ms ModRefs) find(key string) (ref ModRef) {

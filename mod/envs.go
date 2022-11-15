@@ -82,7 +82,7 @@ type ModEnv struct {
 func (e *ModEnv) Parent() exp.Env { return e.Par }
 
 func (e *ModEnv) Lookup(s *exp.Sym, k string, eval bool) (exp.Exp, error) {
-	l, err := exp.Select(e.Mod.Res, k)
+	l, err := exp.Select(e.Mod.Decl, k)
 	if err != nil {
 		return e.Par.Lookup(s, k, eval)
 	}

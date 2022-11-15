@@ -29,7 +29,7 @@ func (s *modSpec) Resl(p *exp.Prog, env exp.Env, c *exp.Call, _ typ.Type) (_ exp
 	val := &lit.Obj{Vals: make([]lit.Val, 0, len(tags.Els)),
 		Typ: typ.Type{Kind: knd.Mod | knd.Obj, Ref: name, Body: pb},
 	}
-	m.Res = &exp.Lit{Res: val.Typ, Val: val, Src: c.Src}
+	m.Decl = &exp.Lit{Res: val.Typ, Val: val, Src: c.Src}
 	for _, el := range tags.Els {
 		tag := el.(*exp.Tag)
 		if tag.Exp == nil {
@@ -91,6 +91,7 @@ func (s *useSpec) Resl(p *exp.Prog, env exp.Env, c *exp.Call, _ typ.Type) (_ exp
 		}
 		// register modules in parent loader or mod env local
 		if ref.Alias != "" {
+			// TODO select module from decls
 			if len(f.Decls) != 1 {
 				return nil, fmt.Errorf("alias works only with single module units %q", ref.Path)
 			}
