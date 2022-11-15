@@ -9,15 +9,11 @@ import (
 	"xelf.org/xelf/exp"
 	"xelf.org/xelf/lib"
 	"xelf.org/xelf/lit"
-	"xelf.org/xelf/typ"
 )
 
 func TestFSMods(t *testing.T) {
 	fsmods := FileMods("testdata/lib")
-	sysmods := &SysMods{files: map[string]*File{
-		"sys": {Decls: []ModRef{{Mod: &Mod{Name: "sys"}}}},
-	}}
-	lenv := NewLoaderEnv(exp.Builtins(lib.Std), sysmods, fsmods)
+	env := NewLoaderEnv(exp.Builtins(lib.Std), fsmods)
 	var reads string
 	fsmods.log = func(root, path string) {
 		reads += fmt.Sprintf("\n\tread %s %s", root, path)
@@ -55,16 +51,11 @@ func TestFSMods(t *testing.T) {
 			t.Errorf("%s parse failed: %v", test.name, err)
 			continue
 		}
-		p := exp.NewProg(nil, reg, lenv)
+		p := exp.NewProg(nil, reg, env)
 		p.File.URL = "testdata/"
-		x, err = p.Resl(p, x, typ.Void)
+		res, err := p.Run(x, nil)
 		if err != nil {
-			t.Errorf("%s resl failed: %v", test.name, err)
-			continue
-		}
-		res, err := p.Eval(p, x)
-		if err != nil {
-			t.Errorf("%s eval failed: %v", test.name, err)
+			t.Errorf("%s run failed: %v", test.name, err)
 			continue
 		}
 		var local []string

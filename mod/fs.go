@@ -42,10 +42,10 @@ type FSMods struct {
 }
 
 func (fm *FSMods) LoadFile(prog *exp.Prog, raw *url.URL) (*File, error) {
-	if raw.Scheme != "" && raw.Scheme != "file:" {
+	if raw.Scheme != "" && raw.Scheme != "file" {
 		return nil, ErrFileNotFound
 	}
-	sym, roots := raw.Path, fm.Roots
+	sym, roots := rawPath(raw), fm.Roots
 	if strings.HasPrefix(sym, "./") {
 		sym = sym[2:]
 		r, err := fm.relRoot(prog, sym)
@@ -66,7 +66,11 @@ func (fm *FSMods) LoadFile(prog *exp.Prog, raw *url.URL) (*File, error) {
 	return nil, ErrFileNotFound
 }
 func (fm *FSMods) relRoot(prog *exp.Prog, sym string) (*PathFS, error) {
-	rel := path.Dir(prog.File.URL)
+	u, err := url.Parse(prog.File.URL)
+	if err != nil {
+		return nil, err
+	}
+	rel := path.Dir(rawPath(u))
 	if rel == "" {
 		return nil, fmt.Errorf("relative mod path not allowed here")
 	}
