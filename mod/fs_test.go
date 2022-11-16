@@ -15,7 +15,7 @@ func TestFSMods(t *testing.T) {
 	fsmods := FileMods("testdata/lib")
 	env := NewLoaderEnv(exp.Builtins(lib.Std), fsmods)
 	var reads string
-	fsmods.log = func(root, path string) {
+	fsmods.Log = func(root, path string) {
 		reads += fmt.Sprintf("\n\tread %s %s", root, path)
 	}
 	tests := []struct {

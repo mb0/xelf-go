@@ -188,6 +188,12 @@ func (s *NodeSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 			continue
 		}
 	}
+	if s.EvalHook != nil {
+		err = s.EvalHook(p, c, n)
+		if err != nil {
+			return nil, err
+		}
+	}
 	return &exp.Lit{Res: n.Type(), Val: n}, nil
 }
 func (s *NodeSpec) dokey(p *exp.Prog, c *exp.Call, prx Node, key string, el exp.Exp) error {

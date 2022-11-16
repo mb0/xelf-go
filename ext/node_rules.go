@@ -40,6 +40,7 @@ type Rules struct {
 	Tail Rule
 
 	ReslHook func(*exp.Prog, *exp.Call) error
+	EvalHook func(*exp.Prog, *exp.Call, Node) error
 }
 
 func (rs *Rules) Rule(tag string) Rule {

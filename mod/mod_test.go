@@ -11,7 +11,7 @@ import (
 
 func TestSysMods(t *testing.T) {
 	setup := func(prog *exp.Prog, s *Src) (*File, error) {
-		f := &exp.File{URL: s.Loc.URL}
+		f := &exp.File{URL: s.URL}
 		decl := exp.LitVal(lit.MakeObj(lit.Keyed{
 			{Key: "b", Val: new(lit.Int)},
 		}))
@@ -34,7 +34,7 @@ func TestSysMods(t *testing.T) {
 	}{
 		{"use foo", "(use 'test/foo') foo.b", "0"},
 		{"mut foo", "(use 'test/foo') (mut foo.b 2) foo.b", "2"},
-		{"reuse foo", "(use 'test/foo') foo.b", "0"},
+		{"use foo as spam", "(use spam:'test/foo') spam.b", "0"},
 	}
 	for _, test := range tests {
 		reg := &lit.Reg{Cache: &lit.Cache{}}

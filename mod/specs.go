@@ -56,8 +56,8 @@ func (s *modSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 	return &exp.Lit{Val: typ.Void, Src: c.Src}, nil
 }
 
-var Use = &useSpec{impl("<form@use mods:<tupl|alt str tag|str> void>"), false}
-var Export = &useSpec{impl("<form@export mods:<tupl|alt str tag|str> void>"), true}
+var Use = &useSpec{impl("<form@use mods:<tupl|exp|alt str tag|str> void>"), false}
+var Export = &useSpec{impl("<form@export mods:<tupl|exp|alt str tag|str> void>"), true}
 
 type useSpec struct {
 	exp.SpecBase

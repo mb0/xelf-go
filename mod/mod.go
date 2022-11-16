@@ -39,13 +39,14 @@ type SysMods struct {
 	srcs map[string]*Src
 }
 
-func (sm *SysMods) Register(src *Src) {
+func (sm *SysMods) Register(src *Src) *Src {
 	sm.Lock()
 	defer sm.Unlock()
 	if sm.srcs == nil {
 		sm.srcs = make(map[string]*Src)
 	}
 	sm.srcs[src.Rel] = src
+	return src
 }
 
 func (sm *SysMods) LoadSrc(raw, base *Loc) (*Src, error) {

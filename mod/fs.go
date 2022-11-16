@@ -34,7 +34,7 @@ type FSMods struct {
 	Ext   []string
 	Index []string
 
-	log   func(root, path string)
+	Log   func(root, path string)
 	local map[string]*PathFS
 }
 
@@ -148,8 +148,8 @@ func (fm *FSMods) try(r *PathFS, part string) (*Src, error) {
 			return s, nil
 		}
 	}
-	if fm.log != nil {
-		fm.log(r.Path, found)
+	if fm.Log != nil {
+		fm.Log(r.Path, found)
 	}
 	ff, err := r.FS.Open(found)
 	if err != nil {

@@ -52,6 +52,15 @@ func (reg *Reg) LookupType(ref string) (typ.Type, error) {
 	}
 	return typ.Void, fmt.Errorf("no type found named %s", ref)
 }
+func (reg *Reg) Each(f func(string, typ.Type, Mut) error) error {
+	for ref, info := range reg.refs {
+		err := f(ref, info.Type, info.Mut)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
 
 // Zero returns a primitive mutable assignable to a value of type t or null.
 func Zero(t typ.Type) Mut {

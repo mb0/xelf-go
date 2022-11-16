@@ -38,7 +38,7 @@ func LayoutForm(sig typ.Type, els []Exp) ([]Exp, error) {
 				arg = &Tupl{Type: p.Type, Els: els[:n], Src: ast.Src{
 					Doc: fst.Doc, Pos: fst.Pos, End: lst.End,
 				}}
-			} else if pt == typ.Exp {
+			} else if pt.Kind == knd.Exp {
 				arg = &Tupl{Type: typ.ElemTupl(pt), Els: els}
 				n = len(els)
 			} else {
