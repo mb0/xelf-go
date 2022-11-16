@@ -101,10 +101,7 @@ func (s *NodeSpec) Resl(p *exp.Prog, env exp.Env, c *exp.Call, h typ.Type) (exp.
 		return nil, err
 	}
 	if s.ReslHook != nil {
-		err = s.ReslHook(p, c)
-		if err != nil {
-			return nil, err
-		}
+		return s.ReslHook(p, c)
 	}
 	return res, nil
 }
