@@ -47,8 +47,7 @@ func (s *modSpec) Resl(p *exp.Prog, env exp.Env, c *exp.Call, _ typ.Type) (_ exp
 		val.Vals = append(val.Vals, tl.Val)
 		tag.Exp = tl
 	}
-	p.File.Uses = append(p.File.Uses, ModRef{Mod: m})
-	p.File.Decls = append(p.File.Decls, ModRef{Mod: m})
+	p.File.Refs = append(p.File.Refs, ModRef{Pub: true, Mod: m})
 	return c, nil
 }
 
@@ -92,24 +91,24 @@ func (s *useSpec) Resl(p *exp.Prog, env exp.Env, c *exp.Call, _ typ.Type) (_ exp
 		// register modules in parent loader or mod env local
 		if ref.Alias != "" {
 			// TODO select module from decls
-			if len(f.Decls) != 1 {
+			fst, n := getPub(f.Refs)
+			if n != 1 {
 				return nil, fmt.Errorf("alias works only with single module units %q", ref.Path)
 			}
-			ref.Mod = f.Decls[0].Mod
-			p.File.Uses = append(p.File.Uses, ref)
-			if s.export {
-				p.File.Decls = append(p.File.Decls, ref)
-			}
+			ref.Mod = fst.Mod
+			ref.Pub = s.export
+			p.File.Refs = append(p.File.Refs, ref)
 		} else {
-			for _, m := range f.Decls {
+			for _, m := range f.Refs {
+				if !m.Pub {
+					continue
+				}
 				m.Path = ref.Path
 				if ref.Alias != "" {
 					m.Alias = ref.Alias
 				}
-				p.File.Uses = append(p.File.Uses, m)
-				if s.export {
-					p.File.Decls = append(p.File.Decls, m)
-				}
+				m.Pub = s.export
+				p.File.Refs = append(p.File.Refs, m)
 			}
 		}
 	}
@@ -119,6 +118,17 @@ func (s *useSpec) Resl(p *exp.Prog, env exp.Env, c *exp.Call, _ typ.Type) (_ exp
 }
 func (s *useSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 	return &exp.Lit{Val: typ.Void, Src: c.Src}, nil
+}
+
+func getPub(refs exp.ModRefs) (fst exp.ModRef, n int) {
+	for _, r := range refs {
+		if r.Pub {
+			if n++; n == 1 {
+				fst = r
+			}
+		}
+	}
+	return fst, n
 }
 
 func impl(sig string) exp.SpecBase {

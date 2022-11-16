@@ -15,8 +15,8 @@ func TestSysMods(t *testing.T) {
 		decl := exp.LitVal(lit.MakeObj(lit.Keyed{
 			{Key: "b", Val: new(lit.Int)},
 		}))
-		f.Decls = []exp.ModRef{
-			{Mod: &exp.Mod{File: f, Name: "foo", Decl: decl}},
+		f.Refs = []exp.ModRef{
+			{Pub: true, Mod: &exp.Mod{File: f, Name: "foo", Decl: decl}},
 		}
 		return f, nil
 	}
@@ -50,7 +50,7 @@ func TestSysMods(t *testing.T) {
 			continue
 		}
 		var local []string
-		for _, m := range p.File.Uses {
+		for _, m := range p.File.Refs {
 			local = append(local, m.File.URL+"#"+m.Name)
 		}
 		sort.Strings(local)

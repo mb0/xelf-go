@@ -89,7 +89,7 @@ func copyNode(reg *lit.Reg, node Node) (Node, error) {
 	return n, err
 }
 func (s *NodeSpec) Resl(p *exp.Prog, env exp.Env, c *exp.Call, h typ.Type) (exp.Exp, error) {
-	if s.Env {
+	if c.Env == nil && s.Env {
 		n, err := copyNode(p.Reg, s.Node)
 		if err != nil {
 			return nil, err

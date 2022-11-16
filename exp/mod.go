@@ -3,6 +3,8 @@ package exp
 import (
 	"fmt"
 	"strings"
+
+	"xelf.org/xelf/cor"
 )
 
 // File is a simple representation of any xelf input that store information about modules.
@@ -11,11 +13,8 @@ type File struct {
 	// It usually is a simple file path, but could point into a zip file served on the web.
 	URL string
 
-	// Uses contains all modules used by this file.
-	Uses ModRefs
-
-	// Decls contains modules exported and declared by this file.
-	Decls ModRefs
+	// Refs contains all declared and used modules for this file.
+	Refs ModRefs
 }
 
 // Mod is a simple representation of a module.
@@ -34,6 +33,7 @@ type Mod struct {
 type ModRef struct {
 	Alias string
 	Path  string
+	Pub   bool
 	*Mod
 }
 
@@ -48,6 +48,9 @@ func (ms ModRefs) Lookup(k string) (*Lit, error) {
 		return nil, ErrSymNotFound
 	}
 	qual := k[:dot]
+	if !cor.IsKey(qual) {
+		return nil, ErrSymNotFound
+	}
 	m := ms.find(qual)
 	if m.Mod == nil || m.Decl == nil {
 		return nil, fmt.Errorf("module %s unresolved", m.Path)

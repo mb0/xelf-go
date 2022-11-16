@@ -97,7 +97,7 @@ func (p *Prog) Lookup(s *Sym, k string, eval bool) (res Exp, err error) {
 		s.Type, s.Env, s.Rel = l.Res, p, k
 		return s, nil
 	}
-	ml, err := p.File.Uses.Lookup(k)
+	ml, err := p.File.Refs.Lookup(k)
 	if err == nil {
 		if !eval {
 			s.Type, s.Env, s.Rel = ml.Res, p, k

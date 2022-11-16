@@ -59,7 +59,7 @@ func TestFSMods(t *testing.T) {
 			continue
 		}
 		var local []string
-		for _, m := range p.File.Uses {
+		for _, m := range p.File.Refs {
 			local = append(local, m.File.URL+"#"+m.Name)
 		}
 		sort.Strings(local)
