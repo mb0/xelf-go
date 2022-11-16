@@ -41,30 +41,8 @@ func (p Path) String() string {
 
 // ParsePath reads and returns the dot separated segments for the path or an error.
 func ParsePath(path string) (res Path, err error) {
-	if path == "" {
-		return nil, nil
-	}
-	var sel bool
-	switch r := path[0]; r {
-	case '.', '/':
-		path = path[1:]
-		sel = r == '/'
-	}
-	res = make(Path, 0, len(path)>>2)
-	var last int
-	for i, r := range path {
-		switch r {
-		case '.', '/':
-			res, err = res.Add(path[last:i], sel)
-			if err != nil {
-				return nil, err
-			}
-			sel = r == '/'
-			last = i + 1
-		}
-	}
-	if len(path) > last {
-		res, err = res.Add(path[last:], sel)
+	for len(path) > 0 {
+		res, path, err = addSeg(res, path)
 		if err != nil {
 			return nil, err
 		}
@@ -72,19 +50,39 @@ func ParsePath(path string) (res Path, err error) {
 	return res, nil
 }
 
-// Add appends a new segment and returns the new path or an error for empty segments.
-func (p Path) Add(s string, sel bool) (Path, error) {
-	if s == "" {
-		return nil, fmt.Errorf("empty segment")
+func addSeg(p Path, s string) (_ Path, rest string, err error) {
+	var res Seg
+	var idx, upper, other bool
+	if r := s[0]; r == '.' || r == '/' {
+		s = s[1:]
+		res.Sel = r == '/'
+	} else if len(p) > 0 {
+		return p, s, fmt.Errorf("missing path sep")
 	}
-	if c := s[0]; c == '-' || c >= '0' && c <= '9' {
-		i, err := strconv.Atoi(s)
-		if err != nil {
-			return nil, err
+	for i, r := range s {
+		if r == '.' || r == '/' {
+			s, rest = s[:i], s[i:]
+			break
+		} else if r >= 'A' && r <= 'Z' {
+			upper = true
+		} else if r >= '0' && r <= '9' || r == '-' && i == 0 {
+			idx = true
+		} else {
+			other = true
 		}
-		p = append(p, Seg{Idx: i, Sel: sel})
-	} else {
-		p = append(p, Seg{Key: s, Sel: sel})
 	}
-	return p, nil
+	if upper || other {
+		if upper {
+			s = strings.ToLower(s)
+		}
+		res.Key = s
+	} else if idx && len(s) < 10 {
+		res.Idx, _ = strconv.Atoi(s)
+	} else {
+		res.Key = s
+	}
+	if s != "" || res.Sel {
+		p = append(p, res)
+	}
+	return p, rest, nil
 }
