@@ -26,22 +26,22 @@ func TestFSMods(t *testing.T) {
 	}{
 		{"none", "1", nil, "1"},
 		{"simple", "(mod big a:'A') big.a", []string{"testdata/#big"}, `"A"`},
-		{"use foo", "(use './foo') foo.b", []string{"testdata/foo.xelf#foo"}, "2"},
+		{"use foo", "(use './foo') foo.b", []string{"file:testdata/foo.xelf#foo"}, "2"},
 		{"use multi", "(use './multi') ([] bar.c spam.e egg.name)", []string{
-			"testdata/multi.xelf#bar",
-			"testdata/multi.xelf#egg",
-			"testdata/multi.xelf#spam",
+			"file:testdata/multi.xelf#bar",
+			"file:testdata/multi.xelf#egg",
+			"file:testdata/multi.xelf#spam",
 		}, `[3,5,"ehh"]`},
 		{"use liba", "(use 'name.org/liba') liba.name", []string{
-			"testdata/lib/name.org/liba.xelf#liba",
+			"file:testdata/lib/name.org/liba.xelf#liba",
 		}, `"liba"`},
 		{"use libb", "(use 'name.org/libb') libb.name", []string{
-			"testdata/lib/name.org/libb.xelf#libb",
+			"file:testdata/lib/name.org/libb.xelf#libb",
 		}, `"libb using liba"`},
 		{"use name.org", "(use 'name.org') prod.name", []string{
-			"testdata/lib/name.org/liba.xelf#liba",
-			"testdata/lib/name.org/libb.xelf#libb",
-			"testdata/lib/name.org/mod.xelf#prod",
+			"file:testdata/lib/name.org/liba.xelf#liba",
+			"file:testdata/lib/name.org/libb.xelf#libb",
+			"file:testdata/lib/name.org/mod.xelf#prod",
 		}, `"my product with liba and libb using liba"`},
 	}
 	for _, test := range tests {

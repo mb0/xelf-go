@@ -1,7 +1,6 @@
 package mod
 
 import (
-	"log"
 	"sort"
 	"testing"
 
@@ -11,26 +10,22 @@ import (
 )
 
 func TestSysMods(t *testing.T) {
-	f := &exp.File{URL: "xelf:test/foo"}
-	o := lit.MakeObj(lit.Keyed{
-		{Key: "b", Val: new(lit.Int)},
-	})
-	m := &exp.Mod{
-		File: f,
-		Name: "foo",
-		Decl: exp.LitVal(o),
-		Setup: func(p *exp.Prog, m *exp.Mod) error {
-			log.Printf("setup mod %s", f.URL)
-			return nil
-		},
+	setup := func(prog *exp.Prog, s *Src) (*File, error) {
+		f := &exp.File{URL: s.Loc.URL}
+		decl := exp.LitVal(lit.MakeObj(lit.Keyed{
+			{Key: "b", Val: new(lit.Int)},
+		}))
+		f.Decls = []exp.ModRef{
+			{Mod: &exp.Mod{File: f, Name: "foo", Decl: decl}},
+		}
+		return f, nil
 	}
-	f.Decls = append(f.Decls, exp.ModRef{Mod: m})
 	mods := new(SysMods)
-	err := mods.Register(f)
-	if err != nil {
-		t.Errorf("failed to register mod: %v", err)
-		return
-	}
+	mods.Register(&Src{
+		Rel:   "test/foo",
+		Loc:   Loc{URL: "xelf:test/foo"},
+		Setup: setup,
+	})
 	env := NewLoaderEnv(exp.Builtins(lib.Std), mods)
 	tests := []struct {
 		name string

@@ -84,7 +84,7 @@ func (s *useSpec) Resl(p *exp.Prog, env exp.Env, c *exp.Call, _ typ.Type) (_ exp
 		} else {
 			return nil, fmt.Errorf("unexpected use argument %T", el)
 		}
-		// load module using mod env
+		// load module using loader env
 		f, err := le.LoadFile(p, ref.Path)
 		if err != nil {
 			return nil, fmt.Errorf("could not load module %q: %v", ref.Path, err)

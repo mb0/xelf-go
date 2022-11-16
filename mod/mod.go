@@ -2,10 +2,9 @@ package mod
 
 import (
 	"errors"
-	"fmt"
-	"net/url"
 	"sync"
 
+	"xelf.org/xelf/ast"
 	"xelf.org/xelf/exp"
 )
 
@@ -20,53 +19,45 @@ type (
 	ModRef = exp.ModRef
 )
 
-// Loader is a simple api to lookup and load modules.
+// Src is the raw and program independent module source for a location.
+// The input is represented either as an abstract syntax tree or as program specific setup hook.
+type Src struct {
+	Rel string
+	Loc
+	Raw   []ast.Ast
+	Setup func(*exp.Prog, *Src) (*File, error)
+}
+
+// Loader caches and loads module sources.
 type Loader interface {
-	LoadFile(*exp.Prog, *url.URL) (*File, error)
+	LoadSrc(path, base *Loc) (*Src, error)
 }
 
 // SysMods is a thread-safe module registry that implements the module loader interface.
 type SysMods struct {
 	sync.RWMutex
-	files map[string]*File
+	srcs map[string]*Src
 }
 
-func (sm *SysMods) Register(f *File) error {
-	u, err := url.Parse(f.URL)
-	if err != nil {
-		return err
-	}
-	if u.Scheme != "" && u.Scheme != "xelf" {
-		return fmt.Errorf("incorrect scheme %s", u.Scheme)
-	}
+func (sm *SysMods) Register(src *Src) {
 	sm.Lock()
 	defer sm.Unlock()
-	if sm.files == nil {
-		sm.files = make(map[string]*File)
+	if sm.srcs == nil {
+		sm.srcs = make(map[string]*Src)
 	}
-	sm.files[rawPath(u)] = f
-	return nil
+	sm.srcs[src.Rel] = src
 }
 
-func (sm *SysMods) LoadFile(prog *exp.Prog, raw *url.URL) (*File, error) {
-	if raw.Scheme != "" && raw.Scheme != "xelf" {
+func (sm *SysMods) LoadSrc(raw, base *Loc) (*Src, error) {
+	if proto := raw.Proto(); proto != "" && proto != "xelf" {
 		return nil, ErrFileNotFound
 	}
-	p := rawPath(raw)
+	p := raw.Path()
 	sm.RLock()
 	defer sm.RUnlock()
-	if f := sm.files[p]; f != nil {
-		return f, nil
+	src := sm.srcs[p]
+	if src == nil {
+		return nil, ErrFileNotFound
 	}
-	return nil, ErrFileNotFound
-}
-
-func rawPath(u *url.URL) string {
-	if u.Opaque != "" {
-		return u.Opaque
-	}
-	if u.RawPath != "" {
-		return u.RawPath
-	}
-	return u.Path
+	return src, nil
 }

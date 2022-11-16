@@ -1,16 +1,13 @@
 package mod
 
 import (
-	"bytes"
 	"fmt"
 	"io/fs"
-	"net/url"
 	"os"
 	"path"
 	"strings"
 
-	"xelf.org/xelf/exp"
-	"xelf.org/xelf/typ"
+	"xelf.org/xelf/ast"
 )
 
 func FileMods(roots ...string) *FSMods {
@@ -29,7 +26,7 @@ type PathFS struct {
 	Path  string
 	FS    fs.FS
 	Rel   string
-	cache map[string]*File
+	cache map[string]*Src
 }
 
 type FSMods struct {
@@ -41,39 +38,36 @@ type FSMods struct {
 	local map[string]*PathFS
 }
 
-func (fm *FSMods) LoadFile(prog *exp.Prog, raw *url.URL) (*File, error) {
-	if raw.Scheme != "" && raw.Scheme != "file" {
+func (fm *FSMods) LoadSrc(raw, base *Loc) (*Src, error) {
+	if proto := raw.Proto(); proto != "" && proto != "file" {
 		return nil, ErrFileNotFound
 	}
-	sym, roots := rawPath(raw), fm.Roots
-	if strings.HasPrefix(sym, "./") {
-		sym = sym[2:]
-		r, err := fm.relRoot(prog, sym)
+	p, roots := raw.Path(), fm.Roots
+	if strings.HasPrefix(p, "./") {
+		p = p[2:]
+		r, err := fm.relRoot(p, base)
 		if err != nil {
 			return nil, err
 		}
-		return fm.try(prog, r, sym)
+		return fm.try(r, p)
 	}
 	for _, r := range roots {
-		f, err := fm.try(prog, r, sym)
+		src, err := fm.try(r, p)
 		if err != nil {
 			if err == ErrFileNotFound {
 				continue
 			}
 		}
-		return f, err
+		return src, err
 	}
 	return nil, ErrFileNotFound
 }
-func (fm *FSMods) relRoot(prog *exp.Prog, sym string) (*PathFS, error) {
-	u, err := url.Parse(prog.File.URL)
-	if err != nil {
-		return nil, err
-	}
-	rel := path.Dir(rawPath(u))
-	if rel == "" {
+func (fm *FSMods) relRoot(p string, base *Loc) (*PathFS, error) {
+	bp := base.Path()
+	if pr := base.Proto(); base == nil || pr != "" && pr != "file" {
 		return nil, fmt.Errorf("relative mod path not allowed here")
 	}
+	rel := path.Dir(bp)
 	if fm.local == nil {
 		fm.local = make(map[string]*PathFS)
 	} else if r := fm.local[rel]; r != nil {
@@ -86,7 +80,7 @@ func (fm *FSMods) relRoot(prog *exp.Prog, sym string) (*PathFS, error) {
 		}
 		if strings.HasPrefix(rel, rp) {
 			if r.cache == nil {
-				r.cache = make(map[string]*File)
+				r.cache = make(map[string]*Src)
 			}
 			tmp := *r
 			tmp.Rel = rel[len(rp)+1:]
@@ -98,33 +92,19 @@ func (fm *FSMods) relRoot(prog *exp.Prog, sym string) (*PathFS, error) {
 	fm.local[rel] = r
 	return r, nil
 }
-func (fm *FSMods) readFile(prog *exp.Prog, f []byte, url string) (*File, error) {
-	e, err := exp.Read(bytes.NewReader(f), url)
-	if err != nil {
-		return nil, err
-	}
-	// shallow copy the loader for every loaded file
-	p := *prog
-	p.File = File{URL: url}
-	e, err = p.Resl(&p, e, typ.Void)
-	if err != nil {
-		return nil, err
-	}
-	_, err = p.Eval(&p, e)
-	return &p.File, err
-}
-func (fm *FSMods) try(prog *exp.Prog, r *PathFS, sym string) (f *File, err error) {
-	p := sym
+
+func (fm *FSMods) try(r *PathFS, part string) (*Src, error) {
+	p := part
 	if r.Rel != "" {
-		p = path.Join(r.Rel, sym)
+		p = path.Join(r.Rel, part)
 	}
 	if r.cache == nil {
-		r.cache = make(map[string]*File)
-	} else if f, ok := r.cache[p]; ok {
-		if f == nil {
+		r.cache = make(map[string]*Src)
+	} else if s, ok := r.cache[p]; ok {
+		if s == nil {
 			return nil, ErrFileNotFound
 		}
-		return f, nil
+		return s, nil
 	}
 	// always try sym as is
 	fi, err := fs.Stat(r.FS, p)
@@ -163,22 +143,28 @@ func (fm *FSMods) try(prog *exp.Prog, r *PathFS, sym string) (f *File, err error
 		return nil, ErrFileNotFound
 	}
 	if p != found {
-		f := r.cache[found]
-		if f != nil {
-			return f, nil
+		s := r.cache[found]
+		if s != nil {
+			return s, nil
 		}
 	}
 	if fm.log != nil {
 		fm.log(r.Path, found)
 	}
-	b, err := fs.ReadFile(r.FS, found)
+	ff, err := r.FS.Open(found)
 	if err != nil {
 		return nil, err
 	}
-	f, err = fm.readFile(prog, b, path.Join(r.Path, found))
-	r.cache[p] = f
-	if p != found {
-		r.cache[found] = f
+	defer ff.Close()
+	full := path.Join(r.Path, found)
+	as, err := ast.ReadAll(ff, full)
+	if err != nil {
+		return nil, err
 	}
-	return f, err
+	src := &Src{Rel: found, Loc: Loc{URL: "file:" + full}, Raw: as}
+	r.cache[p] = src
+	if p != found {
+		r.cache[found] = src
+	}
+	return src, nil
 }

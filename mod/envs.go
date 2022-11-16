@@ -1,10 +1,9 @@
 package mod
 
 import (
-	"net/url"
-
 	"xelf.org/xelf/exp"
 	"xelf.org/xelf/lit"
+	"xelf.org/xelf/typ"
 )
 
 // LoaderEnv adds module awareness to a program environment.
@@ -28,28 +27,40 @@ func FindLoaderEnv(env exp.Env) *LoaderEnv {
 	}
 	return nil
 }
-
-func (le *LoaderEnv) LoadFile(p *exp.Prog, raw string) (f *File, err error) {
-	url, err := url.Parse(raw)
-	if err != nil {
-		return nil, err
-	}
+func (le *LoaderEnv) LoadFile(prog *exp.Prog, url string) (f *File, err error) {
+	loc := ParseLoc(url)
+	base := ParseLoc(prog.File.URL)
 	for _, l := range le.Loaders {
-		f, err = l.LoadFile(p, url)
+		src, err := l.LoadSrc(loc, base)
 		if err != nil {
 			if err == ErrFileNotFound {
 				continue
 			}
 			return nil, err
 		}
-		for _, m := range f.Decls {
-			if m.Setup != nil {
-				err := m.Setup(p, m.Mod)
-				if err != nil {
-					return nil, err
-				}
-			}
+		if prog.Files == nil {
+			prog.Files = make(map[string]*File)
+		} else if f = prog.Files[src.URL]; f != nil {
+			return f, nil
 		}
+		if src.Setup != nil {
+			f, err = src.Setup(prog, src)
+		} else {
+			e, err := exp.ParseAll(src.Raw)
+			if err != nil {
+				return nil, err
+			}
+			// shallow copy the loader for every loaded file
+			p := *prog
+			p.File = File{URL: src.URL}
+			e, err = p.Resl(&p, e, typ.Void)
+			if err != nil {
+				return nil, err
+			}
+			_, err = p.Eval(&p, e)
+			f = &p.File
+		}
+		prog.Files[src.URL] = f
 		return f, err
 	}
 	return nil, ErrFileNotFound

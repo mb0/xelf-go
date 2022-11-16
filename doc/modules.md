@@ -38,24 +38,18 @@ helpers, that use layla for pdf reports and then export the whole repl session a
 Implementation
 --------------
 
-Modules represent a qualifier to group types, specs and values and on the other hand optional an
-mechanism to add language capability extensions. Modules are unique within a program and setup hooks
-are only executed once. They cannot be selected, instantiated or used as a value type, but can be
-used for symbol resolution. To enforce that we introduce a mod meta kind to mark the mod types and
-values provided to the language machinery. The module tree must be acyclic: a module cannot have
-itself as dependency.
+Modules are just qualified literal values, but as concept a language extension mechanism.
+Modules are unique per program and cannot have itself as (indirect) dependency.
 
-Special modules that require platform support must be registered into a module registry and may have
-a setup hook that is called once to add themselves to a program environment.
+Loaders locate, load and cache raw module sources by url. Sources are program independent and
+represented either as ast or as program specific setup hook.
 
-A loader environment adds module awareness to the [program environment](./prog_env.md) and provides
-the foundational specs to interact with modules. The loader env has a user supplied list of loaders.
-The loader implementations loads module file sources for specific protocols. The raw input is then
-evaluated and cached by the loader. Source mods are evaluated in isolation of any loading program.
-All module dependencies are then registered with the loading program.
+A loader environment stores module loaders and provides the foundational specs to interact with
+modules. The loader environment loads the module sources and evaluates them to a module file.
+Files provide a url and a list of declared and used modules.
 
-The basic module and file data structures are part of exp package. Every program environment stores
-a module file with reference to used and declared modules and resolves qualified module symbols.
+The module and file data structures are part of exp package. Every program environment contains root
+file, and a list of all files and resolves qualified module symbols.
 
 The `mod` form creates and registers a simple module with a module name and tags of named values and
 returns void. This form creates a mod scope, that resolves its definitions as unqualified names. The
@@ -109,5 +103,5 @@ where we may want to import both the old and new schema. The thing that complica
 versions is that we currently use a program scoped type registry that uses the declaration name for
 proxies and module types. We describe the [task in more detail](./lit_reg_split.md).
 
-If we restrict the module loading environment to be independent of the loading program or arguments
-(ideally immutable and static), would allow us to cache and reuse the results for that environment.
+We restricted the module loading environment to be independent of the loading program or arguments,
+this allows us to cache and reuse the module sources for that environment.
