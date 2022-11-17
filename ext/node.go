@@ -191,7 +191,7 @@ func (s *NodeSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 			return nil, err
 		}
 	}
-	return &exp.Lit{Res: n.Type(), Val: n}, nil
+	return exp.LitVal(n), nil
 }
 func (s *NodeSpec) dokey(p *exp.Prog, c *exp.Call, prx Node, key string, el exp.Exp) error {
 	r := s.Rule(key)

@@ -35,6 +35,9 @@ func (s *doSpec) Resl(p *exp.Prog, env exp.Env, c *exp.Call, h typ.Type) (exp.Ex
 		if err != nil {
 			return c, err
 		}
+		if res != e {
+			els[i] = res
+		}
 		lst = res
 	}
 	if lst != nil {

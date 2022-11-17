@@ -1,7 +1,6 @@
 package exp
 
 import (
-	"fmt"
 	"strings"
 
 	"xelf.org/xelf/cor"
@@ -51,18 +50,10 @@ func (ms ModRefs) Lookup(k string) (*Lit, error) {
 	if !cor.IsKey(qual) {
 		return nil, ErrSymNotFound
 	}
-	m := ms.find(qual)
-	if m.Mod == nil || m.Decl == nil {
-		return nil, fmt.Errorf("module %s unresolved", m.Path)
-	}
-	return Select(m.Decl, k[dot+1:])
-}
-
-func (ms ModRefs) find(key string) (ref ModRef) {
 	for _, m := range ms {
-		if m.Alias == key || m.Name == key {
-			return m
+		if m.Alias == qual || m.Name == qual {
+			return Select(m.Decl, k[dot+1:])
 		}
 	}
-	return
+	return nil, ErrSymNotFound
 }
