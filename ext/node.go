@@ -39,7 +39,7 @@ type NodeSpec struct {
 	Rules
 	Node Node
 	Env  bool
-	Sub  func(string) exp.Spec
+	Sub  NodeEnvSub
 }
 
 func NodeSpecSig(reg *lit.Reg, sig string, val interface{}, rs Rules) (*NodeSpec, error) {
@@ -94,7 +94,7 @@ func (s *NodeSpec) Resl(p *exp.Prog, env exp.Env, c *exp.Call, h typ.Type) (exp.
 		if err != nil {
 			return nil, err
 		}
-		c.Env = &NodeEnv{Par: env, Node: n, Spec: s.Sub}
+		c.Env = &NodeEnv{Par: env, Node: n, Sub: s.Sub}
 	}
 	res, err := s.SpecBase.Resl(p, env, c, h)
 	if err != nil {
@@ -208,18 +208,19 @@ func (s *NodeSpec) dokey(p *exp.Prog, c *exp.Call, prx Node, key string, el exp.
 	return nil
 }
 
+type NodeEnvSub func(*NodeEnv, *exp.Sym, string, bool) (exp.Exp, error)
+
 type NodeEnv struct {
 	Par  exp.Env
 	Node Node
 	Spec func(string) exp.Spec
+	Sub  NodeEnvSub
 }
 
 func (e *NodeEnv) Parent() exp.Env { return e.Par }
 func (e *NodeEnv) Lookup(s *exp.Sym, k string, eval bool) (exp.Exp, error) {
-	if e.Spec != nil {
-		if s := e.Spec(k); s != nil {
-			return &exp.Lit{Res: s.Type(), Val: s}, nil
-		}
+	if e.Sub != nil {
+		return e.Sub(e, s, k, eval)
 	}
 	return e.Par.Lookup(s, k, eval)
 }
