@@ -21,6 +21,7 @@ func TestProgEval(t *testing.T) {
 		{`(dot {a:[{b:2}, {b:3}]} .a/b)`, `[2 3]`},
 		{`(dot {a:'2021-08-19T15:00:00Z'} (month .a))`, `8`},
 		{`(dyn (month $now))`, `8`},
+		{`<@test.point>`, `<obj@test.point>`},
 	}
 	reg := &lit.Reg{}
 	tval, _ := typ.Parse("<obj@test.point x:int y:int>")
@@ -55,6 +56,7 @@ func TestProgResl(t *testing.T) {
 			`<form@if <tupl cond:any then:exp|char@1> else:exp?|char@1 char@1>`},
 		{`(make @test.point {})`, `<obj@test.point>`, ``},
 		{`(add (int 1) 2)`, `<int>`, `<form@add int tupl?|num int>`},
+		{`<@test.point>`, `<typ>`, `<obj@test.point>`},
 	}
 	tval, _ := typ.Parse("<obj@test.point x:int y:int>")
 	env := &lib.LetEnv{Par: extlib.Std, Lets: map[string]*exp.Lit{
@@ -80,12 +82,16 @@ func TestProgResl(t *testing.T) {
 			continue
 		}
 		c, ok := got.(*exp.Call)
-		if !ok {
-			t.Errorf("resl %s want call got %T", test.raw, got)
-		}
-		ss := c.Sig.String()
-		if ss != test.sig {
-			t.Errorf("resl %s want sig %s got %s", test.raw, test.sig, ss)
+		if ok {
+			ss := c.Sig.String()
+			if ss != test.sig {
+				t.Errorf("resl %s want sig %s got %s", test.raw, test.sig, ss)
+			}
+		} else {
+			ss := got.String()
+			if ss != test.sig {
+				t.Errorf("resl %s want res %s got %s", test.raw, test.sig, ss)
+			}
 		}
 	}
 }
