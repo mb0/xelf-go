@@ -5,7 +5,6 @@ import (
 
 	"xelf.org/xelf/ast"
 	"xelf.org/xelf/exp"
-	"xelf.org/xelf/knd"
 	"xelf.org/xelf/lit"
 	"xelf.org/xelf/typ"
 )
@@ -20,16 +19,12 @@ func (s *modSpec) Resl(p *exp.Prog, env exp.Env, c *exp.Call, _ typ.Type) (_ exp
 		return c, nil
 	}
 	name := c.Args[0].String()
-	m := &Mod{File: &p.File, Name: name}
-	c.Env = &ModEnv{Par: env, Mod: m}
+	me := NewModEnv(env, &p.File, c.Src)
+	me.Name(name)
+	c.Env = me
 	// eval elements to build the result type and value
 	tags := c.Args[1].(*exp.Tupl)
 	// create module type
-	pb := &typ.ParamBody{Params: make([]typ.Param, 0, len(tags.Els))}
-	val := &lit.Obj{Vals: make([]lit.Val, 0, len(tags.Els)),
-		Typ: typ.Type{Kind: knd.Mod | knd.Obj, Ref: name, Body: pb},
-	}
-	m.Decl = &exp.Lit{Res: val.Typ, Val: val, Src: c.Src}
 	for _, el := range tags.Els {
 		tag := el.(*exp.Tag)
 		if tag.Exp == nil {
@@ -43,11 +38,10 @@ func (s *modSpec) Resl(p *exp.Prog, env exp.Env, c *exp.Call, _ typ.Type) (_ exp
 		if err != nil {
 			return nil, err
 		}
-		pb.Params = append(pb.Params, typ.P(tag.Tag, te.Resl()))
-		val.Vals = append(val.Vals, tl.Val)
+		me.Add(tag.Tag, tl.Val)
 		tag.Exp = tl
 	}
-	p.File.Refs = append(p.File.Refs, ModRef{Pub: true, Mod: m})
+	me.Pub()
 	return c, nil
 }
 

@@ -1,7 +1,9 @@
 package mod
 
 import (
+	"xelf.org/xelf/ast"
 	"xelf.org/xelf/exp"
+	"xelf.org/xelf/knd"
 	"xelf.org/xelf/lit"
 	"xelf.org/xelf/typ"
 )
@@ -88,14 +90,53 @@ func (le *LoaderEnv) Lookup(s *exp.Sym, k string, eval bool) (exp.Exp, error) {
 type ModEnv struct {
 	Par exp.Env
 	Mod *Mod
+	obj *lit.Obj
+}
+
+func FindModEnv(env exp.Env) *ModEnv {
+	for ; env != nil; env = env.Parent() {
+		if me, _ := env.(*ModEnv); me != nil {
+			return me
+		}
+	}
+	return nil
+}
+func NewModEnv(par exp.Env, file *File, src ast.Src) *ModEnv {
+	obj := &lit.Obj{Typ: typ.Type{Kind: knd.Mod | knd.Obj, Body: &typ.ParamBody{}}}
+	m := &Mod{File: file, Decl: &exp.Lit{Res: obj.Typ, Val: obj, Src: src}}
+	return &ModEnv{Par: par, Mod: m, obj: obj}
 }
 
 func (e *ModEnv) Parent() exp.Env { return e.Par }
 
+func (e *ModEnv) Name(name string) {
+	e.Mod.Name = name
+	e.obj.Typ.Ref = name
+	e.Mod.Decl.Res = e.obj.Typ
+}
+func (e *ModEnv) Add(name string, v lit.Val) {
+	pb := e.obj.Typ.Body.(*typ.ParamBody)
+	pb.Params = append(pb.Params, typ.P(name, v.Type()))
+	e.obj.Vals = append(e.obj.Vals, v)
+}
+func (e *ModEnv) Pub() *Mod {
+	m := e.Mod
+	m.File.Refs = append(m.File.Refs, exp.ModRef{Pub: true, Mod: m})
+	return m
+}
+
 func (e *ModEnv) Lookup(s *exp.Sym, k string, eval bool) (exp.Exp, error) {
-	l, err := exp.Select(e.Mod.Decl, k)
-	if err != nil {
-		return e.Par.Lookup(s, k, eval)
+	var decl lit.Val
+	if e.obj != nil {
+		decl = e.obj
+	} else if e.Mod.Decl != nil {
+		decl = e.Mod.Decl.Val
 	}
-	return l, nil
+	if decl != nil {
+		v, err := lit.Select(decl, k)
+		if err == nil {
+			return exp.LitVal(v), nil
+		}
+	}
+	return e.Par.Lookup(s, k, eval)
 }
