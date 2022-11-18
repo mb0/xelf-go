@@ -145,7 +145,7 @@ func (d *Keyed) Key(k string) (Val, error) {
 		}
 	}
 	// TODO think about zero values of keyr go uses zero value and js undefined values
-	return Null{}, nil
+	return Null{}, ErrKeyNotFound
 }
 func (d *Keyed) SetKey(k string, el Val) error {
 	s := *d
@@ -194,5 +194,5 @@ func (d *Dict) Key(k string) (Val, error) {
 	if d != nil {
 		return d.Keyed.Key(k)
 	}
-	return Null{}, nil
+	return Null{}, ErrKeyNotFound
 }
