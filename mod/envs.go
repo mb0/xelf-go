@@ -29,8 +29,7 @@ func FindLoaderEnv(env exp.Env) *LoaderEnv {
 	}
 	return nil
 }
-func (le *LoaderEnv) LoadFile(prog *exp.Prog, url string) (f *File, err error) {
-	loc := ParseLoc(url)
+func (le *LoaderEnv) LoadFile(prog *exp.Prog, loc *Loc) (f *File, err error) {
 	base := ParseLoc(prog.File.URL)
 	for _, l := range le.Loaders {
 		src, err := l.LoadSrc(loc, base)

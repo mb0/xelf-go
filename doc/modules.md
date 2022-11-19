@@ -52,12 +52,12 @@ The module and file data structures are part of exp package. Every program envir
 file, and a list of all files and resolves qualified module symbols.
 
 The `mod` form creates and registers a simple module with a module name and tags of named values and
-returns void. This form creates a mod scope, that resolves its definitions as unqualified names. The
+returns void. This form creates a mod env, that resolves its definitions as unqualified names. The
 declared module is available after its declaration in the parent file env.
 
 The `use` form loads modules into the file env and returns void. Use takes constant strings as
 module paths or tagged paths to alias a specific module. The used modules are available after the
-call in the parent loader env.
+call in the parent loader env. A path fragment can be used to pick specific modules from a file.
 
 The `export` form loads modules just like the use form but also re-exports used modules.
 
@@ -79,12 +79,11 @@ Discussion
 ----------
 
 I experienced that using the simple module name as qualifier like go does is very readable and want
-to use this as default for external modules. We need to be able to locally alias a module name to
-resolve potential naming conflicts. Defaulting to qualified symbols and whole module uses we usually
-do not want to use a filter syntax in the use statement. When not filtering module uses we can
-accept multiple packages with one use or export call.
+to use this as default for external modules. The use spec can load whole files or pick single
+modules out and use aliases to resolve naming conflicts with one call.
 
-Daql projects and schemas should extend the module system and allow schema specific extra data.
+Daql projects and schemas integrate with the new module system and export the node as dom property
+and all model types by name.
 
 Currently the program environment must be explicitly prepared to use daql packages. We would add dom
 and qry modules to encapsulate that setup. The dom package would add its specs and export the
@@ -102,6 +101,3 @@ We want to import two versions of the same module. This would be especially hand
 where we may want to import both the old and new schema. The thing that complicates multiple type
 versions is that we currently use a program scoped type registry that uses the declaration name for
 proxies and module types. We describe the [task in more detail](./lit_reg_split.md).
-
-We restricted the module loading environment to be independent of the loading program or arguments,
-this allows us to cache and reuse the module sources for that environment.

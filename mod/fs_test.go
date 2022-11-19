@@ -32,6 +32,15 @@ func TestFSMods(t *testing.T) {
 			"file:testdata/multi.xelf#egg",
 			"file:testdata/multi.xelf#spam",
 		}, `[3,5,"ehh"]`},
+		{"use multi frag", "(use './multi#bar') bar.c", []string{
+			"file:testdata/multi.xelf#bar",
+		}, `3`},
+		{"use multi frag alias", "(use foo:'./multi#bar') foo.c", []string{
+			"file:testdata/multi.xelf#bar",
+		}, `3`},
+		{"use multi plain alias", "(use bar:'./multi') bar.c", []string{
+			"file:testdata/multi.xelf#bar",
+		}, `3`},
 		{"use liba", "(use 'name.org/liba') liba.name", []string{
 			"file:testdata/lib/name.org/liba.xelf#liba",
 		}, `"liba"`},

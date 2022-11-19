@@ -78,51 +78,52 @@ func (s *useSpec) Resl(p *exp.Prog, env exp.Env, c *exp.Call, _ typ.Type) (_ exp
 			return nil, fmt.Errorf("unexpected use argument %T", el)
 		}
 		// load module using loader env
-		f, err := le.LoadFile(p, ref.Path)
+		loc := ParseLoc(ref.Path)
+		f, err := le.LoadFile(p, loc)
 		if err != nil {
 			return nil, fmt.Errorf("could not load module %q: %v", ref.Path, err)
 		}
-		// register modules in parent loader or mod env local
+		refs := filterRefs(f.Refs, loc.Frag())
 		if ref.Alias != "" {
-			// TODO select module from decls
-			fst, n := getPub(f.Refs)
-			if n != 1 {
-				return nil, fmt.Errorf("alias works only with single module units %q", ref.Path)
+			if len(refs) > 1 {
+				refs = filterRefs(refs, ref.Alias)
 			}
-			ref.Mod = fst.Mod
-			ref.Pub = s.export
-			p.File.Refs = append(p.File.Refs, ref)
-		} else {
-			for _, m := range f.Refs {
-				if !m.Pub {
-					continue
-				}
-				m.Path = ref.Path
-				if ref.Alias != "" {
-					m.Alias = ref.Alias
-				}
-				m.Pub = s.export
-				p.File.Refs = append(p.File.Refs, m)
+		}
+		if len(refs) == 0 {
+			return nil, fmt.Errorf("no modules found for %s", ref.Path)
+		}
+		// register modules in parent loader or mod env local
+		for _, m := range refs {
+			if !m.Pub {
+				continue
 			}
+			m.Path = ref.Path
+			if ref.Alias != "" {
+				m.Alias = ref.Alias
+			}
+			m.Pub = s.export
+			p.File.Refs = append(p.File.Refs, m)
 		}
 	}
 	c.Env = env
 	// keep the call around for printing
 	return c, nil
 }
+
 func (s *useSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 	return &exp.Lit{Val: typ.Void, Src: c.Src}, nil
 }
 
-func getPub(refs exp.ModRefs) (fst exp.ModRef, n int) {
-	for _, r := range refs {
-		if r.Pub {
-			if n++; n == 1 {
-				fst = r
-			}
+func matchRef(m exp.ModRef, s string) bool {
+	return s == "" || m.Alias != "" && m.Alias == s || m.Name == s
+}
+func filterRefs(refs []exp.ModRef, find string) (pub []exp.ModRef) {
+	for _, m := range refs {
+		if m.Pub && matchRef(m, find) {
+			pub = append(pub, m)
 		}
 	}
-	return fst, n
+	return pub
 }
 
 func impl(sig string) exp.SpecBase {
