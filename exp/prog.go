@@ -111,10 +111,6 @@ func (p *Prog) Lookup(s *Sym, k string, eval bool) (res Exp, err error) {
 			return &Lit{Res: typ.Typ, Val: t, Src: s.Src}, nil
 		}
 		if t, err := typ.ParseSym(k, s.Src, nil); err == nil {
-			t, err = p.Sys.Inst(LookupType(p), t)
-			if err != nil {
-				return nil, err
-			}
 			return &Lit{Res: typ.Typ, Val: t, Src: s.Src}, nil
 		}
 	}
@@ -146,7 +142,17 @@ func (p *Prog) Resl(env Env, e Exp, h typ.Type) (Exp, error) {
 		if err != nil {
 			return nil, ast.ErrReslSym(a.Src, a.Sym, err)
 		}
-		ut, err := p.Sys.Unify(LookupType(env), r.Resl(), h)
+		lup := LookupType(env)
+		if l, ok := r.(*Lit); ok {
+			if t, ok := l.Val.(typ.Type); ok {
+				t, err = p.Sys.Inst(lup, t)
+				if err != nil {
+					return nil, ast.ErrReslSym(a.Src, a.Sym, err)
+				}
+				l.Val = t
+			}
+		}
+		ut, err := p.Sys.Unify(lup, r.Resl(), h)
 		if err != nil {
 			return nil, ast.ErrUnify(a.Src, err.Error())
 		}
