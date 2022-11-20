@@ -38,9 +38,6 @@ type Rules struct {
 	Default
 	// Tail holds optional rules for tail elements.
 	Tail Rule
-
-	ReslHook func(*exp.Prog, *exp.Call) (exp.Exp, error)
-	EvalHook func(*exp.Prog, *exp.Call, Node) error
 }
 
 func (rs *Rules) Rule(tag string) Rule {

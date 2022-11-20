@@ -38,8 +38,6 @@ type NodeSpec struct {
 	exp.SpecBase
 	Rules
 	Node Node
-	Env  bool
-	Sub  NodeEnvSub
 }
 
 func NodeSpecSig(reg *lit.Reg, sig string, val interface{}, rs Rules) (*NodeSpec, error) {
@@ -74,7 +72,7 @@ func NodeSpecName(reg *lit.Reg, name string, val interface{}, rs Rules) (*NodeSp
 func NewNodeSpec(decl typ.Type, node Node, rs Rules) *NodeSpec {
 	res := exp.SigRes(decl)
 	res.Type = node.Type()
-	return &NodeSpec{exp.SpecBase{Decl: decl}, rs, node, false, nil}
+	return &NodeSpec{exp.SpecBase{Decl: decl}, rs, node}
 }
 
 func (s *NodeSpec) Value() lit.Val { return s }
@@ -88,31 +86,8 @@ func copyNode(reg *lit.Reg, node Node) (Node, error) {
 	err = n.Assign(node)
 	return n, err
 }
-func (s *NodeSpec) Resl(p *exp.Prog, env exp.Env, c *exp.Call, h typ.Type) (exp.Exp, error) {
-	if c.Env == nil && s.Env {
-		n, err := copyNode(p.Reg, s.Node)
-		if err != nil {
-			return nil, err
-		}
-		c.Env = &NodeEnv{Par: env, Node: n, Sub: s.Sub}
-	}
-	res, err := s.SpecBase.Resl(p, env, c, h)
-	if err != nil {
-		return nil, err
-	}
-	if s.ReslHook != nil {
-		return s.ReslHook(p, c)
-	}
-	return res, nil
-}
 
 func (s *NodeSpec) GetNode(p *exp.Prog, c *exp.Call) (Node, error) {
-	if s.Env && c != nil {
-		if env, ok := c.Env.(*NodeEnv); ok {
-			return env.Node, nil
-		}
-		return nil, fmt.Errorf("expect node env in call got %T", c.Env)
-	}
 	return copyNode(p.Reg, s.Node)
 }
 
@@ -135,7 +110,7 @@ func (s *NodeSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 			case ek == knd.All: // tupl -> idx rule
 				for idx, d := range a.Els {
 					key := s.IdxKeyer(n, idx)
-					err := s.dokey(p, c, n, key, d)
+					_, err := s.Rules.Eval(p, c.Env, n, key, d)
 					if err != nil {
 						return nil, err
 					}
@@ -145,9 +120,9 @@ func (s *NodeSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 					t, ok := d.(*exp.Tag)
 					var err error
 					if ok {
-						err = s.dokey(p, c, n, t.Tag, t.Exp)
+						_, err = s.Rules.Eval(p, c.Env, n, t.Tag, t.Exp)
 					} else {
-						err = s.dokey(p, c, n, "", d)
+						_, err = s.Rules.Eval(p, c.Env, n, "", d)
 					}
 					if err != nil {
 						return nil, err
@@ -173,54 +148,32 @@ func (s *NodeSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 			default:
 			}
 		case *exp.Tag:
-			err := s.dokey(p, c, n, a.Tag, a.Exp)
+			_, err := s.Rules.Eval(p, c.Env, n, a.Tag, a.Exp)
 			if err != nil {
 				return nil, err
 			}
 		default:
-			err := s.dokey(p, c, n, sp.Name, a)
+			_, err := s.Rules.Eval(p, c.Env, n, sp.Name, a)
 			if err != nil {
 				return nil, err
 			}
 			continue
 		}
 	}
-	if s.EvalHook != nil {
-		err = s.EvalHook(p, c, n)
-		if err != nil {
-			return nil, err
-		}
-	}
 	return exp.LitVal(n), nil
 }
-func (s *NodeSpec) dokey(p *exp.Prog, c *exp.Call, prx Node, key string, el exp.Exp) error {
-	r := s.Rule(key)
-	v, err := r.Prepper(p, c.Env, prx, key, el)
+
+func (rs Rules) Eval(p *exp.Prog, env exp.Env, n Node, key string, e exp.Exp) (lit.Val, error) {
+	r := rs.Rule(key)
+	v, err := r.Prepper(p, env, n, key, e)
 	if err != nil {
-		return fmt.Errorf("prep key %s: %v", key, err)
+		return nil, fmt.Errorf("prep key %s: %v", key, err)
 	}
 	if v != nil {
-		err = r.Setter(p, prx, key, v)
+		err = r.Setter(p, n, key, v)
 		if err != nil {
-			return fmt.Errorf("set key %s: %v", key, err)
+			return nil, fmt.Errorf("set key %s: %v", key, err)
 		}
 	}
-	return nil
-}
-
-type NodeEnvSub func(*NodeEnv, *exp.Sym, string, bool) (exp.Exp, error)
-
-type NodeEnv struct {
-	Par  exp.Env
-	Node Node
-	Spec func(string) exp.Spec
-	Sub  NodeEnvSub
-}
-
-func (e *NodeEnv) Parent() exp.Env { return e.Par }
-func (e *NodeEnv) Lookup(s *exp.Sym, k string, eval bool) (exp.Exp, error) {
-	if e.Sub != nil {
-		return e.Sub(e, s, k, eval)
-	}
-	return e.Par.Lookup(s, k, eval)
+	return v, nil
 }
