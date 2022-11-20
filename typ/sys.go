@@ -112,14 +112,14 @@ func resolveSel(e *Editor, path string) (Type, error) {
 	cur := e
 	rest := path
 	for rest != "" && rest[0] == '.' {
-		for cur != nil {
+		for {
 			cur = cur.Parent
+			if cur == nil {
+				return e.Type, fmt.Errorf("selection %s not found in %v", path, e.Type)
+			}
 			if cur.Type.Kind&(knd.Obj|knd.Spec) != 0 {
 				break
 			}
-		}
-		if cur == nil {
-			return e.Type, fmt.Errorf("selection %s not found in %v", path, e.Type)
 		}
 		rest = rest[1:]
 	}
