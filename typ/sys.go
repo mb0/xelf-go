@@ -83,8 +83,7 @@ func (sys *Sys) inst(lup Lookup, t Type, m map[int32]Type) (Type, error) {
 		if r.Kind&knd.Ref != 0 && r.Ref != "" {
 			n, err := sys.resolveRef(lup, r)
 			if err != nil {
-				// TODO uncomment here to highlight custom references hacks
-				//return r, err
+				return r, fmt.Errorf("resolve type ref %q: %v", r.Ref, err)
 			} else {
 				r = n
 			}
