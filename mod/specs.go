@@ -20,7 +20,7 @@ func (s *modSpec) Resl(p *exp.Prog, env exp.Env, c *exp.Call, _ typ.Type) (_ exp
 	}
 	name := c.Args[0].String()
 	me := NewModEnv(env, &p.File, c.Src)
-	me.Name(name)
+	me.SetName(name)
 	c.Env = me
 	// eval elements to build the result type and value
 	tags := c.Args[1].(*exp.Tupl)
@@ -38,10 +38,9 @@ func (s *modSpec) Resl(p *exp.Prog, env exp.Env, c *exp.Call, _ typ.Type) (_ exp
 		if err != nil {
 			return nil, err
 		}
-		me.Add(tag.Tag, tl.Val)
+		me.AddDecl(tag.Tag, tl.Val)
 		tag.Exp = tl
 	}
-	me.Pub()
 	return c, nil
 }
 

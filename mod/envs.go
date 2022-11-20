@@ -103,36 +103,30 @@ func FindModEnv(env exp.Env) *ModEnv {
 func NewModEnv(par exp.Env, file *File, src ast.Src) *ModEnv {
 	obj := &lit.Obj{Typ: typ.Type{Kind: knd.Mod | knd.Obj, Body: &typ.ParamBody{}}}
 	m := &Mod{File: file, Decl: &exp.Lit{Res: obj.Typ, Val: obj, Src: src}}
+	file.Refs = append(file.Refs, exp.ModRef{Pub: true, Mod: m})
 	return &ModEnv{Par: par, Mod: m, obj: obj}
 }
 
 func (e *ModEnv) Parent() exp.Env { return e.Par }
 
-func (e *ModEnv) Name(name string) {
-	e.Mod.Name = name
-	e.obj.Typ.Ref = name
-	e.Mod.Decl.Res = e.obj.Typ
+func (e *ModEnv) SetName(name string) {
+	if o := e.obj; o != nil {
+		e.Mod.Name = name
+		o.Typ.Ref = name
+		e.Mod.Decl.Res = e.obj.Typ
+	}
 }
-func (e *ModEnv) Add(name string, v lit.Val) {
-	pb := e.obj.Typ.Body.(*typ.ParamBody)
-	pb.Params = append(pb.Params, typ.P(name, v.Type()))
-	e.obj.Vals = append(e.obj.Vals, v)
-}
-func (e *ModEnv) Pub() *Mod {
-	m := e.Mod
-	m.File.Refs = append(m.File.Refs, exp.ModRef{Pub: true, Mod: m})
-	return m
+func (e *ModEnv) AddDecl(name string, v lit.Val) {
+	if o := e.obj; o != nil {
+		pb := o.Typ.Body.(*typ.ParamBody)
+		pb.Params = append(pb.Params, typ.P(name, v.Type()))
+		o.Vals = append(o.Vals, v)
+	}
 }
 
 func (e *ModEnv) Lookup(s *exp.Sym, k string, eval bool) (exp.Exp, error) {
-	var decl lit.Val
-	if e.obj != nil {
-		decl = e.obj
-	} else if e.Mod.Decl != nil {
-		decl = e.Mod.Decl.Val
-	}
-	if decl != nil {
-		v, err := lit.Select(decl, k)
+	if o := e.obj; o != nil {
+		v, err := lit.Select(o, k)
 		if err == nil {
 			return exp.LitVal(v), nil
 		}
