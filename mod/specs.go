@@ -125,10 +125,4 @@ func filterRefs(refs []exp.ModRef, find string) (pub []exp.ModRef) {
 	return pub
 }
 
-func impl(sig string) exp.SpecBase {
-	t, err := typ.Parse(sig)
-	if err != nil {
-		panic(fmt.Errorf("impl sig %s: %v", sig, err))
-	}
-	return exp.SpecBase{Decl: t}
-}
+var impl = exp.MustSpecBase

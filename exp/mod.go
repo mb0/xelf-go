@@ -38,6 +38,16 @@ type ModRef struct {
 
 type ModRefs []ModRef
 
+func (ms ModRefs) Find(k string) *ModRef {
+	if cor.IsKey(k) {
+		for i, m := range ms {
+			if m.Alias != "" && m.Alias == k || m.Name == k {
+				return &ms[i]
+			}
+		}
+	}
+	return nil
+}
 func (ms ModRefs) Lookup(k string) (*Lit, error) {
 	if len(ms) == 0 {
 		return nil, ErrSymNotFound
@@ -46,14 +56,9 @@ func (ms ModRefs) Lookup(k string) (*Lit, error) {
 	if dot <= 0 {
 		return nil, ErrSymNotFound
 	}
-	qual := k[:dot]
-	if !cor.IsKey(qual) {
+	m := ms.Find(k[:dot])
+	if m == nil {
 		return nil, ErrSymNotFound
 	}
-	for _, m := range ms {
-		if m.Alias == qual || m.Name == qual {
-			return Select(m.Decl, k[dot+1:])
-		}
-	}
-	return nil, ErrSymNotFound
+	return Select(m.Decl, k[dot+1:])
 }

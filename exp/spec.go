@@ -1,6 +1,8 @@
 package exp
 
 import (
+	"fmt"
+
 	"xelf.org/xelf/bfr"
 	"xelf.org/xelf/knd"
 	"xelf.org/xelf/lit"
@@ -22,6 +24,14 @@ type Spec interface {
 // SpecBase is partial base definition for spec implementations.
 // Implementations only need embed this type and declare the value and eval methods.
 type SpecBase struct{ Decl typ.Type }
+
+func MustSpecBase(sig string) SpecBase {
+	decl, err := typ.Parse(sig)
+	if err != nil {
+		panic(fmt.Errorf("must parse signature %s: %v", sig, err))
+	}
+	return SpecBase{decl}
+}
 
 func (s *SpecBase) Type() typ.Type               { return s.Decl }
 func (s *SpecBase) Nil() bool                    { return s == nil }

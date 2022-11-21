@@ -1,10 +1,7 @@
 package lib
 
 import (
-	"fmt"
-
 	"xelf.org/xelf/exp"
-	"xelf.org/xelf/typ"
 )
 
 // Core is a builtin environment with foundational specs.
@@ -47,10 +44,4 @@ func (sm Specs) AddMap(m map[string]exp.Spec) Specs {
 	return sm
 }
 
-func impl(sig string) exp.SpecBase {
-	t, err := typ.Parse(sig)
-	if err != nil {
-		panic(fmt.Errorf("impl sig %s: %v", sig, err))
-	}
-	return exp.SpecBase{Decl: t}
-}
+var impl = exp.MustSpecBase
