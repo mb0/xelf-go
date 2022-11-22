@@ -18,6 +18,7 @@ func TestMakeEval(t *testing.T) {
 		{`(make raw "test")`, `test`, "<raw>"},
 		{`(make list 1 2)`, `[1 2]`, "<list|any>"},
 		{`(make dict a:1 b:2)`, `{a:1 b:2}`, "<dict|any>"},
+		{`(make dict {a:1} b:2)`, `{a:1 b:2}`, "<dict|any>"},
 	}
 	for _, test := range tests {
 		got, err := exp.NewProg(nil, nil, Core).RunStr(test.raw, nil)

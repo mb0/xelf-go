@@ -63,6 +63,24 @@ func (s *makeSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 	if err != nil {
 		return nil, err
 	}
+	if pok {
+		apdr, ok := res.(lit.Apdr)
+		if ok {
+			for _, v := range plain.Vals {
+				err = apdr.Append(v)
+				if err != nil {
+					return nil, err
+				}
+			}
+		} else if len(plain.Vals) != 1 {
+			return nil, fmt.Errorf("make non-idxr type %s for vals", t)
+		} else {
+			err = res.Assign(plain.Vals[0])
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
 	if tok {
 		keyr, ok := res.(lit.Keyr)
 		if !ok {
@@ -82,37 +100,6 @@ func (s *makeSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 			err = keyr.SetKey(tag.Tag, tv)
 			if err != nil {
 				return nil, err
-			}
-		}
-	} else if pok {
-		apdr, ok := res.(lit.Apdr)
-		if !ok {
-			if len(plain.Vals) == 1 {
-				err := res.Assign(plain.Vals[0])
-				if err != nil {
-					return nil, err
-				}
-			} else {
-				return nil, fmt.Errorf("make non-idxr type %s for vals", t)
-			}
-		} else {
-			et := typ.ContEl(res.Type())
-			for _, v := range plain.Vals {
-				if et != typ.Any {
-					prx, err := p.Reg.Zero(et)
-					if err != nil {
-						return nil, err
-					}
-					err = prx.Assign(v)
-					if err != nil {
-						return nil, err
-					}
-					v = prx
-				}
-				err = apdr.Append(v)
-				if err != nil {
-					return nil, err
-				}
 			}
 		}
 	}
