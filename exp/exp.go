@@ -1,6 +1,8 @@
 package exp
 
 import (
+	"fmt"
+
 	"xelf.org/xelf/ast"
 	"xelf.org/xelf/bfr"
 	"xelf.org/xelf/knd"
@@ -41,7 +43,13 @@ func (a *Lit) Print(p *bfr.P) error {
 	}
 	return a.Val.Print(p)
 }
-func (a *Lit) Clone() Exp { return &Lit{a.Res, a.Val, a.Src} }
+func (a *Lit) Clone() Exp {
+	v, err := lit.Copy(a.Val)
+	if err != nil {
+		panic(fmt.Errorf("unhandled err in lit clone:\n%w", err))
+	}
+	return &Lit{a.Res, v, a.Src}
+}
 func (a *Lit) Value() lit.Val {
 	if a == nil || a.Val == nil {
 		return lit.Null{}

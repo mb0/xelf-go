@@ -1,9 +1,25 @@
 package lit
 
+import "xelf.org/xelf/knd"
+
 func Copy(v Val) (Val, error) {
-	cache := make(map[Mut]Mut)
-	return deepCopy(v, cache)
+	if v == nil {
+		return nil, nil
+	}
+	m, ok := v.(Mut)
+	if !ok {
+		return v.Value(), nil
+	}
+	if m.Type().Kind&(knd.Keyr|knd.Idxr) == 0 {
+		n, err := m.New()
+		if err != nil {
+			return nil, err
+		}
+		return n, n.Assign(m)
+	}
+	return deepCopy(v, make(map[Mut]Mut))
 }
+
 func deepCopy(v Val, cache map[Mut]Mut) (Val, error) {
 	m, ok := v.(Mut)
 	if !ok {
