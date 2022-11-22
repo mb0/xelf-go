@@ -8,8 +8,8 @@ import (
 	"xelf.org/xelf/typ"
 )
 
-// Reg is a registry context for type references, reflected types and proxies. Many functions and
-// container literals have an optional registry to aid in value conversion and construction.
+// Reg is a registry for custom mutable values and provides api to work proxies in general. Reg uses
+// the global reflection cache by default, to support self referential types and improve efficiency.
 type Reg struct {
 	refs  map[string]refInfo
 	Cache *Cache

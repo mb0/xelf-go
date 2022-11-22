@@ -13,10 +13,10 @@ We use three interfaces that describe sets of value implementations:
  * `Prx` for mutable proxy values
 
 We have three ways to parse an `Ast` to a value implementations:
- * `ParseVal`  returns generic values that may be immutable
- * `ParseMut`  returns generic and registered mutable values
- * `Mut.Parse` parses into a mutable proxy value provided by the user.
-    The value parse method can be optimize and allows user defined values.
+ * `ParseVal`  returns generic values, using immutable values for primitive literals
+ * `ParseMut`  returns generic mutable values
+ * `Mut.Parse` parses into a mutable value provided by the user.
+    The parse method can be optimize and allows user defined values.
 
 There are other some helper methods:
  * `Read`, `ReadInto`, `ReadIntoMut` to read from a named reader
@@ -27,9 +27,8 @@ We have another set of interfaces to cover capabilities:
  * `Apdr` for appendable values like list
  * `Keyr` for keyable values like dict or strc
 
-`Reg` is a registry where proxies are registered. The registry then provides implementation for xelf
-types, when no proxy is found a generic implementation is provided. We use the same registry as
-reflection cache to break self referential type cycles.
+`Reg` is a registry for custom mutable values and provides api to work proxies in general. Reg uses
+the global reflection cache by default, to support self referential types and improve efficiency.
 
 The registry must be used to creating new values or proxies. These operations are used all over the
 place and do happen deep in call stacks. Passing the registry through as argument looks bad and is
@@ -47,7 +46,7 @@ type implicitly addressed and wrapped in an interface and instead would increase
 
 All proxy values can point to pointer and then represent null directly without using an OptMut.
 
-The generic `Map` implementation can explicitly used instead of dicts by users provided types to
+The generic `Map` implementation can explicitly be used instead of dicts by users provided types to
 make working with dicts easier. `Dict` is a useful default because they preserve order which may be
 important for some internal conversions and program resolution.
 
