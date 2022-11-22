@@ -80,7 +80,7 @@ func (s *useSpec) Resl(p *exp.Prog, env exp.Env, c *exp.Call, _ typ.Type) (_ exp
 		loc := ParseLoc(ref.Path)
 		f, err := le.LoadFile(p, loc)
 		if err != nil {
-			return nil, fmt.Errorf("could not load module %q: %v", ref.Path, err)
+			return nil, err
 		}
 		refs := filterRefs(f.Refs, loc.Frag())
 		if ref.Alias != "" {

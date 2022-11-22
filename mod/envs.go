@@ -1,6 +1,8 @@
 package mod
 
 import (
+	"fmt"
+
 	"xelf.org/xelf/ast"
 	"xelf.org/xelf/exp"
 	"xelf.org/xelf/knd"
@@ -31,40 +33,55 @@ func FindLoaderEnv(env exp.Env) *LoaderEnv {
 }
 func (le *LoaderEnv) LoadFile(prog *exp.Prog, loc *Loc) (f *File, err error) {
 	base := ParseLoc(prog.File.URL)
+	var src *Src
 	for _, l := range le.Loaders {
-		src, err := l.LoadSrc(loc, base)
+		src, err = l.LoadSrc(loc, base)
 		if err != nil {
 			if err == ErrFileNotFound {
 				continue
 			}
-			return nil, err
+			return nil, fmt.Errorf("module source load error for %s:\n%v", src.URL, err)
 		}
 		if prog.Files == nil {
 			prog.Files = make(map[string]*File)
 		} else if f = prog.Files[src.URL]; f != nil {
 			return f, nil
 		}
+		if prog.Birth == nil {
+			prog.Birth = make(map[string]struct{})
+		} else if _, ok := prog.Birth[src.URL]; ok {
+			return nil, fmt.Errorf("module load recursion detected for %s", src.URL)
+		}
+		prog.Birth[src.URL] = struct{}{}
 		if src.Setup != nil {
 			f, err = src.Setup(prog, src)
 		} else {
-			e, err := exp.ParseAll(src.Raw)
+			var e exp.Exp
+			e, err = exp.ParseAll(src.Raw)
 			if err != nil {
-				return nil, err
+				break
 			}
 			// shallow copy the loader for every loaded file
 			p := *prog
 			p.File = File{URL: src.URL}
 			e, err = p.Resl(&p, e, typ.Void)
 			if err != nil {
-				return nil, err
+				break
 			}
 			_, err = p.Eval(&p, e)
 			f = &p.File
 		}
+		if err != nil {
+			break
+		}
+		delete(prog.Birth, src.URL)
 		prog.Files[src.URL] = f
-		return f, err
+		return f, nil
 	}
-	return nil, ErrFileNotFound
+	if err == nil {
+		err = ErrFileNotFound
+	}
+	return nil, fmt.Errorf("module load failed for %s:\n%v", src.URL, err)
 }
 
 func (le *LoaderEnv) Parent() exp.Env { return le.Par }

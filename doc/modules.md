@@ -28,18 +28,18 @@ Use case
 project conf: one often has a common project configuration as well as deployment target specific
 configuration, modules let use different files that are easily composed.
 
-daql repl: we want start a blank daql repl - if not a generic xelf repl, that we use to load
-a plain xelf configuration file for the development db details, pull in the dom package to define
-a new schema, pull in gen to experiment with code generation, pull in mig to migrate the db and
-insert some fixtures, pull in qry to read results from the database, pull in a script with reporting
-helpers, that use layla for pdf reports and then export the whole repl session as script file.
+daql repl: we want a generic xelf repl, that we use to load a plain xelf configuration file for the
+development db details, pull in the dom package to define a new schema, pull in gen to experiment
+with code generation, pull in mig to migrate the db and insert some fixtures, pull in qry to read
+results from the database, pull in a script with reporting helpers, that use layla for pdf reports
+and then export the whole repl session as script file.
 
 
 Implementation
 --------------
 
 Modules are just qualified literal values, but as concept a language extension mechanism.
-Modules are unique per program and cannot have itself as (indirect) dependency.
+Modules are unique per program and cannot have themselves as (indirect) dependency.
 
 Loaders locate, load and cache raw module sources by url. Sources are program independent and
 represented either as ast or as program specific setup hook.
@@ -82,20 +82,18 @@ I experienced that using the simple module name as qualifier like go does is ver
 to use this as default for external modules. The use spec can load whole files or pick single
 modules out and use aliases to resolve naming conflicts with one call.
 
+Daql packages dom and qry register module sources that prepare a program and provide extra data.
+The packages of course must still be imported into the go binary to register the module sources.
+
 Daql projects and schemas integrate with the new module system and export the node as dom property
 and all model types by name.
-
-Currently the program environment must be explicitly prepared to use daql packages. We would add dom
-and qry modules to encapsulate that setup. The dom package would add its specs and export the
-project, schema and model registry, that is then used to build up the dom schema. We still plan to
-import and register the module at compile time in these cases.
 
 We want to support process external code generators for the daql command. Maybe we can add a plugin
 module wrapper that support external processes using something like github.com/hashicorp/go-plugin.
 
-Daql and layla use the corresponding file name extension to indicate the expected xelf environment
-maybe we should converge on the xelf file with a use header. The idea is that we would make things
-easier for composing different extensions, tooling, being more explicit about requirements.
+Daql and layla used a corresponding file name extension to indicate the expected xelf environment.
+While we can still use explicit extensions, we should not encourage custom extension to simplify
+tooling. We can use the module system to ensure the expected environment.
 
 We want to import two versions of the same module. This would be especially handy for migrations
 where we may want to import both the old and new schema. The thing that complicates multiple type

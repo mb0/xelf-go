@@ -1,0 +1,8 @@
+(<> this must fail to resolve due to declaration order)
+(mod rec1
+	Greeting:('Hallo' rec2.Foo)
+)
+(mod rec2
+	Foo:15
+	Greet:(fn name:str (rec1.Greeting _))
+)

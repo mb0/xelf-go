@@ -2,6 +2,7 @@ package mod
 
 import (
 	"sort"
+	"strings"
 	"testing"
 
 	"xelf.org/xelf/exp"
@@ -57,6 +58,35 @@ func TestSysMods(t *testing.T) {
 		got, _ := res.Val.MarshalJSON()
 		if string(got) != test.want {
 			t.Errorf("%s got result %s want %s", test.name, got, test.want)
+		}
+	}
+}
+
+func TestFailMods(t *testing.T) {
+	fsmods := FileMods()
+	env := NewLoaderEnv(exp.Builtins(lib.Std), fsmods)
+	tests := []struct {
+		name string
+		raw  string
+		want string
+	}{
+		{"recurse", `(use './rec1')`,
+			"module load recursion detected for file:testdata/rec1.xelf"},
+		{"recurse", `(use './rec3')`,
+			"sym rec2.Foo unresolved"},
+	}
+	for _, test := range tests {
+		reg := &lit.Reg{Cache: &lit.Cache{}}
+		p := exp.NewProg(nil, reg, env)
+		p.File.URL = "testdata/"
+		_, err := p.RunStr(test.raw, nil)
+		if err == nil {
+			t.Errorf("%s expect error %s got none", test.name, test.want)
+			continue
+		}
+		got := err.Error()
+		if !strings.Contains(got, test.want) {
+			t.Errorf("%s error does not contain %s:\n%s", test.name, test.want, got)
 		}
 	}
 }

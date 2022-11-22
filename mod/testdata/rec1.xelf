@@ -1,0 +1,3 @@
+(<> this must fail to break recursive module loads)
+(use './rec2')
+(mod rec1)

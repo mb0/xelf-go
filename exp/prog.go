@@ -35,7 +35,10 @@ type Prog struct {
 	File File
 	Arg  *Lit
 
+	// Files collects all external files loaded by the program
 	Files map[string]*File
+	// Birth holds the uri for actively loading files to break recursive loads
+	Birth map[string]struct{}
 
 	fnid uint
 	dyn  Spec
