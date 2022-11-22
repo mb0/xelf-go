@@ -99,10 +99,6 @@ func (p *Prog) Lookup(s *Sym, k string, eval bool) (res Exp, err error) {
 	}
 	ml, err := p.File.Refs.Lookup(k)
 	if err == nil {
-		if !eval {
-			s.Type, s.Env, s.Rel = ml.Res, p, k
-			return s, nil
-		}
 		return ml, nil
 	}
 	res, err = p.Root.Lookup(s, k, eval)
