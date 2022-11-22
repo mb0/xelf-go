@@ -16,7 +16,7 @@ type Obj struct {
 
 func NewObj(t typ.Type) (*Obj, error) {
 	s := &Obj{Typ: t}
-	err := s.init(false)
+	_, err := s.pinit(false)
 	return s, err
 }
 
@@ -30,21 +30,6 @@ func MakeObj(kvs []KeyVal) *Obj {
 	return &Obj{Typ: typ.Obj("", ps...), Vals: vs}
 }
 
-func (s *Obj) init(ext bool) (err error) {
-	ps := s.ps()
-	vs := make([]Val, len(ps))
-	if ext {
-		copy(vs, s.Vals)
-	}
-	for i, p := range ps {
-		if ext && vs[i] != nil {
-			continue
-		}
-		vs[i] = Zero(p.Type)
-	}
-	s.Vals = vs
-	return err
-}
 func (s *Obj) Type() typ.Type { return s.Typ }
 func (s *Obj) Nil() bool      { return len(s.Vals) == 0 }
 func (s *Obj) Zero() bool {
@@ -59,9 +44,13 @@ func (s *Obj) Value() Val                   { return s }
 func (s *Obj) MarshalJSON() ([]byte, error) { return bfr.JSON(s) }
 func (s *Obj) UnmarshalJSON(b []byte) error { return unmarshal(b, s) }
 func (s *Obj) String() string               { return bfr.String(s) }
-func (s *Obj) Print(p *bfr.P) (err error) {
+func (s *Obj) Print(p *bfr.P) error {
 	p.Byte('{')
-	for i, par := range s.ps() {
+	pb, err := s.pinit(true)
+	if err != nil {
+		return err
+	}
+	for i, par := range pb.Params {
 		if i > 0 {
 			p.Sep()
 		}
@@ -84,7 +73,8 @@ func (s *Obj) New() (Mut, error) { return NewObj(s.Typ) }
 func (s *Obj) Ptr() interface{}  { return s }
 func (s *Obj) Parse(a ast.Ast) error {
 	if isNull(a) {
-		return s.init(false)
+		_, err := s.pinit(false)
+		return err
 	}
 	if a.Kind != knd.Dict {
 		return ast.ErrExpect(a, knd.Dict)
@@ -115,7 +105,9 @@ func (s *Obj) Parse(a ast.Ast) error {
 }
 func (s *Obj) Assign(p Val) error {
 	// TODO check types
-	s.init(false)
+	if _, err := s.pinit(false); err != nil {
+		return err
+	}
 	switch o := p.(type) {
 	case nil:
 	case Null:
@@ -138,28 +130,22 @@ func (s *Obj) Assign(p Val) error {
 	}
 	return nil
 }
-func (s *Obj) Len() int { return len(s.ps()) }
-func (s *Obj) Idx(i int) (Val, error) {
-	ps, ok := s.pidx(i)
-	if !ok {
-		return nil, ErrIdxBounds
+func (s *Obj) Len() int {
+	pb, _ := s.Typ.Body.(*typ.ParamBody)
+	if pb == nil {
+		return 0
 	}
-	if len(s.Vals) < len(ps) {
-		if err := s.init(true); err != nil {
-			return nil, err
-		}
+	return len(pb.Params)
+}
+func (s *Obj) Idx(i int) (Val, error) {
+	if _, err := s.pidx(i); err != nil {
+		return nil, err
 	}
 	return s.Vals[i], nil
 }
 func (s *Obj) SetIdx(idx int, el Val) error {
-	ps, ok := s.pidx(idx)
-	if !ok {
-		return ErrIdxNotFound
-	}
-	if len(s.Vals) < len(ps) {
-		if err := s.init(true); err != nil {
-			return err
-		}
+	if _, err := s.pidx(idx); err != nil {
+		return err
 	}
 	if el == nil {
 		el = Null{}
@@ -168,11 +154,9 @@ func (s *Obj) SetIdx(idx int, el Val) error {
 	return nil
 }
 func (s *Obj) IterIdx(it func(int, Val) error) error {
-	ps := s.ps()
-	if len(s.Vals) < len(ps) {
-		if err := s.init(true); err != nil {
-			return err
-		}
+	_, err := s.pinit(true)
+	if err != nil {
+		return err
 	}
 	for i, v := range s.Vals {
 		if err := it(i, v); err != nil {
@@ -185,34 +169,35 @@ func (s *Obj) IterIdx(it func(int, Val) error) error {
 	return nil
 }
 func (s *Obj) Keys() []string {
-	ps := s.ps()
-	res := make([]string, 0, len(ps))
-	for _, p := range ps {
+	pb, _ := s.Typ.Body.(*typ.ParamBody)
+	if pb == nil {
+		return nil
+	}
+	res := make([]string, 0, len(pb.Params))
+	for _, p := range pb.Params {
 		res = append(res, p.Key)
 	}
 	return res
 }
 func (s *Obj) Key(k string) (Val, error) {
-	ps, i := s.pkey(k)
+	pb, err := s.pinit(true)
+	if err != nil {
+		return nil, err
+	}
+	i := pb.FindKeyIndex(k)
 	if i < 0 {
 		return nil, fmt.Errorf("obj %s %q: %w", s.Typ, k, ErrKeyNotFound)
-	}
-	if len(s.Vals) < len(ps) {
-		if err := s.init(true); err != nil {
-			return nil, err
-		}
 	}
 	return s.Vals[i], nil
 }
 func (s *Obj) SetKey(k string, el Val) error {
-	ps, i := s.pkey(k)
+	pb, err := s.pinit(true)
+	if err != nil {
+		return err
+	}
+	i := pb.FindKeyIndex(k)
 	if i < 0 {
 		return fmt.Errorf("obj %s %q: %w", s.Typ, k, ErrKeyNotFound)
-	}
-	if len(s.Vals) < len(ps) {
-		if err := s.init(true); err != nil {
-			return err
-		}
 	}
 	if el == nil {
 		el = Null{}
@@ -221,13 +206,11 @@ func (s *Obj) SetKey(k string, el Val) error {
 	return nil
 }
 func (s *Obj) IterKey(it func(string, Val) error) error {
-	ps := s.ps()
-	if len(s.Vals) < len(ps) {
-		if err := s.init(true); err != nil {
-			return err
-		}
+	pb, err := s.pinit(true)
+	if err != nil {
+		return err
 	}
-	for i, p := range ps {
+	for i, p := range pb.Params {
 		if err := it(p.Key, s.Vals[i]); err != nil {
 			if err == BreakIter {
 				return nil
@@ -237,26 +220,32 @@ func (s *Obj) IterKey(it func(string, Val) error) error {
 	}
 	return nil
 }
-func (s *Obj) ps() []typ.Param {
-	pb := s.Typ.Body.(*typ.ParamBody)
-	return pb.Params
+func (s *Obj) pinit(ext bool) (pb *typ.ParamBody, err error) {
+	pb, _ = s.Typ.Body.(*typ.ParamBody)
+	if pb == nil || s.Typ.Kind&knd.Obj == 0 {
+		err = fmt.Errorf("not an obj type %s", s.Typ)
+	} else if !ext || len(s.Vals) < len(pb.Params) {
+		vs := make([]Val, len(pb.Params))
+		if ext {
+			copy(vs, s.Vals)
+		}
+		for i, p := range pb.Params {
+			if ext && vs[i] != nil {
+				continue
+			}
+			vs[i] = Zero(p.Type)
+		}
+		s.Vals = vs
+	}
+	return
 }
-func (s *Obj) pidx(i int) (ps []typ.Param, ok bool) {
+func (s *Obj) pidx(i int) (*typ.ParamBody, error) {
 	if i < 0 {
-		return nil, false
+		return nil, ErrIdxBounds
 	}
-	ps = s.ps()
-	if i >= len(ps) {
-		return nil, false
+	pb, err := s.pinit(true)
+	if err != nil || i >= len(pb.Params) {
+		return nil, err
 	}
-	return ps, true
-}
-
-func (s *Obj) pkey(k string) ([]typ.Param, int) {
-	pb := s.Typ.Body.(*typ.ParamBody)
-	i := pb.FindKeyIndex(k)
-	if i < 0 {
-		return nil, i
-	}
-	return pb.Params, i
+	return pb, nil
 }
