@@ -66,50 +66,13 @@ func (reg *Reg) Zero(t typ.Type) (m Mut, err error) {
 		}
 	}
 	k := t.Kind & knd.All
-	if k.Count() != 1 {
-		switch {
-		case k&knd.Num != 0 && k&^knd.Num == 0:
-			m = new(Num)
-		case k&knd.Char != 0 && k&^knd.Char == 0:
-			m = new(Char)
-		case k&knd.Keyr != 0 && k&^knd.Keyr == 0:
-			m = &Keyed{}
-		case k&knd.Idxr != 0 && k&^knd.Idxr == 0:
-			m = &Vals{}
-		default:
-			return newAnyPrx(reg, t), nil
-		}
-	} else {
-		switch k {
-		case knd.Typ:
-			t = typ.El(t)
-			m = &t
-		case knd.Bool:
-			m = new(Bool)
-		case knd.Int:
-			m = new(Int)
-		case knd.Real:
-			m = new(Real)
-		case knd.Str:
-			m = new(Str)
-		case knd.Raw:
-			m = new(Raw)
-		case knd.UUID:
-			m = new(UUID)
-		case knd.Time:
-			m = new(Time)
-		case knd.Span:
-			m = new(Span)
-		case knd.List:
-			m = &List{El: typ.ContEl(t)}
-		case knd.Dict:
-			m = &Dict{El: typ.ContEl(t)}
-		case knd.Obj:
-			m, err = NewObj(t)
-			if err != nil {
-				return nil, err
-			}
-		default:
+	switch k {
+	case knd.Typ:
+		t = typ.El(t)
+		m = &t
+	default:
+		m = Zero(t)
+		if m == nil {
 			return newAnyPrx(reg, t), nil
 		}
 	}
