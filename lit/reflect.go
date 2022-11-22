@@ -13,6 +13,15 @@ import (
 
 var DefaultCache = &Cache{}
 
+type typInfo struct {
+	typ.Type
+	*params
+}
+type params struct {
+	ps  []typ.Param
+	idx [][]int
+}
+
 // Cache holds process-shared reflection information
 type Cache struct {
 	sync.RWMutex

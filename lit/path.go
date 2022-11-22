@@ -200,7 +200,7 @@ func CreatePath(reg *Reg, mut Mut, path cor.Path, val Val) (err error) {
 				et = typ.Keyr
 			}
 		}
-		z, err := reg.Zero(et)
+		z, err := reg.Zero(typ.Deopt(et))
 		if err != nil {
 			return err
 		}

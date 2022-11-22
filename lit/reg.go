@@ -8,6 +8,11 @@ import (
 	"xelf.org/xelf/typ"
 )
 
+type refInfo struct {
+	Type typ.Type
+	Mut  Mut
+}
+
 // Reg is a registry for custom mutable values and provides api to work proxies in general. Reg uses
 // the global reflection cache by default, to support self referential types and improve efficiency.
 type Reg struct {
@@ -19,19 +24,6 @@ func (reg *Reg) init() {
 	if reg.Cache == nil {
 		reg.Cache = DefaultCache
 	}
-}
-
-type refInfo struct {
-	Type typ.Type
-	Mut  Mut
-}
-type typInfo struct {
-	typ.Type
-	*params
-}
-type params struct {
-	ps  []typ.Param
-	idx [][]int
 }
 
 // SetRef registers type and optionally a mutable implementation for ref.
@@ -57,43 +49,6 @@ func (reg *Reg) Each(f func(string, typ.Type, Mut) error) error {
 		err := f(ref, info.Type, info.Mut)
 		if err != nil {
 			return err
-		}
-	}
-	return nil
-}
-
-// Zero returns a primitive mutable assignable to a value of type t or null.
-func Zero(t typ.Type) Mut {
-	if k := t.Kind & knd.All; k != 0 {
-		switch k {
-		case knd.Typ:
-			return new(typ.Type)
-		case knd.Bool:
-			return new(Bool)
-		case knd.Int:
-			return new(Int)
-		case knd.Real:
-			return new(Real)
-		case knd.Str:
-			return new(Str)
-		case knd.Raw:
-			return &Raw{}
-		case knd.UUID:
-			return &UUID{}
-		case knd.Time:
-			return &Time{}
-		case knd.Span:
-			return new(Span)
-		}
-		switch {
-		case k&knd.Num != 0 && k&^knd.Num == 0:
-			return new(Num)
-		case k&knd.Char != 0 && k&^knd.Char == 0:
-			return new(Num)
-		case k&knd.Keyr != 0 && k&^knd.Keyr == 0:
-			return &Keyed{}
-		case k&knd.Idxr != 0 && k&^knd.Idxr == 0:
-			return &Vals{}
 		}
 	}
 	return nil

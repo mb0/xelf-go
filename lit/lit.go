@@ -78,19 +78,57 @@ type Prx interface {
 	NewWith(ptr reflect.Value) (Mut, error)
 }
 
+// Zero returns a mutable assignable to a value of type t or null.
+func Zero(t typ.Type) Mut {
+	k := t.Kind & knd.All
+	switch k {
+	case knd.Void:
+		return nil
+	case knd.Typ:
+		return new(typ.Type)
+	case knd.Bool:
+		return new(Bool)
+	case knd.Int:
+		return new(Int)
+	case knd.Real:
+		return new(Real)
+	case knd.Str:
+		return new(Str)
+	case knd.Raw:
+		return new(Raw)
+	case knd.UUID:
+		return new(UUID)
+	case knd.Time:
+		return new(Time)
+	case knd.Span:
+		return new(Span)
+	}
+	switch {
+	case k&knd.Num != 0 && k&^knd.Num == 0:
+		return new(Num)
+	case k&knd.Char != 0 && k&^knd.Char == 0:
+		return new(Char)
+	case k&knd.Keyr != 0 && k&^knd.Keyr == 0:
+		return new(Keyed)
+	case k&knd.Idxr != 0 && k&^knd.Idxr == 0:
+		return new(Vals)
+	}
+	return nil
+}
+
 func PrintZero(p *bfr.P, t typ.Type) error {
 	k := t.Kind & knd.Any
-	if k&knd.None != 0 || k.Count() != 1 {
+	if k&knd.None != 0 {
 		return p.Fmt("null")
 	}
 	switch k {
 	case knd.Typ:
-		return typ.Void.Print(p)
+		return p.Fmt("void")
 	case knd.Bool:
 		return p.Fmt("false")
-	case knd.Int, knd.Real:
+	case knd.Num, knd.Int, knd.Real:
 		return p.Fmt("0")
-	case knd.Str, knd.Raw:
+	case knd.Char, knd.Str, knd.Raw:
 		return Str("").Print(p)
 	case knd.UUID:
 		return UUID{}.Print(p)
@@ -98,9 +136,9 @@ func PrintZero(p *bfr.P, t typ.Type) error {
 		return Time{}.Print(p)
 	case knd.Span:
 		return Span(0).Print(p)
-	case knd.List:
+	case knd.Idxr, knd.List:
 		return p.Fmt(`[]`)
-	case knd.Dict, knd.Obj:
+	case knd.Keyr, knd.Dict, knd.Obj:
 		return p.Fmt(`{}`)
 	}
 	return p.Fmt("null")
