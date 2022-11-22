@@ -92,7 +92,11 @@ func FindProg(env Env) *Prog {
 func (p *Prog) Parent() Env { return p.Root }
 
 func (p *Prog) Lookup(s *Sym, k string, eval bool) (res Exp, err error) {
-	if p.Arg != nil && k[0] == '$' {
+	switch k[0] {
+	case '$':
+		if p.Arg == nil {
+			break
+		}
 		l, err := SelectLookup(p.Arg, cor.Keyed(k[1:]), eval)
 		if err != nil || eval {
 			return l, err
@@ -106,9 +110,6 @@ func (p *Prog) Lookup(s *Sym, k string, eval bool) (res Exp, err error) {
 	}
 	res, err = p.Root.Lookup(s, k, eval)
 	if err == ErrSymNotFound {
-		if t, err := p.Reg.LookupType(k); err == nil {
-			return &Lit{Res: typ.Typ, Val: t, Src: s.Src}, nil
-		}
 		if t, err := typ.ParseSym(k, s.Src, nil); err == nil {
 			return &Lit{Res: typ.Typ, Val: t, Src: s.Src}, nil
 		}

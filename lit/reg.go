@@ -1,8 +1,6 @@
 package lit
 
 import (
-	"fmt"
-
 	"xelf.org/xelf/cor"
 	"xelf.org/xelf/knd"
 	"xelf.org/xelf/typ"
@@ -36,14 +34,6 @@ func (reg *Reg) SetRef(ref string, t typ.Type, mut Mut) {
 	reg.refs[ref] = refInfo{t, mut}
 }
 
-// LookupType returns a type for ref or an error.
-func (reg *Reg) LookupType(ref string) (typ.Type, error) {
-	nfo, ok := reg.refs[cor.Keyed(ref)]
-	if ok && nfo.Type != typ.Void {
-		return nfo.Type, nil
-	}
-	return typ.Void, fmt.Errorf("no type found named %s", ref)
-}
 func (reg *Reg) Each(f func(string, typ.Type, Mut) error) error {
 	for ref, info := range reg.refs {
 		err := f(ref, info.Type, info.Mut)
