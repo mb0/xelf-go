@@ -20,6 +20,9 @@ func Select(val Val, path string) (Val, error) {
 // SelectPath returns the selected value at path from val or an error.
 func SelectPath(val Val, path cor.Path) (_ Val, err error) {
 	for i, s := range path {
+		if t, ok := val.Value().(typ.Type); ok {
+			return typ.SelectPath(t, path[i:])
+		}
 		if s.Sel {
 			val, err = SelectList(val, path[i:])
 		} else if s.Key != "" {
