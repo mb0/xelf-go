@@ -21,7 +21,7 @@ Calls and symbols cache their environment.
 
 A `Spec` is a func or form definition that resolves and evaluates calls. If the first element of a
 call does not resolve to a spec literal the program calls a `dyn` spec to allow syntax sugar.
-The `dyn` spec is evaluated from the environment.
+The `dyn` spec is evaluated from the root environment on init.
 
 Specs have a declaration type. When we resolves a call spec we instantiate the spec declaration
 and call `LayoutSpec` to match and group all arguments to spec parameters.

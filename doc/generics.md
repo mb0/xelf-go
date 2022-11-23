@@ -1,7 +1,7 @@
 Generics
 ========
 
-Most of the code was initial written when generics where not yet on the horizon.
+Most of the code was initial written when generics were not yet on the horizon.
 Although proxy literals cover all the cases that the "generic" literals don't, we might want
 to revisit the container types list and dict for additional type safety and the number literals to
 maybe drop number proxy literal all together.

@@ -115,8 +115,6 @@ func litSpec(a *exp.Lit, args []exp.Exp) (spec exp.Spec, _ []exp.Exp) {
 		spec = Add
 	case k&knd.Str != 0:
 		spec = Cat
-	case k&knd.Raw != 0:
-		spec = Json
 	case k&knd.List != 0:
 		spec = Append
 	case k&knd.Keyr != 0:

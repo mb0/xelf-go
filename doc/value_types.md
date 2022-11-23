@@ -6,7 +6,7 @@ We want to correct literal value types to be the most generic kind for packages 
 Problem
 -------
 
-We don't use the most generic kind for literal values and rely to heavily on an expression context
+We don't use the most generic kind for literal values and rely too heavily on an expression context
 for type annotations. For example we currently use lit.Str as default to the char value the literal
 expression type to hold the more general char type. So if we parse json obj with a time or uuid
 encoded as strings and pass the value to a program, then it cannot know the original type without

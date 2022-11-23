@@ -35,7 +35,7 @@ replaces the type name of const, obj and spec types; this changes the type name 
 `<func@atoi str int>`. Reference resolution specializes the type, sets a type id and normalizes the
 reference. The reference must always resolve to a assignable super-type.
 
-Work on a [Module System](./modules.md) will introduce a clean concept for qualified names.
+Work on a [Module System](./modules.md) introduced a clean concept for qualified names.
 
 Type ref lookup api was changed to allow references to the whole environment. This adds lots of
 power and flexibility, but we need to revisit keeping which reference around. We want to ensure that
