@@ -34,6 +34,7 @@ func TestParse(t *testing.T) {
 		{Opt(Num), `num?`, `<num?>`},
 		{Typ, `typ`, `<typ>`},
 		{TypOf(Num), `typ|num`, `<typ|num>`},
+		{VarTyp, `typ@`, `<typ@>`},
 		{LitOf(Num), `lit|num`, `<lit|num>`},
 		{CallOf(Num), `<call|num>`, ``},
 		{Opt(CallOf(Num)), `<call?|num>`, ``},
