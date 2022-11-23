@@ -6,15 +6,10 @@ import (
 	"xelf.org/xelf/typ"
 )
 
-type refInfo struct {
-	Type typ.Type
-	Mut  Mut
-}
-
 // Reg is a registry for custom mutable values and provides api to work proxies in general. Reg uses
 // the global reflection cache by default, to support self referential types and improve efficiency.
 type Reg struct {
-	refs  map[string]refInfo
+	refs  map[string]Mut
 	Cache *Cache
 }
 
@@ -25,19 +20,16 @@ func (reg *Reg) init() {
 }
 
 // SetRef registers type and optionally a mutable implementation for ref.
-func (reg *Reg) SetRef(ref string, t typ.Type, mut Mut) {
+func (reg *Reg) SetRef(ref string, mut Mut) {
 	if reg.refs == nil {
-		reg.refs = make(map[string]refInfo)
+		reg.refs = make(map[string]Mut)
 	}
-	t.Ref = ref
-	ref = cor.Keyed(ref)
-	reg.refs[ref] = refInfo{t, mut}
+	reg.refs[cor.Keyed(ref)] = mut
 }
 
-func (reg *Reg) Each(f func(string, typ.Type, Mut) error) error {
-	for ref, info := range reg.refs {
-		err := f(ref, info.Type, info.Mut)
-		if err != nil {
+func (reg *Reg) Each(f func(string, Mut) error) error {
+	for ref, mut := range reg.refs {
+		if err := f(ref, mut); err != nil {
 			return err
 		}
 	}
@@ -47,25 +39,21 @@ func (reg *Reg) Each(f func(string, typ.Type, Mut) error) error {
 // Zero returns a mutable zero value for t or an error.
 func (reg *Reg) Zero(t typ.Type) (m Mut, err error) {
 	reg.init()
-	if t.Kind&knd.Idxr == knd.List {
-		n := typ.ContEl(t).Ref
-		if n != "" {
-			nfo := reg.refs[n]
-			if nfo.Mut != nil {
-				if s, ok := nfo.Mut.(interface{ Slice() Mut }); ok {
+	k := t.Kind & knd.All
+	if t.Ref != "" {
+		if m := reg.refs[cor.Keyed(t.Ref)]; m != nil {
+			return m.New()
+		}
+	}
+	if k == knd.List {
+		if e := typ.ContEl(t); e.Ref != "" {
+			if m := reg.refs[cor.Keyed(e.Ref)]; m != nil {
+				if s, ok := m.(interface{ Slice() Mut }); ok {
 					return s.Slice(), nil
 				}
 			}
 		}
-	} else {
-		if t.Ref != "" {
-			nfo := reg.refs[t.Ref]
-			if nfo.Mut != nil {
-				return nfo.Mut.New()
-			}
-		}
 	}
-	k := t.Kind & knd.All
 	switch k {
 	case knd.Typ:
 		t = typ.El(t)
@@ -82,22 +70,19 @@ func (reg *Reg) Zero(t typ.Type) (m Mut, err error) {
 	return m, nil
 }
 
-// AddFrom updates the registry with entries from o.
+// AddFrom updates the registry and reflect cache with entries from o.
 func (reg *Reg) AddFrom(o *Reg) {
-	for ref, r := range o.refs {
-		if ri, ok := reg.refs[ref]; !ok || ri.Type == typ.Void || ri.Mut == nil {
-			reg.SetRef(ref, r.Type, reg.copyMut(r.Mut))
+	if reg.refs == nil {
+		reg.refs = make(map[string]Mut, len(o.refs))
+	}
+	for ref, mut := range o.refs {
+		if _, ok := reg.refs[ref]; !ok {
+			reg.refs[ref] = mut
 		}
 	}
-	reg.Cache = o.Cache
-}
-
-func (reg *Reg) copyMut(p Mut) Mut {
-	if p != nil {
-		p, _ = p.New()
-		if wr, ok := p.(interface{ WithReg(*Reg) }); ok {
-			wr.WithReg(reg)
-		}
+	if reg.Cache == nil {
+		reg.Cache = o.Cache
+	} else {
+		reg.Cache.AddFrom(o.Cache)
 	}
-	return p
 }

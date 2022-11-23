@@ -266,6 +266,34 @@ func (c *Cache) addEmbed(pm *params, t reflect.Type, s *tstack, idx []int) (bool
 	return false, nil
 }
 
+// AddFrom updates the cache with entries from o.
+func (c *Cache) AddFrom(o *Cache) {
+	o.RLock()
+	c.Lock()
+	if len(o.proxy) > 0 {
+		if c.proxy == nil {
+			c.proxy = make(map[reflect.Type]Prx)
+		}
+		for rt, prx := range o.proxy {
+			if _, ok := c.proxy[rt]; !ok {
+				c.proxy[rt] = prx
+			}
+		}
+	}
+	if len(o.param) > 0 {
+		if c.param == nil {
+			c.param = make(map[reflect.Type]typInfo)
+		}
+		for rt, nfo := range o.param {
+			if _, ok := c.param[rt]; !ok {
+				c.param[rt] = nfo
+			}
+		}
+	}
+	c.Unlock()
+	o.RUnlock()
+}
+
 type tstack struct {
 	stack []reflect.Type
 }
