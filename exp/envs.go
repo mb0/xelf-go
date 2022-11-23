@@ -54,12 +54,16 @@ func DotKey(k string) (string, bool) {
 }
 
 func LookupType(env Env) typ.Lookup {
-	return func(k string) (typ.Type, error) {
-		r, err := env.Lookup(&Sym{Sym: k}, k, true)
+	return func(k string) (_ typ.Type, err error) {
+		s := &Sym{Sym: k, Env: env, Rel: k}
+		r, err := env.Lookup(s, k, true)
 		if err != nil {
 			return typ.Void, err
 		}
-		l := r.(*Lit)
+		l, _ := r.(*Lit)
+		if l == nil {
+			return typ.Void, ErrSymNotFound
+		}
 		if t, ok := l.Val.(typ.Type); ok {
 			return t, nil
 		}

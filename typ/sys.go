@@ -2,7 +2,6 @@ package typ
 
 import (
 	"fmt"
-	"strings"
 
 	"xelf.org/xelf/knd"
 )
@@ -134,41 +133,10 @@ func (sys *Sys) resolveRef(lup Lookup, t Type) (Type, error) {
 	if lup == nil {
 		return t, fmt.Errorf("no type lookup configured")
 	}
-	// try the first part
-	ref, rest, sel := strings.Cut(t.Ref, ".")
-	n, err := lup(ref)
+	// try the whole ref
+	n, err := lup(t.Ref)
 	if err != nil {
-		if !sel {
-			return t, err
-		}
-		// modules are not yet implemented, so check for schema qualified types
-		// we can at least expect a flat schema.model structure
-		idx := strings.IndexByte(rest, '.')
-		if idx >= 0 {
-			idx += 1 + len(ref)
-			ref, rest, sel = t.Ref[:idx], t.Ref[idx+1:], true
-		} else {
-			ref, rest, sel = t.Ref, "", false
-		}
-		n, err = lup(ref)
-		if err != nil {
-			return t, err
-		}
-	}
-	// normalize ref
-	ref = n.Ref
-	if sel {
-		ref += "." + rest
-		if n.Kind&knd.Ref != 0 {
-			n = Ref(ref)
-		} else {
-			// find selection
-			n, err = Select(n, rest)
-			if err != nil {
-				return t, err
-			}
-			n.Ref = ref
-		}
+		return t, err
 	}
 	if t.Kind&knd.None != 0 {
 		n.Kind |= knd.None

@@ -1,11 +1,5 @@
 package exp
 
-import (
-	"strings"
-
-	"xelf.org/xelf/cor"
-)
-
 // File is a simple representation of any xelf input that store information about modules.
 type File struct {
 	// URL is the resource locator for this input, it should be empty or conform to net/url.
@@ -39,26 +33,10 @@ type ModRef struct {
 type ModRefs []ModRef
 
 func (ms ModRefs) Find(k string) *ModRef {
-	if cor.IsKey(k) {
-		for i, m := range ms {
-			if m.Alias != "" && m.Alias == k || m.Name == k {
-				return &ms[i]
-			}
+	for i, m := range ms {
+		if m.Alias != "" && m.Alias == k || m.Name == k {
+			return &ms[i]
 		}
 	}
 	return nil
-}
-func (ms ModRefs) Lookup(k string) (*Lit, error) {
-	if len(ms) == 0 {
-		return nil, ErrSymNotFound
-	}
-	dot := strings.IndexByte(k, '.')
-	if dot <= 0 {
-		return nil, ErrSymNotFound
-	}
-	m := ms.Find(k[:dot])
-	if m == nil {
-		return nil, ErrSymNotFound
-	}
-	return Select(m.Decl, k[dot+1:])
 }

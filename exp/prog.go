@@ -3,6 +3,7 @@ package exp
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"xelf.org/xelf/ast"
 	"xelf.org/xelf/cor"
@@ -104,17 +105,33 @@ func (p *Prog) Lookup(s *Sym, k string, eval bool) (res Exp, err error) {
 		s.Type, s.Env, s.Rel = l.Res, p, k
 		return s, nil
 	}
-	ml, err := p.File.Refs.Lookup(k)
-	if err == nil {
-		return ml, nil
+	if qual, rest := modQual(k); qual != "" {
+		m := p.File.Refs.Find(qual)
+		if m != nil {
+			return SelectLookup(m.Decl, rest, true)
+		}
 	}
 	res, err = p.Root.Lookup(s, k, eval)
 	if err == ErrSymNotFound {
 		if t, err := typ.ParseSym(k, s.Src, nil); err == nil {
+			t, err = p.Sys.Inst(LookupType(s.Env), t)
+			if err != nil {
+				return nil, err
+			}
 			return &Lit{Res: typ.Typ, Val: t, Src: s.Src}, nil
 		}
 	}
 	return res, err
+}
+
+func modQual(k string) (q, _ string) {
+	dot := strings.IndexByte(k, '.')
+	if dot > 0 {
+		if q = k[:dot]; cor.IsKey(q) {
+			return k[:dot], k[dot+1:]
+		}
+	}
+	return "", k
 }
 
 // Resl resolves an expression using a type hint and returns the result or an error.
@@ -133,24 +150,25 @@ func (p *Prog) Resl(env Env, e Exp, h typ.Type) (Exp, error) {
 		if h.Kind == knd.Sym {
 			return &Lit{Res: typ.Sym, Val: lit.Str(a.Sym), Src: a.Src}, nil
 		}
-		k := a.Sym
-		if a.Env != nil {
-			env = a.Env
-			k = a.Rel
+		lup := LookupType(env)
+		if a.Sym[0] == '@' {
+			t, err := typ.ParseSym(a.Sym, a.Src, nil)
+			if err != nil {
+				return nil, ast.ErrReslSym(a.Src, a.Sym, err)
+			}
+			t, err = p.Sys.Inst(lup, t)
+			if err != nil {
+				return nil, ast.ErrReslSym(a.Src, a.Sym, err)
+			}
+			return &Lit{Res: typ.Typ, Val: t, Src: a.Src}, nil
 		}
-		r, err := env.Lookup(a, k, false)
+		if a.Env == nil {
+			a.Env = env
+			a.Rel = a.Sym
+		}
+		r, err := a.Env.Lookup(a, a.Rel, false)
 		if err != nil {
 			return nil, ast.ErrReslSym(a.Src, a.Sym, err)
-		}
-		lup := LookupType(env)
-		if l, ok := r.(*Lit); ok {
-			if t, ok := l.Val.(typ.Type); ok {
-				t, err = p.Sys.Inst(lup, t)
-				if err != nil {
-					return nil, ast.ErrReslSym(a.Src, a.Sym, err)
-				}
-				l.Val = t
-			}
 		}
 		ut, err := p.Sys.Unify(lup, r.Resl(), h)
 		if err != nil {
@@ -160,7 +178,7 @@ func (p *Prog) Resl(env Env, e Exp, h typ.Type) (Exp, error) {
 		return r, nil
 	case *Lit:
 		lup := LookupType(env)
-		if a.Res.Kind&knd.Typ != 0 {
+		if a.Res.Kind == knd.Typ {
 			t, ok := a.Val.(typ.Type)
 			if ok {
 				a.Val = p.Sys.Update(lup, t)
