@@ -9,7 +9,7 @@ import (
 	"xelf.org/xelf/typ"
 )
 
-var Len = &lenSpec{impl("<form@len <alt@? list keyr str raw> int>")}
+var Len = &lenSpec{impl("<form@len <alt? list keyr str raw> int>")}
 
 type lenSpec struct{ exp.SpecBase }
 
@@ -87,32 +87,36 @@ func (s *rangeSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 	if err != nil {
 		return nil, err
 	}
-	n, err := lit.ToInt(args[0].Val)
+	fst := args[0]
+	n, err := lit.ToInt(fst.Val)
 	if err != nil {
 		return nil, err
 	}
-	snd := args[1]
-	var fun exp.Spec
-	if snd != nil {
+	var list *lit.List
+	res := make([]lit.Val, n)
+	if snd := args[1]; snd != nil {
 		f, ok := snd.Val.(exp.Spec)
 		if !ok {
 			return nil, fmt.Errorf("unexpected func %[1]T %[1]s", snd)
 		}
-		fun = f
-	}
-	res := make([]lit.Val, n)
-	for i := range res {
-		var r lit.Val = lit.Int(i)
-		if fun != nil {
-			arg := &exp.Lit{Res: typ.Int, Val: r, Src: snd.Src}
-			r, err = callFunc(p, c, fun, []exp.Exp{arg}, snd.Src)
+		farg := &exp.Lit{Res: typ.Int, Src: fst.Src}
+		fargs := []exp.Exp{farg}
+		for i := range res {
+			farg.Val = lit.Int(i)
+			res[i], err = callFunc(p, c, f, fargs, snd.Src)
 			if err != nil {
 				return nil, err
 			}
 		}
-		res[i] = r
+		list = &lit.List{El: exp.SigRes(f.Type()).Type, Vals: res}
+		return &exp.Lit{Res: list.Type(), Val: list, Src: c.Src}, nil
+	} else {
+		for i := range res {
+			res[i] = lit.Int(i)
+		}
+		list = &lit.List{El: typ.Int, Vals: res}
 	}
-	return &exp.Lit{Res: exp.SigRes(c.Sig).Type, Val: &lit.List{Vals: res}, Src: c.Src}, nil
+	return &exp.Lit{Res: list.Type(), Val: list, Src: c.Src}, nil
 }
 
 func callFunc(p *exp.Prog, c *exp.Call, s exp.Spec, org []exp.Exp, src ast.Src) (lit.Val, error) {
