@@ -239,12 +239,6 @@ func (e *FuncEnv) Lookup(s *exp.Sym, k string, eval bool) (exp.Exp, error) {
 func dotkey(k string) (string, bool) {
 	if k == "_" {
 		k = ".0"
-	} else if k[0] != '.' {
-		return k, false
-	} else {
-		if len(k) > 1 && k[1] == '.' {
-			return k[1:], false
-		}
 	}
-	return k, true
+	return exp.DotKey(k)
 }
