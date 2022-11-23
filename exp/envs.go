@@ -16,7 +16,7 @@ func (e Builtins) Parent() Env { return nil }
 
 func (e Builtins) Lookup(s *Sym, k string, eval bool) (Exp, error) {
 	if sp := e[k]; sp != nil {
-		return &Lit{Res: typ.VarSpec, Val: sp, Src: s.Src}, nil
+		return &Lit{Res: typ.Spec, Val: sp, Src: s.Src}, nil
 	}
 	return nil, ErrSymNotFound
 }

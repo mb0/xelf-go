@@ -213,7 +213,7 @@ func unify(sys *Sys, t, h Type) (Type, error) {
 			}
 			return unibind(sys, a, b, r), nil
 		case *ParamBody:
-			r.Ref = "_"
+			r.Ref = ""
 			bb, ok := b.Body.(*ParamBody)
 			if ak&knd.Tupl != 0 {
 				if !ok {
@@ -234,6 +234,8 @@ func unify(sys *Sys, t, h Type) (Type, error) {
 				if p.Type.Body != nil && !p.Type.Body.EqualHist(op.Type.Body, nil) {
 					break Switch
 				}
+				p.ID = 0
+				p.Kind = (p.Kind &^ knd.Var) | (op.Kind & knd.None)
 				ps = append(ps, p)
 			}
 			r.Body = &ParamBody{Params: ps}

@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func TestCtx(t *testing.T) {
+func TestSys(t *testing.T) {
 	s := Func("",
 		P("", Func("", P("", Var(1, Void)), P("", Bool))),
 		P("", ListOf(Var(1, Void))),
@@ -50,6 +50,7 @@ func TestInst(t *testing.T) {
 		w string
 	}{
 		{"<form@a num@ _>", "<form@a num@2 num@2>"},
+		// The self selection in child is resolved and then printed as selection again
 		{"<obj id:int@ par:.id child:list|.>", "<obj id:int@2 par:int@2 child:list|.>"},
 		{"<obj id:int@ body:<obj child:list|..>>", "<obj id:int@2 body:<obj child:list|..>>"},
 		{"<form@make typ@ lit|_>", "<form@make typ@2 lit|typ@2>"},
@@ -88,6 +89,8 @@ func TestUnify(t *testing.T) {
 		{"int", "real", "cannot", Void},
 		{"num", "str", "cannot", Void},
 		{"num", "<alt int str>", "", Int},
+		{"<alt int str>", "<alt int str>", "", Alt(Int, Str)},
+		{"<alt num str>", "<alt int char>", "", Alt(Int, Str)},
 		{"<alt real bits>", "<alt int str>", "cannot", Void},
 		{"<alt real bits str>", "<alt int str>", "", Str},
 		{"<alt@ real bits str>", "<alt int str>", "", WithID(1, Str)},
@@ -95,19 +98,23 @@ func TestUnify(t *testing.T) {
 		{"@", "num", "", Var(1, Num)},
 		{"@", "int", "", WithID(1, Int)},
 		{"int", "@", "", WithID(1, Int)},
-		{"@", "@", "", Var(1, Void)},
+		{"@1", "@2", "", Var(1, Void)},
+		{"idxr", "list|int", "", ListOf(Int)},
 		{"list", "list|int", "", ListOf(Int)},
 		{"list|@", "list", "", ListOf(Var(1, Void))},
 		{"list|@", "list|int", "", ListOf(WithID(1, Int))},
 		{"list|str", "list|int", "cannot", Void},
-		{"<obj x:int y:int>", "<obj x:int y:int>", "", Obj("", P("x", Int), P("y", Int))},
-		{"<obj x:int y:int>", "any", "", Obj("", P("x", Int), P("y", Int))},
+		{"<obj@foo x:int y:int>", "<obj@foo x:int y:int>", "", Obj("foo", P("x", Int), P("y", Int))},
+		{"<obj@foo x:int y:int>", "<obj@bar x:int y:int>", "", Obj("", P("x", Int), P("y", Int))},
+		{"<obj@foo x:int y:int>", "any", "", Obj("foo", P("x", Int), P("y", Int))},
+		{"<obj@foo x:int y:int>", "idxr", "", Obj("foo", P("x", Int), P("y", Int))},
 		{"num@", "exp", "", Var(1, Num)},
 		{"num", "exp|@", "", Var(1, Num)},
 		{"num", "@", "", Var(1, Num)},
 		{"tupl|int", "tupl?", "", ElemTupl(Int)},
-		{"<form@a int any>", "<form@b int any>", "", Form("_", P("", Int), P("", Any))},
-		{"<form@a int any>", "<form@b int? any>", "", Form("_", P("", Int), P("", Any))},
+		{"tupl?|int", "tupl?", "", Opt(ElemTupl(Int))},
+		{"<form@a int any>", "<form@b int any>", "", Form("", P("", Int), P("", Any))},
+		{"<form@a int@1 any>", "<form@b int@2? any>", "", Form("", P("", Opt(Int)), P("", Any))},
 	}
 	for _, test := range tests {
 		a, err := Parse(test.a)
@@ -139,35 +146,6 @@ func TestUnify(t *testing.T) {
 		if test.err == "" && !r.Equal(test.w) {
 			t.Errorf("unify ab for %s %s want %s got %s\n",
 				a, b, test.w, r)
-		}
-	}
-}
-
-func TestUnifyError(t *testing.T) {
-	tests := []struct {
-		a, b Type
-	}{
-		{Num, Char},
-		{Var(1, Char), Int},
-		{Int, Var(1, Char)},
-		{Alt(Num, Int), Char},
-		{ListOf(Alt(Num)), ListOf(Char)},
-	}
-	for _, test := range tests {
-		sys := NewSys()
-		m := make(map[int32]Type)
-		a, _ := sys.inst(nil, test.a, m)
-		b, _ := sys.inst(nil, test.b, m)
-		r := sys.Bind(Var(0, Void))
-		var err error
-		r, err = sys.Unify(r, a)
-		if err != nil {
-			t.Errorf("unify a error for %s %s: %+v", a, b, err)
-			continue
-		}
-		r, err = sys.Unify(r, b)
-		if err == nil {
-			t.Errorf("unify b want error for %s %s got %s", a, b, r)
 		}
 	}
 }

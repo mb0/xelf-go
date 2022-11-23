@@ -119,8 +119,7 @@ func callFunc(p *exp.Prog, c *exp.Call, s exp.Spec, org []exp.Exp, src ast.Src) 
 	sig := s.Type()
 	args, err := exp.LayoutSpec(sig, org)
 	if err != nil {
-		r, _ := p.Sys.Update(sig)
-		return nil, fmt.Errorf("layout fun call %s with %s\n\t%v", r, org, err)
+		return nil, fmt.Errorf("layout fun call %s with %s\n\t%v", sig, org, err)
 	}
 	cc := &exp.Call{Sig: sig, Spec: s, Args: args}
 	_, err = s.Resl(p, c.Env, cc, typ.Void)

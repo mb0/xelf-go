@@ -169,16 +169,6 @@ func (p *Prog) Resl(env Env, e Exp, h typ.Type) (Exp, error) {
 		if err != nil {
 			return nil, ast.ErrReslSym(a.Src, a.Sym, err)
 		}
-		if r.Resl() == typ.VarSpec {
-			l := r.(*Lit)
-			t := l.Val.Type()
-			nt, err := p.Sys.Inst(LookupType(env), t)
-			if err != nil {
-				return nil, ast.ErrReslTyp(a.Src, t, err)
-			}
-			l.Res = nt
-			return l, nil
-		}
 		if h != typ.Void {
 			ut, err := p.Sys.Unify(r.Resl(), h)
 			if err != nil {
@@ -188,6 +178,15 @@ func (p *Prog) Resl(env Env, e Exp, h typ.Type) (Exp, error) {
 		}
 		return r, nil
 	case *Lit:
+		if a.Res == typ.Spec {
+			t := a.Val.Type()
+			nt, err := p.Sys.Inst(LookupType(env), t)
+			if err != nil {
+				return nil, ast.ErrReslTyp(a.Src, t, err)
+			}
+			a.Res = nt
+			return a, nil
+		}
 		if a.Res == typ.VarTyp {
 			t, ok := a.Val.(typ.Type)
 			if !ok {
@@ -228,16 +227,31 @@ func (p *Prog) Resl(env Env, e Exp, h typ.Type) (Exp, error) {
 		return a, nil
 	case *Call:
 		if a.Spec == nil {
-			var err error
-			a.Spec, a.Args, a.Sig, err = p.reslSpec(env, a)
+			if len(a.Args) == 0 {
+				return nil, ast.ErrReslSpec(a.Src, "unexpected empty call", nil)
+			}
+			fst, err := p.Resl(env, a.Args[0], typ.Void)
 			if err != nil {
 				return nil, err
 			}
-			if a.Sig == typ.VarSpec {
-				a.Sig, err = p.Sys.Inst(LookupType(env), a.Spec.Type())
-				if err != nil {
-					return nil, ast.ErrLayout(a.Src, a.Sig, err)
+			if fst.Kind() == knd.Lit && fst.Resl().Kind&knd.Spec != 0 {
+				if l, ok := fst.(*Lit); ok {
+					if s, ok := l.Val.(Spec); ok {
+						a.Spec = s
+						a.Args = a.Args[1:]
+					}
 				}
+			}
+			if a.Spec == nil {
+				if p.dyn == nil {
+					return nil, ast.ErrReslSpec(a.Src, "unsupported dyn call", nil)
+				}
+				a.Spec = p.dyn
+				a.Args[0] = fst
+			}
+			a.Sig, err = p.Sys.Inst(LookupType(env), a.Spec.Type())
+			if err != nil {
+				return nil, ast.ErrReslSpec(a.Src, p.dyn.Type().String(), err)
 			}
 			a.Args, err = LayoutSpec(a.Sig, a.Args)
 			if err != nil {
@@ -278,6 +292,15 @@ func (p *Prog) Eval(env Env, e Exp) (_ *Lit, err error) {
 		}
 		return &Lit{Val: &lit.List{Vals: vals}}, nil
 	case *Lit:
+		if a.Res == typ.Spec {
+			t := a.Val.Type()
+			nt, err := p.Sys.Inst(LookupType(env), t)
+			if err != nil {
+				return nil, ast.ErrReslTyp(a.Src, t, err)
+			}
+			a.Res = nt
+			return a, nil
+		}
 		if a.Res == typ.Typ {
 			if t, ok := a.Val.(typ.Type); ok {
 				a.Val, err = p.Sys.Update(t)
@@ -312,26 +335,4 @@ func (p *Prog) EvalArgs(c *Call) ([]*Lit, error) {
 func (p *Prog) NextFnID() uint {
 	p.fnid++
 	return p.fnid
-}
-
-func (p *Prog) reslSpec(env Env, c *Call) (Spec, []Exp, typ.Type, error) {
-	if len(c.Args) == 0 {
-		return nil, nil, typ.Void, ast.ErrReslSpec(c.Src, "unexpected empty call", nil)
-	}
-	fst, err := p.Resl(env, c.Args[0], typ.Void)
-	if err != nil {
-		return nil, nil, typ.Void, err
-	}
-	if fst.Kind() == knd.Lit && fst.Resl().Kind&knd.Spec != 0 {
-		if l, ok := fst.(*Lit); ok {
-			if s, ok := l.Val.(Spec); ok {
-				return s, c.Args[1:], l.Res, nil
-			}
-		}
-	}
-	if p.dyn == nil {
-		return nil, nil, typ.Void, ast.ErrReslSpec(c.Src, "unsupported dyn call", nil)
-	}
-	c.Args[0] = fst
-	return p.dyn, c.Args, typ.VarSpec, nil
 }

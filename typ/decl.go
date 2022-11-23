@@ -18,13 +18,14 @@ var (
 	Time = Type{Kind: knd.Time}
 	Span = Type{Kind: knd.Span}
 
-	Lit  = Type{Kind: knd.Lit}
-	Typ  = Type{Kind: knd.Typ}
-	Sym  = Type{Kind: knd.Sym}
-	Tag  = Type{Kind: knd.Tag}
-	Tupl = Type{Kind: knd.Tupl}
-	Call = Type{Kind: knd.Call}
-	Exp  = Type{Kind: knd.Exp}
+	Lit    = Type{Kind: knd.Lit}
+	Typ    = Type{Kind: knd.Typ}
+	VarTyp = Type{Kind: knd.Typ | knd.Var, ID: -1}
+	Sym    = Type{Kind: knd.Sym}
+	Tag    = Type{Kind: knd.Tag}
+	Tupl   = Type{Kind: knd.Tupl}
+	Call   = Type{Kind: knd.Call}
+	Exp    = Type{Kind: knd.Exp}
 
 	Idxr = Type{Kind: knd.Idxr}
 	Keyr = Type{Kind: knd.Keyr}
@@ -34,11 +35,6 @@ var (
 	Data = Type{Kind: knd.Data}
 	Spec = Type{Kind: knd.Spec}
 	Any  = Type{Kind: knd.Any}
-)
-
-var (
-	VarTyp  = Type{Kind: knd.Typ | knd.Var, ID: -1}
-	VarSpec = Type{Kind: knd.Spec | knd.Var, ID: -1}
 )
 
 func Opt(t Type) Type {
