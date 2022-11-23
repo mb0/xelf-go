@@ -87,21 +87,25 @@ func ErrUnexpectedExp(s Src, e interface{}) *Error {
 }
 func ErrReslSym(s Src, sym string, err error) *Error {
 	name := fmt.Sprintf("sym %s unresolved", sym)
-	return &Error{Src: s, Code: 502, Name: name, Err: err}
+	return &Error{Src: s, Code: 510, Name: name, Err: err}
+}
+func ErrReslTyp(s Src, t interface{}, err error) *Error {
+	name := fmt.Sprintf("typ %v unresolved", t)
+	return &Error{Src: s, Code: 511, Name: name, Err: err}
 }
 func ErrReslSpec(s Src, name string, err error) *Error {
-	return &Error{Src: s, Code: 503, Name: name, Err: err}
+	return &Error{Src: s, Code: 512, Name: name, Err: err}
 }
 func ErrUnify(s Src, name string) *Error {
-	return &Error{Src: s, Code: 504, Name: name}
+	return &Error{Src: s, Code: 520, Name: name}
 }
 func ErrLayout(s Src, t fmt.Stringer, err error) *Error {
 	name := fmt.Sprintf("layout %s failed", t)
-	return &Error{Src: s, Code: 505, Name: name, Err: err}
+	return &Error{Src: s, Code: 521, Name: name, Err: err}
 }
 func ErrEval(s Src, name string, err error) *Error {
 	name = fmt.Sprintf("eval %s failed", name)
-	return &Error{Src: s, Code: 506, Name: name, Err: err}
+	return &Error{Src: s, Code: 530, Name: name, Err: err}
 }
 func ErrUserErr(s Src, name string, err error) *Error {
 	return &Error{Src: s, Code: 600, Name: name, Err: err}
