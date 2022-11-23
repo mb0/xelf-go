@@ -92,8 +92,14 @@ func (s *dynSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 	if err != nil {
 		return nil, ast.ErrEval(a.Source(), fmt.Sprintf("dyn resl call failed for %s", a), err)
 	}
-	cc = ce.(*exp.Call)
-	return cc.Spec.Eval(p, cc)
+	switch l := ce.(type) {
+	case *exp.Lit:
+		return l, nil
+	case *exp.Call:
+		return l.Spec.Eval(p, l)
+	}
+	err = fmt.Errorf("unexpected result %T", ce)
+	return nil, ast.ErrEval(a.Source(), fmt.Sprintf("dyn resl call failed for %s", a), err)
 }
 
 func litSpec(a *exp.Lit, args []exp.Exp) (spec exp.Spec, _ []exp.Exp) {

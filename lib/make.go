@@ -15,6 +15,9 @@ type makeSpec struct{ exp.SpecBase }
 
 func (s *makeSpec) Value() lit.Val { return s }
 func (s *makeSpec) Resl(p *exp.Prog, env exp.Env, c *exp.Call, h typ.Type) (exp.Exp, error) {
+	if c.Env == nil {
+		c.Env = env
+	}
 	fst, err := p.Resl(env, c.Args[0], typ.Typ)
 	if err != nil {
 		return nil, err

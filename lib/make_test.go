@@ -13,6 +13,7 @@ func TestMakeEval(t *testing.T) {
 		typ  string
 	}{
 		{`(make int 1)`, `1`, "<int>"},
+		{`(make int null)`, `0`, "<int>"},
 		{`(make real 1)`, `1`, "<real>"},
 		{`(make str 'ab')`, `ab`, "<str>"},
 		{`(make raw "test")`, `test`, "<raw>"},

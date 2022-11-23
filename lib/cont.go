@@ -115,11 +115,12 @@ func (s *rangeSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 	return &exp.Lit{Res: exp.SigRes(c.Sig).Type, Val: &lit.List{Vals: res}, Src: c.Src}, nil
 }
 
-func callFunc(p *exp.Prog, c *exp.Call, s exp.Spec, args []exp.Exp, src ast.Src) (lit.Val, error) {
+func callFunc(p *exp.Prog, c *exp.Call, s exp.Spec, org []exp.Exp, src ast.Src) (lit.Val, error) {
 	sig := s.Type()
-	args, err := exp.LayoutSpec(sig, args)
+	args, err := exp.LayoutSpec(sig, org)
 	if err != nil {
-		return nil, err
+		r, _ := p.Sys.Update(sig)
+		return nil, fmt.Errorf("layout fun call %s with %s\n\t%v", r, org, err)
 	}
 	cc := &exp.Call{Sig: sig, Spec: s, Args: args}
 	_, err = s.Resl(p, c.Env, cc, typ.Void)

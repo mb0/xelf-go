@@ -5,7 +5,6 @@ import (
 	"strconv"
 
 	"xelf.org/xelf/exp"
-	"xelf.org/xelf/knd"
 	"xelf.org/xelf/lit"
 	"xelf.org/xelf/typ"
 )
@@ -65,14 +64,12 @@ func explicitArgs(p *exp.Prog, fe *FuncEnv, es []exp.Exp) error {
 		if err != nil {
 			return err
 		}
-		if pa.Res.Kind&knd.Typ != 0 {
-			pv, ok := pa.Val.(typ.Type)
-			if ok {
-				t := *tag
-				t.Exp = &exp.Lit{Res: pv, Src: tag.Src, Val: lit.Null{}}
-				keys = append(keys, t)
-				continue
-			}
+		pv, ok := pa.Val.(typ.Type)
+		if ok {
+			t := *tag
+			t.Exp = &exp.Lit{Res: pv, Src: tag.Src, Val: lit.Null{}}
+			keys = append(keys, t)
+			continue
 		}
 		return fmt.Errorf("expect type got %[1]T %[1]s", pa)
 	}
@@ -199,7 +196,7 @@ func (e *FuncEnv) Lookup(s *exp.Sym, k string, eval bool) (exp.Exp, error) {
 				kv.Exp = &l
 				r.def[i] = kv
 			}
-			return &exp.Lit{Res: r.Type(), Val: &r}, nil
+			return &exp.Lit{Res: r.Decl, Val: &r}, nil
 		}
 	}
 	k, ok := dotkey(k)

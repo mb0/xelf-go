@@ -169,6 +169,16 @@ func (p *Prog) Resl(env Env, e Exp, h typ.Type) (Exp, error) {
 		if err != nil {
 			return nil, ast.ErrReslSym(a.Src, a.Sym, err)
 		}
+		if r.Resl() == typ.VarSpec {
+			l := r.(*Lit)
+			t := l.Val.Type()
+			nt, err := p.Sys.Inst(LookupType(env), t)
+			if err != nil {
+				return nil, ast.ErrReslTyp(a.Src, t, err)
+			}
+			l.Res = nt
+			return l, nil
+		}
 		if h != typ.Void {
 			ut, err := p.Sys.Unify(r.Resl(), h)
 			if err != nil {
@@ -219,13 +229,15 @@ func (p *Prog) Resl(env Env, e Exp, h typ.Type) (Exp, error) {
 	case *Call:
 		if a.Spec == nil {
 			var err error
-			a.Spec, a.Args, err = p.reslSpec(env, a)
+			a.Spec, a.Args, a.Sig, err = p.reslSpec(env, a)
 			if err != nil {
 				return nil, err
 			}
-			a.Sig, err = p.Sys.Inst(LookupType(env), a.Spec.Type())
-			if err != nil {
-				return nil, ast.ErrLayout(a.Src, a.Sig, err)
+			if a.Sig == typ.VarSpec {
+				a.Sig, err = p.Sys.Inst(LookupType(env), a.Spec.Type())
+				if err != nil {
+					return nil, ast.ErrLayout(a.Src, a.Sig, err)
+				}
 			}
 			a.Args, err = LayoutSpec(a.Sig, a.Args)
 			if err != nil {
@@ -302,24 +314,24 @@ func (p *Prog) NextFnID() uint {
 	return p.fnid
 }
 
-func (p *Prog) reslSpec(env Env, c *Call) (Spec, []Exp, error) {
+func (p *Prog) reslSpec(env Env, c *Call) (Spec, []Exp, typ.Type, error) {
 	if len(c.Args) == 0 {
-		return nil, nil, ast.ErrReslSpec(c.Src, "unexpected empty call", nil)
+		return nil, nil, typ.Void, ast.ErrReslSpec(c.Src, "unexpected empty call", nil)
 	}
 	fst, err := p.Resl(env, c.Args[0], typ.Void)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, typ.Void, err
 	}
 	if fst.Kind() == knd.Lit && fst.Resl().Kind&knd.Spec != 0 {
 		if l, ok := fst.(*Lit); ok {
 			if s, ok := l.Val.(Spec); ok {
-				return s, c.Args[1:], nil
+				return s, c.Args[1:], l.Res, nil
 			}
 		}
 	}
 	if p.dyn == nil {
-		return nil, nil, ast.ErrReslSpec(c.Src, "unsupported dyn call", nil)
+		return nil, nil, typ.Void, ast.ErrReslSpec(c.Src, "unsupported dyn call", nil)
 	}
 	c.Args[0] = fst
-	return p.dyn, c.Args, nil
+	return p.dyn, c.Args, typ.VarSpec, nil
 }

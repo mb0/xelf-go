@@ -24,6 +24,8 @@ func TestProgEval(t *testing.T) {
 		{`@`, `<@1>`},
 		{`<@>`, `<@1>`},
 		{`<@test.point>`, `<obj@test.point>`},
+		{`(dot make ([] (. int) (. str)))`, `[0 '']`},
+		{`(fold (list|typ int str) [] (fn r:list t:typ (_ (.1 null)))))`, `[0 '']`},
 	}
 	reg := &lit.Reg{}
 	tval, _ := typ.Parse("<obj@test.point x:int y:int>")
@@ -56,6 +58,12 @@ func TestProgResl(t *testing.T) {
 			`<form@if <tupl cond:any then:exp|num@1> else:exp?|num@1 num@1>`},
 		{`(if true "one")`, `<char@1>`,
 			`<form@if <tupl cond:any then:exp|char@1> else:exp?|char@1 char@1>`},
+		{`bool`, `<typ>`,
+			`<bool>`},
+		{`add`, `<form@add num@1 tupl?|num num@1>`,
+			`<form@add num@ tupl?|num _>`},
+		{`(if true add sub)`, `<@1>`,
+			`<form@if <tupl cond:any then:exp|@1> else:exp?|@1 @1>`},
 		{`(make @test.point {})`, `<obj@test.point>`, ``},
 		{`(add (int 1) 2)`, `<int>`, `<form@add int tupl?|num int>`},
 		{`<@test.point>`, `<typ>`, `<obj@test.point>`},
