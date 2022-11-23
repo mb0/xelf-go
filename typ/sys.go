@@ -38,27 +38,22 @@ func (sys *Sys) Get(id int32) Type {
 }
 
 // Update updates all vars and refs in t with the currently bound types and returns the result.
-func (sys *Sys) Update(lup Lookup, t Type) Type {
-	t, _ = Edit(t, func(e *Editor) (Type, error) {
-		if e.Kind&knd.Var != 0 {
-			r := sys.Get(e.ID)
-			if r != Void {
-				return r, nil
-			}
-		}
+func (sys *Sys) Update(t Type) (Type, error) {
+	return Edit(t, func(e *Editor) (Type, error) {
 		if e.Kind&knd.Ref != 0 && e.Ref != "" {
-			r, err := sys.resolveRef(lup, e.Type)
-			if err != nil {
-				return e.Type, nil
-			}
-			if e.Kind&knd.None != 0 {
-				r.Kind |= knd.None
-			}
+			return e.Type, fmt.Errorf("uninstantiated type ref %s", e.Ref)
+		}
+		if e.Kind&knd.Var == 0 {
+			return e.Type, nil
+		}
+		if e.ID <= 0 {
+			return e.Type, fmt.Errorf("uninstantiated type var")
+		}
+		if r := sys.Get(e.ID); r != Void {
 			return r, nil
 		}
 		return e.Type, nil
 	})
-	return t
 }
 
 // Inst instantiates all vars in t for sys and returns the result or an error.
@@ -147,13 +142,19 @@ func (sys *Sys) resolveRef(lup Lookup, t Type) (Type, error) {
 // Unify unifies type t and h and returns the result or an error.
 // Type unification in this context means that we have two types that should describe the same type.
 // We then check where these descriptions overlap and use the result instead of the input types.
-func (sys *Sys) Unify(lup Lookup, t, h Type) (Type, error) {
-	t = sys.Update(lup, t)
+func (sys *Sys) Unify(t, h Type) (_ Type, err error) {
+	t, err = sys.Update(t)
+	if err != nil {
+		return t, err
+	}
 	if h == Void {
 		return t, nil
 	}
-	h = sys.Update(lup, h)
-	r, err := unify(sys, lup, t, h)
+	h, err = sys.Update(h)
+	if err != nil {
+		return t, err
+	}
+	r, err := unify(sys, t, h)
 	if err != nil {
 		return t, err
 	}
@@ -161,7 +162,7 @@ func (sys *Sys) Unify(lup Lookup, t, h Type) (Type, error) {
 	return r, nil
 }
 
-func unify(sys *Sys, lup Lookup, t, h Type) (Type, error) {
+func unify(sys *Sys, t, h Type) (Type, error) {
 	a := base(t)
 	b := base(h)
 	kk := a.Kind | b.Kind
@@ -204,7 +205,7 @@ func unify(sys *Sys, lup Lookup, t, h Type) (Type, error) {
 				}
 			}
 			if ok {
-				el, err := sys.Unify(lup, ab.El, bb.El)
+				el, err := sys.Unify(ab.El, bb.El)
 				if err != nil {
 					return Void, err
 				}
@@ -306,7 +307,7 @@ func unibind(sys *Sys, a, b, r Type) Type {
 }
 
 // Free appends all unbound type variables in t to res and returns the result.
-func (c *Sys) Free(lup Lookup, t Type, res []Type) []Type {
+func (c *Sys) Free(t Type, res []Type) []Type {
 	if t.Kind&(knd.Var|knd.Ref|knd.Sel) != 0 {
 		if t.ID > 0 {
 			// skip if we already collect this type
@@ -316,7 +317,7 @@ func (c *Sys) Free(lup Lookup, t Type, res []Type) []Type {
 				}
 			}
 			// update from context
-			t = c.Update(lup, t)
+			t, _ = c.Update(t)
 		}
 		// append if still a free type
 		if t.Kind&(knd.Var|knd.Ref|knd.Sel) != 0 {
@@ -325,14 +326,14 @@ func (c *Sys) Free(lup Lookup, t Type, res []Type) []Type {
 	}
 	switch b := t.Body.(type) {
 	case *ElBody:
-		res = c.Free(lup, b.El, res)
+		res = c.Free(b.El, res)
 	case *AltBody:
 		for _, a := range b.Alts {
-			res = c.Free(lup, a, res)
+			res = c.Free(a, res)
 		}
 	case *ParamBody:
 		for _, p := range b.Params {
-			res = c.Free(lup, p.Type, res)
+			res = c.Free(p.Type, res)
 		}
 	}
 	return res

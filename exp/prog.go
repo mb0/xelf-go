@@ -128,7 +128,7 @@ func modQual(k string) (q, _ string) {
 	dot := strings.IndexByte(k, '.')
 	if dot > 0 {
 		if q = k[:dot]; cor.IsKey(q) {
-			return k[:dot], k[dot+1:]
+			return q, k[dot+1:]
 		}
 	}
 	return "", k
@@ -150,13 +150,12 @@ func (p *Prog) Resl(env Env, e Exp, h typ.Type) (Exp, error) {
 		if h.Kind == knd.Sym {
 			return &Lit{Res: typ.Sym, Val: lit.Str(a.Sym), Src: a.Src}, nil
 		}
-		lup := LookupType(env)
 		if a.Sym[0] == '@' {
 			t, err := typ.ParseSym(a.Sym, a.Src, nil)
 			if err != nil {
 				return nil, ast.ErrReslTyp(a.Src, a.Sym, err)
 			}
-			t, err = p.Sys.Inst(lup, t)
+			t, err = p.Sys.Inst(LookupType(env), t)
 			if err != nil {
 				return nil, ast.ErrReslTyp(a.Src, a.Sym, err)
 			}
@@ -170,14 +169,15 @@ func (p *Prog) Resl(env Env, e Exp, h typ.Type) (Exp, error) {
 		if err != nil {
 			return nil, ast.ErrReslSym(a.Src, a.Sym, err)
 		}
-		ut, err := p.Sys.Unify(lup, r.Resl(), h)
-		if err != nil {
-			return nil, ast.ErrUnify(a.Src, err.Error())
+		if h != typ.Void {
+			ut, err := p.Sys.Unify(r.Resl(), h)
+			if err != nil {
+				return nil, ast.ErrUnify(a.Src, err.Error())
+			}
+			a.Type = ut
 		}
-		a.Type = ut
 		return r, nil
 	case *Lit:
-		lup := LookupType(env)
 		if a.Res == typ.VarTyp {
 			t, ok := a.Val.(typ.Type)
 			if !ok {
@@ -185,14 +185,14 @@ func (p *Prog) Resl(env Env, e Exp, h typ.Type) (Exp, error) {
 					fmt.Errorf("unexpected type value %T", a.Val),
 				)
 			}
-			a.Res = typ.Typ
-			r, err := p.Sys.Inst(lup, t)
+			r, err := p.Sys.Inst(LookupType(env), t)
 			if err != nil {
 				return nil, ast.ErrReslTyp(a.Src, t, err)
 			}
+			a.Res = typ.Typ
 			a.Val = r
 		}
-		rt, err := p.Sys.Unify(lup, a.Res, h)
+		rt, err := p.Sys.Unify(a.Res, h)
 		if err != nil {
 			return nil, ast.ErrUnify(a.Src, err.Error())
 		}
@@ -211,7 +211,7 @@ func (p *Prog) Resl(env Env, e Exp, h typ.Type) (Exp, error) {
 			}
 			a.Els[i] = el
 		}
-		_, err := p.Sys.Unify(LookupType(env), a.Type, h)
+		_, err := p.Sys.Unify(a.Type, h)
 		if err != nil {
 			return nil, ast.ErrUnify(a.Src, err.Error())
 		}
@@ -268,7 +268,10 @@ func (p *Prog) Eval(env Env, e Exp) (_ *Lit, err error) {
 	case *Lit:
 		if a.Res == typ.Typ {
 			if t, ok := a.Val.(typ.Type); ok {
-				a.Val = p.Sys.Update(LookupType(env), t)
+				a.Val, err = p.Sys.Update(t)
+				if err != nil {
+					return nil, ast.ErrEval(a.Src, t.String(), err)
+				}
 			}
 		}
 		return a, nil

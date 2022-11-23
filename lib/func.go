@@ -37,7 +37,10 @@ func (s *fnSpec) Resl(p *exp.Prog, env exp.Env, c *exp.Call, h typ.Type) (_ exp.
 	ps = append(ps, typ.P("", x.Resl()))
 
 	ft := typ.Func(fmt.Sprintf("fn%d", p.NextFnID()), ps...)
-	ft = p.Sys.Update(exp.LookupType(c.Env), ft)
+	ft, err = p.Sys.Update(ft)
+	if err != nil {
+		return c, err
+	}
 
 	spec := makeFunc(fe, ft, x)
 	if fe.rec {
@@ -95,8 +98,8 @@ func (s *funcSpec) Resl(p *exp.Prog, env exp.Env, c *exp.Call, h typ.Type) (exp.
 	if err != nil {
 		return c, err
 	}
-	rp.Type = p.Sys.Update(exp.LookupType(env), rp.Type)
-	return c, nil
+	rp.Type, err = p.Sys.Update(rp.Type)
+	return c, err
 }
 
 func (s *funcSpec) Eval(p *exp.Prog, c *exp.Call) (l *exp.Lit, err error) {

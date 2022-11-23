@@ -56,6 +56,7 @@ func TestParse(t *testing.T) {
 		{Var(1, Alt(Num, Str)), `<alt@1 num str>`, ``},
 		{Ref(`a`), `@a`, `<@a>`},
 		{Ref(`a.b`), `<@a.b>`, ``},
+		{WithRef(`a.b`, Num), `<num@a.b>`, ``},
 		{Sel(`..a`), `<..a>`, ``},
 		{ListOf(Var(1, Alt(Num, Str))), `<list|alt@1 num str>`, ``},
 		{Opt(Ref(`b`)), `<@b?>`, ``},

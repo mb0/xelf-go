@@ -50,6 +50,10 @@ func WithID(id int32, t Type) Type {
 	t.ID = id
 	return t
 }
+func WithRef(r string, t Type) Type {
+	t.Ref = r
+	return t
+}
 func Var(id int32, t Type) Type {
 	t.Kind |= knd.Var
 	t.ID = id

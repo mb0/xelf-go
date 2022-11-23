@@ -38,7 +38,10 @@ func (s *makeSpec) Resl(p *exp.Prog, env exp.Env, c *exp.Call, h typ.Type) (exp.
 	}
 	rp := exp.SigRes(c.Sig)
 	rp.Type = t
-	c.Sig = p.Sys.Update(exp.LookupType(env), c.Sig)
+	c.Sig, err = p.Sys.Update(c.Sig)
+	if err != nil {
+		return nil, err
+	}
 	return s.SpecBase.Resl(p, env, c, h)
 }
 func (s *makeSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {

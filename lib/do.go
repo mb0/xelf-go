@@ -43,7 +43,11 @@ func (s *doSpec) Resl(p *exp.Prog, env exp.Env, c *exp.Call, h typ.Type) (exp.Ex
 	if lst != nil {
 		rp := exp.SigRes(c.Sig)
 		rp.Type = lst.Resl()
-		c.Sig = p.Sys.Update(exp.LookupType(env), c.Sig)
+		var err error
+		c.Sig, err = p.Sys.Update(c.Sig)
+		if err != nil {
+			return c, err
+		}
 	}
 	return c, nil
 }
