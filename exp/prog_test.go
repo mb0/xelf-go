@@ -21,6 +21,8 @@ func TestProgEval(t *testing.T) {
 		{`(dot {a:[{b:2}, {b:3}]} .a/b)`, `[2 3]`},
 		{`(dot {a:'2021-08-19T15:00:00Z'} (month .a))`, `8`},
 		{`(dyn (month $now))`, `8`},
+		{`@`, `<@1>`},
+		{`<@>`, `<@1>`},
 		{`<@test.point>`, `<obj@test.point>`},
 	}
 	reg := &lit.Reg{}

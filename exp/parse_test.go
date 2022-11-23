@@ -16,7 +16,7 @@ func TestParse(t *testing.T) {
 		want Exp
 	}{
 		{`()`, &Call{Src: src(0, 2)}},
-		{`<>`, &Lit{typ.Typ, typ.Void, src(0, 2)}},
+		{`<>`, &Lit{typ.VarTyp, typ.Void, src(0, 2)}},
 		{`(() 1 2 3 'things')`, &Call{Src: src(0, 19)}},
 		{`(<> 1 2 3 'things')`, &Call{Src: src(0, 19)}},
 		{`null`, &Lit{typ.None, lit.Null{}, src(0, 4)}},
@@ -39,7 +39,7 @@ func TestParse(t *testing.T) {
 			&Sym{Sym: "bool", Src: src(1, 5)},
 			&Lit{typ.Num, lit.Num(1), src(19, 20)},
 		)},
-		{`<obj x:int y:int>`, &Lit{typ.Typ, typ.Obj("",
+		{`<obj x:int y:int>`, &Lit{typ.VarTyp, typ.Obj("",
 			typ.P("x", typ.Int),
 			typ.P("y", typ.Int),
 		), src(0, 17)}},

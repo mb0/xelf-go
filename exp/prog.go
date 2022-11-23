@@ -154,11 +154,11 @@ func (p *Prog) Resl(env Env, e Exp, h typ.Type) (Exp, error) {
 		if a.Sym[0] == '@' {
 			t, err := typ.ParseSym(a.Sym, a.Src, nil)
 			if err != nil {
-				return nil, ast.ErrReslSym(a.Src, a.Sym, err)
+				return nil, ast.ErrReslTyp(a.Src, a.Sym, err)
 			}
 			t, err = p.Sys.Inst(lup, t)
 			if err != nil {
-				return nil, ast.ErrReslSym(a.Src, a.Sym, err)
+				return nil, ast.ErrReslTyp(a.Src, a.Sym, err)
 			}
 			return &Lit{Res: typ.Typ, Val: t, Src: a.Src}, nil
 		}
@@ -178,11 +178,19 @@ func (p *Prog) Resl(env Env, e Exp, h typ.Type) (Exp, error) {
 		return r, nil
 	case *Lit:
 		lup := LookupType(env)
-		if a.Res.Kind == knd.Typ {
+		if a.Res == typ.VarTyp {
 			t, ok := a.Val.(typ.Type)
-			if ok {
-				a.Val = p.Sys.Update(lup, t)
+			if !ok {
+				return nil, ast.ErrReslTyp(a.Src, a.Val,
+					fmt.Errorf("unexpected type value %T", a.Val),
+				)
 			}
+			a.Res = typ.Typ
+			r, err := p.Sys.Inst(lup, t)
+			if err != nil {
+				return nil, ast.ErrReslTyp(a.Src, t, err)
+			}
+			a.Val = r
 		}
 		rt, err := p.Sys.Unify(lup, a.Res, h)
 		if err != nil {
@@ -258,7 +266,7 @@ func (p *Prog) Eval(env Env, e Exp) (_ *Lit, err error) {
 		}
 		return &Lit{Val: &lit.List{Vals: vals}}, nil
 	case *Lit:
-		if a.Res.Kind&knd.Typ != 0 {
+		if a.Res == typ.Typ {
 			if t, ok := a.Val.(typ.Type); ok {
 				a.Val = p.Sys.Update(LookupType(env), t)
 			}

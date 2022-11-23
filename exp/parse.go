@@ -124,7 +124,7 @@ func ParseAst(a ast.Ast) (Exp, error) {
 		if err != nil {
 			return nil, err
 		}
-		return &Lit{Res: typ.Typ, Val: t, Src: a.Src}, nil
+		return &Lit{Res: typ.VarTyp, Val: t, Src: a.Src}, nil
 	}
 	return nil, ast.ErrUnexpected(a)
 }
