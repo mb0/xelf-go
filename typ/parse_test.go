@@ -62,6 +62,7 @@ func TestParse(t *testing.T) {
 		{Opt(Ref(`b`)), `<@b?>`, ``},
 		{List, `<list>`, ``},
 		{ListOf(Int), `<list|int>`, ``},
+		{Enum("", C("a", -1), C("b", -1), C("c", -1)), `<enum a; b; c;>`, ``},
 		{SymOf(TypOf(ListOf(Int))), `<sym|typ|list|int>`, ``},
 		{Opt(Obj("", P(`Name`, Str))), `<obj? Name:str>`, ``},
 		{ListOf(Obj("", P(`Name`, Str))), `<list|obj Name:str>`, ``},

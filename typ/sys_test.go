@@ -57,11 +57,16 @@ func TestInst(t *testing.T) {
 		{"<form@make typ@ lit|_>", "<form@make typ@2 lit|typ@2>"},
 		{"<@decl>", "<str>"},
 		{"<@.field>", "<str>"},
+		{"<@named>", "<str@qualified.Named>"},
+		{"<enum@abc a; b; c;>", "<enum@abc>"},
+		{"<obj@info id:int label:str>", "<obj@info>"},
 	}
 	var lup Lookup = func(key string) (Type, error) {
 		switch key {
 		case "decl", ".field":
 			return Str, nil
+		case "named": // essentially the lookup determines the resolved name
+			return WithRef("qualified.Named", Str), nil
 		}
 		return Void, fmt.Errorf("not found")
 	}

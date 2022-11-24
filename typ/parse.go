@@ -132,10 +132,11 @@ func parseBody(a ast.Ast, args []ast.Ast, t Type, hist []Type) (_ Type, err erro
 	}
 	switch el.Kind &^ (knd.Var | knd.Ref | knd.None) {
 	case knd.Bits, knd.Enum:
-		if len(args) > 0 {
-			// TODO parse consts
+		cs, err := parseConsts(args)
+		if err != nil {
+			return Void, err
 		}
-		el.Body = &ConstBody{}
+		el.Body = &ConstBody{Consts: cs}
 		return t, nil
 	case knd.Alt:
 		alts := make([]Type, 0, len(args))
@@ -204,6 +205,33 @@ func parseParams(args []ast.Ast, hist []Type) ([]Param, error) {
 			return nil, err
 		}
 		p.Type = b
+		res = append(res, p)
+	}
+	return res, nil
+}
+func parseConsts(args []ast.Ast) ([]Const, error) {
+	res := make([]Const, 0, len(args))
+	for len(args) > 0 {
+		a := args[0]
+		args = args[1:]
+		var p Const
+		if a.Kind == knd.Tag {
+			name, err := parseName(a.Seq[0])
+			if err != nil {
+				return nil, err
+			}
+			p = C(name, -1)
+			if len(a.Seq) > 1 {
+				a = a.Seq[1]
+			} else {
+				res = append(res, p)
+				continue
+			}
+		}
+		if a.Kind == knd.Num {
+			num, _ := strconv.ParseInt(a.Raw, 10, 64)
+			p.Val = num
+		}
 		res = append(res, p)
 	}
 	return res, nil

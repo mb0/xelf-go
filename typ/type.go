@@ -151,8 +151,12 @@ func (t Type) print(b *bfr.P, sb *strings.Builder, stack []Body, enclose bool) e
 			for _, c := range tb.Consts {
 				b.Byte(' ')
 				b.Fmt(c.Name)
-				b.Byte(':')
-				b.Fmt("%d", c.Val)
+				if c.Val < 0 {
+					b.Byte(';')
+				} else {
+					b.Byte(':')
+					b.Fmt("%d", c.Val)
+				}
 			}
 		}
 		return b.Byte('>')
