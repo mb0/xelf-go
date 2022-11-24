@@ -61,9 +61,8 @@ func NewProg(env Env, args ...interface{}) *Prog {
 			p.Reg.PrxReg = a
 		}
 	}
-	dyn, _ := env.Lookup(&Sym{Sym: "dyn"}, "dyn", true)
-	if l, _ := dyn.(*Lit); l != nil {
-		p.dyn, _ = l.Val.(Spec)
+	if dyn, _ := LookupKey(env, "dyn"); dyn != nil {
+		p.dyn, _ = dyn.Val.(Spec)
 	}
 	return p
 }
