@@ -23,13 +23,13 @@ type Func struct {
 // NewFunc reflects function value val and returns a named func spec or an error.
 // The variadic names parameter can be specified for parameter names that is elided from the
 // reflect function type information.
-func NewFunc(reg *lit.Reg, name string, val interface{}, names ...string) (*Func, error) {
+func NewFunc(reg lit.Reg, name string, val interface{}, names ...string) (*Func, error) {
 	v := reflect.ValueOf(val)
 	if v.Kind() != reflect.Func {
 		return nil, fmt.Errorf("expect function argument got %T", val)
 	}
 	if reg == nil {
-		reg = &lit.Reg{}
+		reg = lit.GlobalRegs()
 	}
 	t := v.Type()
 	n := t.NumIn()

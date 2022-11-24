@@ -75,15 +75,23 @@ type Prx interface {
 	// NewWith returns a new proxy instance with ptr as value.
 	// This method is used internally for proxy caching and should only be called with pointer
 	// values known to be compatible with this proxy implementation.
-	NewWith(ptr reflect.Value) (Mut, error)
+	NewWith(ptr reflect.Value) Mut
 }
 
 // Zero returns a mutable assignable to a value of type t or null.
 func Zero(t typ.Type) Mut {
-	k := t.Kind & knd.All
-	switch k {
-	case knd.Void:
-		return nil
+	m := zero(t)
+	if m == nil {
+		m = &AnyMut{Typ: t}
+	} else if t.Kind&knd.None != 0 {
+		m = &OptMut{m, nil, true}
+	}
+	return m
+}
+
+func zero(t typ.Type) Mut {
+	t.Kind &= knd.All
+	switch t.Kind {
 	case knd.Typ:
 		return new(typ.Type)
 	case knd.Bool:
@@ -113,6 +121,7 @@ func Zero(t typ.Type) Mut {
 		}
 		return m
 	}
+	k := t.Kind
 	switch {
 	case k&knd.Num != 0 && k&^knd.Num == 0:
 		return new(Num)
@@ -133,23 +142,25 @@ func PrintZero(p *bfr.P, t typ.Type) error {
 	}
 	switch k {
 	case knd.Typ:
-		return p.Fmt("void")
+		return p.Fmt("<>")
 	case knd.Bool:
 		return p.Fmt("false")
-	case knd.Num, knd.Int, knd.Real:
-		return p.Fmt("0")
-	case knd.Char, knd.Str, knd.Raw:
-		return Str("").Print(p)
 	case knd.UUID:
 		return UUID{}.Print(p)
 	case knd.Time:
 		return Time{}.Print(p)
 	case knd.Span:
 		return Span(0).Print(p)
-	case knd.Idxr, knd.List:
-		return p.Fmt(`[]`)
-	case knd.Keyr, knd.Dict, knd.Obj:
+	}
+	switch {
+	case k&knd.Num != 0 && k&^knd.Num == 0:
+		return p.Fmt("0")
+	case k&knd.Char != 0 && k&^knd.Char == 0:
+		return p.Quote("")
+	case k&knd.Keyr != 0 && k&^knd.Keyr == 0:
 		return p.Fmt(`{}`)
+	case k&knd.Idxr != 0 && k&^knd.Idxr == 0:
+		return p.Fmt(`[]`)
 	}
 	return p.Fmt("null")
 }

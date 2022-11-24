@@ -9,9 +9,9 @@ import (
 )
 
 func TestNode(t *testing.T) {
-	reg := &lit.Reg{Cache: &lit.Cache{}}
+	c := &lit.PrxReg{}
 	def := &Element{Kind: "el", Box: Box{Dim: Dim{W: 3}}}
-	spec, err := NodeSpecName(reg, "el", def, Rules{IdxKeyer: ZeroKeyer})
+	spec, err := NodeSpecName(c, "el", def, Rules{IdxKeyer: ZeroKeyer})
 	if err != nil {
 		t.Fatalf("parse sig error: %v", err)
 	}
@@ -41,7 +41,7 @@ func TestNode(t *testing.T) {
 			`[{kind:'el' w:3 font:{size:4}} {kind:'el' w:3 font:{size:5}}]`},
 	}
 	for _, test := range tests {
-		got, err := exp.NewProg(nil, reg, env).RunStr(test.raw, nil)
+		got, err := exp.NewProg(env, c).RunStr(test.raw, nil)
 		if err != nil {
 			t.Errorf("eval %s failed: %v", test.raw, err)
 			continue

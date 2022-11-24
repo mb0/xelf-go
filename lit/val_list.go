@@ -36,7 +36,7 @@ func (v Vals) Print(p *bfr.P) (err error) {
 	return p.Byte(']')
 }
 
-func (*Vals) New() (Mut, error)  { return &Vals{}, nil }
+func (*Vals) New() Mut           { return &Vals{} }
 func (v *Vals) Ptr() interface{} { return v }
 func (v *Vals) Parse(a ast.Ast) (err error) {
 	if isNull(a) {
@@ -131,11 +131,11 @@ type List struct {
 	Vals
 }
 
-func (l *List) Type() typ.Type    { return typ.ListOf(l.El) }
-func (l *List) Nil() bool         { return l == nil }
-func (l *List) Value() Val        { return l }
-func (l *List) New() (Mut, error) { return &List{l.El, nil}, nil }
-func (l *List) Ptr() interface{}  { return l }
+func (l *List) Type() typ.Type   { return typ.ListOf(l.El) }
+func (l *List) Nil() bool        { return l == nil }
+func (l *List) Value() Val       { return l }
+func (l *List) New() Mut         { return &List{l.El, nil} }
+func (l *List) Ptr() interface{} { return l }
 
 func checkIdx(idx, l int) (int, error) {
 	i := idx

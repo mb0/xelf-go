@@ -27,7 +27,6 @@ func TestProgEval(t *testing.T) {
 		{`(dot make ([] (. int) (. str)))`, `[0 '']`},
 		{`(fold (list|typ int str) [] (fn r:list t:typ (_ (.1 null)))))`, `[0 '']`},
 	}
-	reg := &lit.Reg{}
 	tval, _ := typ.Parse("<obj@test.point x:int y:int>")
 	env := &lib.LetEnv{Par: extlib.Std, Lets: map[string]*exp.Lit{
 		"test.point": {Res: typ.Typ, Val: tval},
@@ -36,7 +35,7 @@ func TestProgEval(t *testing.T) {
 		{Key: "now", Val: lit.Char("2021-08-19T15:00:00Z")},
 	}}
 	for _, test := range tests {
-		got, err := exp.NewProg(nil, reg, env).RunStr(test.raw, exp.LitVal(arg))
+		got, err := exp.NewProg(env).RunStr(test.raw, exp.LitVal(arg))
 		if err != nil {
 			t.Errorf("eval %s failed: %v", test.raw, err)
 			continue
@@ -78,7 +77,7 @@ func TestProgResl(t *testing.T) {
 			t.Errorf("read %s failed: %v", test.raw, err)
 			continue
 		}
-		p := exp.NewProg(nil, nil, env)
+		p := exp.NewProg(env)
 		got, err := p.Resl(p, e, typ.Void)
 		if err != nil {
 			t.Errorf("resl %s failed: %v", test.raw, err)

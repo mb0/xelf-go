@@ -11,9 +11,9 @@ import (
 
 type MapPrx struct{ proxy }
 
-func (x *MapPrx) NewWith(v reflect.Value) (Mut, error) { return &MapPrx{x.with(v)}, nil }
-func (x *MapPrx) New() (Mut, error)                    { return x.NewWith(x.new()) }
+func (x *MapPrx) NewWith(v reflect.Value) Mut { return &MapPrx{x.with(v)} }
 
+func (x *MapPrx) New() Mut   { return x.NewWith(x.new()) }
 func (x *MapPrx) Zero() bool { return x.Len() == 0 }
 func (x *MapPrx) Value() Val {
 	if x.Nil() {

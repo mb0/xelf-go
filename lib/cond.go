@@ -26,11 +26,7 @@ func (s *ifSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 		return p.Eval(c.Env, c.Args[1])
 	}
 	rt := exp.SigRes(c.Sig).Type
-	res, err := p.Reg.Zero(rt)
-	if err != nil {
-		return nil, err
-	}
-	return &exp.Lit{Res: rt, Val: res.Value()}, nil
+	return &exp.Lit{Res: rt, Val: lit.Zero(rt).Value()}, nil
 }
 
 var Swt = &swtSpec{impl("<form@swt @1 <tupl case:@1 then:exp|@2> else:exp?|@2 @2>")}
@@ -58,11 +54,8 @@ func (s *swtSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 	if c.Args[2] != nil {
 		return p.Eval(c.Env, c.Args[2])
 	}
-	res, err := p.Reg.Zero(exp.SigRes(c.Sig).Type)
-	if err != nil {
-		return nil, err
-	}
-	return &exp.Lit{Res: res.Type(), Val: res.Value()}, nil
+	rt := exp.SigRes(c.Sig).Type
+	return &exp.Lit{Res: rt, Val: lit.Zero(rt).Value()}, nil
 }
 
 var Df = &dfSpec{impl("<form@df tupl|@1 @1!>")}
@@ -82,9 +75,6 @@ func (s *dfSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 		}
 	}
 	// else
-	res, err := p.Reg.Zero(exp.SigRes(c.Sig).Type)
-	if err != nil {
-		return nil, err
-	}
-	return &exp.Lit{Res: res.Type(), Val: res.Value()}, nil
+	t := exp.SigRes(c.Sig).Type
+	return &exp.Lit{Res: t, Val: lit.Zero(t)}, nil
 }

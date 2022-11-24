@@ -38,13 +38,12 @@ func TestSysMods(t *testing.T) {
 		{"use foo as spam", "(use spam:'test/foo') spam.b", "0"},
 	}
 	for _, test := range tests {
-		reg := &lit.Reg{Cache: &lit.Cache{}}
 		x, err := exp.Parse(test.raw)
 		if err != nil {
 			t.Errorf("%s parse failed: %v", test.name, err)
 			continue
 		}
-		p := exp.NewProg(nil, reg, env)
+		p := exp.NewProg(env)
 		res, err := p.Run(x, nil)
 		if err != nil {
 			t.Errorf("%s resl failed: %v", test.name, err)
@@ -76,8 +75,7 @@ func TestFailMods(t *testing.T) {
 			"sym rec2.Foo unresolved"},
 	}
 	for _, test := range tests {
-		reg := &lit.Reg{Cache: &lit.Cache{}}
-		p := exp.NewProg(nil, reg, env)
+		p := exp.NewProg(env)
 		p.File.URL = "testdata/"
 		_, err := p.RunStr(test.raw, nil)
 		if err == nil {

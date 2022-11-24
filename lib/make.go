@@ -33,11 +33,7 @@ func (s *makeSpec) Resl(p *exp.Prog, env exp.Env, c *exp.Call, h typ.Type) (exp.
 	args, aok := c.Args[1].(*exp.Tupl)
 	tags, tok := c.Args[2].(*exp.Tupl)
 	if (!aok || len(args.Els) == 0) && (!tok || len(tags.Els) == 0) {
-		mut, err := p.Reg.Zero(t)
-		if err != nil {
-			return c, err
-		}
-		return &exp.Lit{Res: t, Val: mut.Value(), Src: c.Src}, nil
+		return &exp.Lit{Res: t, Val: p.Reg.Zero(t), Src: c.Src}, nil
 	}
 	rp := exp.SigRes(c.Sig)
 	rp.Type = t
@@ -65,10 +61,7 @@ func (s *makeSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 	pok = pok && len(plain.Vals) > 0
 	tags, tok := c.Args[2].(*exp.Tupl)
 	tok = tok && len(tags.Els) > 0
-	res, err := p.Reg.Zero(t)
-	if err != nil {
-		return nil, err
-	}
+	res := p.Reg.Zero(t)
 	if pok {
 		apdr, ok := res.(lit.Apdr)
 		if ok {

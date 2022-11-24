@@ -30,12 +30,12 @@ type Env interface {
 // Programs are bound to their expression and cannot be reused.
 type Prog struct {
 	Ctx  context.Context
-	Reg  *lit.Reg
-	Sys  *typ.Sys
 	Root Env
-	File File
+	Sys  *typ.Sys
+	Reg  lit.Regs
 	Arg  *Lit
 
+	File File
 	// Files collects all external files loaded by the program
 	Files map[string]*File
 	// Birth holds the uri for actively loading files to break recursive loads
@@ -47,14 +47,20 @@ type Prog struct {
 
 // NewProg returns a new program using the given registry, environment and expression.
 // The registry argument can be nil, a new registry will be used by default.
-func NewProg(ctx context.Context, reg *lit.Reg, env Env) *Prog {
-	if ctx == nil {
-		ctx = context.Background()
+func NewProg(env Env, args ...interface{}) *Prog {
+	p := &Prog{Ctx: context.Background(), Root: env, Sys: typ.NewSys(), Reg: *lit.GlobalRegs()}
+	for _, arg := range args {
+		switch a := arg.(type) {
+		case *lit.Regs:
+			p.Reg = *lit.DefaultRegs(a)
+		case context.Context:
+			p.Ctx = a
+		case lit.MutReg:
+			p.Reg.MutReg = a
+		case *lit.PrxReg:
+			p.Reg.PrxReg = a
+		}
 	}
-	if reg == nil {
-		reg = &lit.Reg{}
-	}
-	p := &Prog{Ctx: ctx, Reg: reg, Sys: typ.NewSys(), Root: env}
 	dyn, _ := env.Lookup(&Sym{Sym: "dyn"}, "dyn", true)
 	if l, _ := dyn.(*Lit); l != nil {
 		p.dyn, _ = l.Val.(Spec)

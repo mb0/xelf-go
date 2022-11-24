@@ -16,11 +16,9 @@ type ObjPrx struct {
 	*params
 }
 
-func (x *ObjPrx) NewWith(v reflect.Value) (Mut, error) {
-	return &ObjPrx{x.with(v), x.params}, nil
-}
-func (x *ObjPrx) New() (Mut, error) { return x.NewWith(x.new()) }
+func (x *ObjPrx) NewWith(v reflect.Value) Mut { return &ObjPrx{x.with(v), x.params} }
 
+func (x *ObjPrx) New() Mut { return x.NewWith(x.new()) }
 func (x *ObjPrx) Zero() bool {
 	if x.Nil() {
 		return true

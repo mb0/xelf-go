@@ -27,7 +27,7 @@ type Embed struct {
 }
 
 func TestEmbed(t *testing.T) {
-	reg := &Reg{Cache: &Cache{}}
+	reg := &PrxReg{}
 	o := MustProxy(reg, new(Embed)).(Keyr)
 	ot := o.Type()
 	ot.Ref = ""
@@ -41,7 +41,7 @@ func TestEmbed(t *testing.T) {
 }
 
 func TestProxy(t *testing.T) {
-	reg := &Reg{Cache: &Cache{}}
+	reg := &PrxReg{}
 	poi := MustProxy(reg, new(POI))
 	tests := []struct {
 		val  interface{}
@@ -85,7 +85,7 @@ func TestProxy(t *testing.T) {
 			"{a:{x:0 y:5}}"},
 	}
 	for _, test := range tests {
-		p, err := reg.Proxy(test.val)
+		p, err := Proxy(reg, test.val)
 		if err != nil {
 			t.Errorf("proxy %T error: %v", test.val, err)
 			continue
@@ -108,7 +108,7 @@ func TestProxy(t *testing.T) {
 			t.Errorf("marshal %T error: %v", p, err)
 			continue
 		}
-		rj, _ := p.New()
+		rj := p.New()
 		err = json.Unmarshal(gj, rj.Ptr())
 		if err != nil {
 			t.Errorf("unmarshal %s %#v error: %v", string(gj), p, err)
@@ -118,7 +118,7 @@ func TestProxy(t *testing.T) {
 }
 
 func TestProxyAll(t *testing.T) {
-	reg := &Reg{Cache: &Cache{}}
+	reg := &PrxReg{}
 	MustProxy(reg, new(POI))
 	tests := []struct {
 		val interface{}
@@ -141,7 +141,7 @@ func TestProxyAll(t *testing.T) {
 	}
 	for _, test := range tests {
 		// test value
-		p, err := reg.Proxy(test.val)
+		p, err := Proxy(reg, test.val)
 		if err != nil {
 			t.Errorf("proxy %T error: %v", test.val, err)
 			continue
@@ -158,7 +158,7 @@ func TestProxyAll(t *testing.T) {
 	}
 }
 
-func testDefault(t *testing.T, reg *Reg, mut Mut, ptr bool) {
+func testDefault(t *testing.T, c *PrxReg, mut Mut, ptr bool) {
 	if ptr {
 		gotstr := bfr.String(mut)
 		if gotstr != "null" {
@@ -170,11 +170,7 @@ func testDefault(t *testing.T, reg *Reg, mut Mut, ptr bool) {
 		t.Errorf("marshal %T error: %v", mut, err)
 		return
 	}
-	nmut, err := mut.New()
-	if err != nil {
-		t.Errorf("new %T error: %v", mut, err)
-		return
-	}
+	nmut := mut.New()
 	err = json.Unmarshal(jsn, nmut.Ptr())
 	if err != nil {
 		t.Errorf("unmarshal %T error: %v", mut, err)
@@ -198,11 +194,11 @@ func testDefault(t *testing.T, reg *Reg, mut Mut, ptr bool) {
 	}
 	if ptr {
 		ppt := reflect.New(reflect.ValueOf(mut.Ptr()).Type())
-		pmut, err := reg.ProxyValue(ppt)
+		pmut, err := c.ProxyValue(ppt)
 		if err != nil {
 			t.Errorf("proxy %s error: %v", ppt.Elem(), err)
 			return
 		}
-		testDefault(t, reg, pmut, true)
+		testDefault(t, c, pmut, true)
 	}
 }

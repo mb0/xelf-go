@@ -13,12 +13,12 @@ import (
 )
 
 type proxy struct {
-	Reg *Reg
+	Reg *PrxReg
 	typ typ.Type
 	val reflect.Value
 }
 
-func newProxy(reg *Reg, t typ.Type, ptr reflect.Value) proxy {
+func newProxy(reg *PrxReg, t typ.Type, ptr reflect.Value) proxy {
 	x := proxy{reg, t, ptr}
 	if x.isptr() {
 		x.typ = typ.Opt(t)
@@ -37,7 +37,6 @@ func (x *proxy) Ptr() interface{}             { return x.val.Interface() }
 func (x *proxy) Reflect() reflect.Value       { return x.val.Elem() }
 func (x *proxy) new() reflect.Value           { return reflect.New(x.val.Type().Elem()) }
 func (x *proxy) with(ptr reflect.Value) proxy { return newProxy(x.Reg, x.typ, ptr) }
-func (x *proxy) WithReg(reg *Reg)             { x.Reg = reg }
 func (x *proxy) unmarshal(b []byte, mut Mut) error {
 	return ReadInto(bytes.NewReader(b), "", mut)
 }
@@ -72,9 +71,9 @@ func (x *proxy) elem() reflect.Value {
 
 type IntPrx struct{ proxy }
 
-func (x *IntPrx) NewWith(v reflect.Value) (Mut, error) { return &IntPrx{x.with(v)}, nil }
-func (x *IntPrx) New() (Mut, error)                    { return x.NewWith(x.new()) }
+func (x *IntPrx) NewWith(v reflect.Value) Mut { return &IntPrx{x.with(v)} }
 
+func (x *IntPrx) New() Mut   { return x.NewWith(x.new()) }
 func (x *IntPrx) Zero() bool { return x.Nil() || x.value() == 0 }
 func (x *IntPrx) Value() Val {
 	if x.Nil() {
@@ -136,9 +135,9 @@ func (x *IntPrx) Print(p *bfr.P) error         { return p.Fmt(x.String()) }
 
 type RealPrx struct{ proxy }
 
-func (x *RealPrx) NewWith(v reflect.Value) (Mut, error) { return &RealPrx{x.with(v)}, nil }
-func (x *RealPrx) New() (Mut, error)                    { return x.NewWith(x.new()) }
+func (x *RealPrx) NewWith(v reflect.Value) Mut { return &RealPrx{x.with(v)} }
 
+func (x *RealPrx) New() Mut   { return x.NewWith(x.new()) }
 func (x *RealPrx) Zero() bool { return x.Nil() || x.value() == 0 }
 func (x *RealPrx) Value() Val {
 	if x.Nil() {

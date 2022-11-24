@@ -8,7 +8,6 @@ import (
 
 	"xelf.org/xelf/exp"
 	"xelf.org/xelf/lib"
-	"xelf.org/xelf/lit"
 )
 
 func TestFSMods(t *testing.T) {
@@ -54,13 +53,12 @@ func TestFSMods(t *testing.T) {
 		}, `"my product with liba and libb using liba"`},
 	}
 	for _, test := range tests {
-		reg := &lit.Reg{Cache: &lit.Cache{}}
 		x, err := exp.Parse(test.raw)
 		if err != nil {
 			t.Errorf("%s parse failed: %v", test.name, err)
 			continue
 		}
-		p := exp.NewProg(nil, reg, env)
+		p := exp.NewProg(env)
 		p.File.URL = "testdata/"
 		res, err := p.Run(x, nil)
 		if err != nil {

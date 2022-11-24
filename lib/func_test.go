@@ -25,7 +25,7 @@ func TestFuncEval(t *testing.T) {
 		)`, `<list|int>`, `[144 89]`},
 	}
 	for _, test := range tests {
-		res, err := exp.NewProg(nil, nil, Std).RunStr(test.raw, nil)
+		res, err := exp.NewProg(Std).RunStr(test.raw, nil)
 		if err != nil {
 			t.Errorf("eval %s failed: %v", test.raw, err)
 			continue

@@ -32,7 +32,7 @@ func diffVals(a, b Val, pre string, d Delta) (Delta, error) {
 }
 
 // Apply applies edits d to mutable a or returns an error.
-func Apply(reg *Reg, mut Mut, d Delta) error {
+func Apply(mut Mut, d Delta) error {
 	for _, kv := range d {
 		key := kv.Key
 		if key != "" && key != "." && key[0] == '.' {
@@ -49,7 +49,7 @@ func Apply(reg *Reg, mut Mut, d Delta) error {
 		if err != nil {
 			return err
 		}
-		err = CreatePath(reg, mut, p, kv.Val)
+		err = CreatePath(mut, p, kv.Val)
 		if err != nil {
 			return err
 		}

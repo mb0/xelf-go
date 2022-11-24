@@ -37,8 +37,8 @@ func (h *Map) Print(p *bfr.P) (err error) {
 	return p.Byte('}')
 }
 
-func (h *Map) New() (Mut, error) { return &Map{h.El, nil}, nil }
-func (h *Map) Ptr() interface{}  { return h }
+func (h *Map) New() Mut         { return &Map{h.El, nil} }
+func (h *Map) Ptr() interface{} { return h }
 func (h *Map) Parse(a ast.Ast) error {
 	if isNull(a) {
 		h.M = nil

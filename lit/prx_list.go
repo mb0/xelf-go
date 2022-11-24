@@ -11,9 +11,9 @@ import (
 
 type ListPrx struct{ proxy }
 
-func (x *ListPrx) NewWith(v reflect.Value) (Mut, error) { return &ListPrx{x.with(v)}, nil }
-func (x *ListPrx) New() (Mut, error)                    { return x.NewWith(x.new()) }
+func (x *ListPrx) NewWith(v reflect.Value) Mut { return &ListPrx{x.with(v)} }
 
+func (x *ListPrx) New() Mut   { return x.NewWith(x.new()) }
 func (x *ListPrx) Zero() bool { return x.Nil() || x.Len() == 0 }
 func (x *ListPrx) Value() Val {
 	if x.Nil() && x.isptr() {

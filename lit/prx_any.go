@@ -14,7 +14,7 @@ type AnyPrx struct {
 	val Val
 }
 
-func newAnyPrx(reg *Reg, t typ.Type) *AnyPrx {
+func newAnyPrx(reg *PrxReg, t typ.Type) *AnyPrx {
 	var any interface{}
 	return &AnyPrx{proxy{reg, t, reflect.ValueOf(&any)}, Null{}}
 }
@@ -34,11 +34,9 @@ func anyVal(v reflect.Value) Val {
 	return val
 }
 
-func (x *AnyPrx) NewWith(v reflect.Value) (Mut, error) {
-	return &AnyPrx{x.with(v), anyVal(v)}, nil
-}
-func (x *AnyPrx) New() (Mut, error) { return x.NewWith(x.new()) }
+func (x *AnyPrx) NewWith(v reflect.Value) Mut { return &AnyPrx{x.with(v), anyVal(v)} }
 
+func (x *AnyPrx) New() Mut   { return x.NewWith(x.new()) }
 func (x *AnyPrx) Zero() bool { return x.Nil() || x.val.Zero() }
 func (x *AnyPrx) Value() Val { return x.val.Value() }
 func (x *AnyPrx) Parse(a ast.Ast) (err error) {

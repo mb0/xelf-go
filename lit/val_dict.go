@@ -36,8 +36,8 @@ func (d Keyed) Print(p *bfr.P) (err error) {
 	return p.Byte('}')
 }
 
-func (d *Keyed) New() (Mut, error) { return &Keyed{}, nil }
-func (d *Keyed) Ptr() interface{}  { return d }
+func (d *Keyed) New() Mut         { return &Keyed{} }
+func (d *Keyed) Ptr() interface{} { return d }
 func (d *Keyed) Parse(a ast.Ast) error {
 	if isNull(a) {
 		*d = nil
@@ -185,11 +185,11 @@ type Dict struct {
 	Keyed
 }
 
-func (d *Dict) Type() typ.Type    { return typ.DictOf(d.El) }
-func (d *Dict) Nil() bool         { return d == nil }
-func (d *Dict) Value() Val        { return d }
-func (d *Dict) New() (Mut, error) { return &Dict{d.El, nil}, nil }
-func (d *Dict) Ptr() interface{}  { return d }
+func (d *Dict) Type() typ.Type   { return typ.DictOf(d.El) }
+func (d *Dict) Nil() bool        { return d == nil }
+func (d *Dict) Value() Val       { return d }
+func (d *Dict) New() Mut         { return &Dict{d.El, nil} }
+func (d *Dict) Ptr() interface{} { return d }
 func (d *Dict) Key(k string) (Val, error) {
 	if d != nil {
 		return d.Keyed.Key(k)

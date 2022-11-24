@@ -43,13 +43,7 @@ func (o *OptMut) Print(p *bfr.P) error {
 	}
 	return o.Mut.Print(p)
 }
-func (o *OptMut) New() (Mut, error) {
-	mut, err := o.Mut.New()
-	if err != nil {
-		return nil, err
-	}
-	return &OptMut{mut, nil, true}, nil
-}
+func (o *OptMut) New() Mut { return &OptMut{o.Mut.New(), nil, true} }
 func (o *OptMut) Parse(a ast.Ast) error {
 	if isNull(a) {
 		o.Null = true

@@ -13,16 +13,13 @@ import (
 type Node interface {
 	lit.Keyr
 	lit.Idxr
-	WithReg(*lit.Reg)
 }
 
 // NewNode returns a node for val or an error. It either accepts a Node or creates a new proxy.
-func NewNode(reg *lit.Reg, val interface{}) (Node, error) {
+func NewNode(c lit.Reg, val interface{}) (Node, error) {
 	n, ok := val.(Node)
-	if ok {
-		n.WithReg(reg)
-	} else {
-		p, err := reg.Proxy(val)
+	if !ok {
+		p, err := lit.Proxy(c, val)
 		if err != nil {
 			return nil, fmt.Errorf("proxy %T: %w", val, err)
 		}
@@ -40,7 +37,7 @@ type NodeSpec struct {
 	Node Node
 }
 
-func NodeSpecSig(reg *lit.Reg, sig string, val interface{}, rs Rules) (*NodeSpec, error) {
+func NodeSpecSig(reg lit.Reg, sig string, val interface{}, rs Rules) (*NodeSpec, error) {
 	decl, err := typ.Parse(sig)
 	if err != nil {
 		return nil, err
@@ -52,7 +49,7 @@ func NodeSpecSig(reg *lit.Reg, sig string, val interface{}, rs Rules) (*NodeSpec
 	return NewNodeSpec(decl, node, rs), nil
 }
 
-func NodeSpecName(reg *lit.Reg, name string, val interface{}, rs Rules) (*NodeSpec, error) {
+func NodeSpecName(reg lit.Reg, name string, val interface{}, rs Rules) (*NodeSpec, error) {
 	node, err := NewNode(reg, val)
 	if err != nil {
 		return nil, err
@@ -76,26 +73,13 @@ func NewNodeSpec(decl typ.Type, node Node, rs Rules) *NodeSpec {
 }
 
 func (s *NodeSpec) Value() lit.Val { return s }
-func copyNode(reg *lit.Reg, node Node) (Node, error) {
-	mut, err := node.New()
+
+func (s *NodeSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
+	l, err := lit.Copy(s.Node)
 	if err != nil {
 		return nil, err
 	}
-	n := mut.(Node)
-	n.WithReg(reg)
-	err = n.Assign(node)
-	return n, err
-}
-
-func (s *NodeSpec) GetNode(p *exp.Prog, c *exp.Call) (Node, error) {
-	return copyNode(p.Reg, s.Node)
-}
-
-func (s *NodeSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
-	n, err := s.GetNode(p, c)
-	if err != nil {
-		return nil, fmt.Errorf("get node: %v", err)
-	}
+	n := l.(Node)
 	for i, sp := range exp.SigArgs(c.Sig) {
 		switch a := c.Args[i].(type) {
 		case nil:

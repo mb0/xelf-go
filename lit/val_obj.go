@@ -69,8 +69,14 @@ func (s *Obj) Print(p *bfr.P) error {
 	}
 	return p.Byte('}')
 }
-func (s *Obj) New() (Mut, error) { return NewObj(s.Typ) }
-func (s *Obj) Ptr() interface{}  { return s }
+func (s *Obj) New() Mut {
+	m, err := NewObj(s.Typ)
+	if err != nil {
+		panic(err)
+	}
+	return m
+}
+func (s *Obj) Ptr() interface{} { return s }
 func (s *Obj) Parse(a ast.Ast) error {
 	if isNull(a) {
 		_, err := s.pinit(false)

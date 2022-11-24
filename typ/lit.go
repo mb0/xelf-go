@@ -39,7 +39,7 @@ type LitVal interface {
 type LitMut interface {
 	LitVal
 	// New returns a fresh mutable value of the same type or an error.
-	New() (LitMut, error)
+	New() LitMut
 	// Ptr returns a pointer to the underlying value for interfacing with other go tools.
 	Ptr() interface{}
 	// Assign assigns the given value to this mutable or returns an error.
@@ -49,12 +49,12 @@ type LitMut interface {
 	Parse(ast.Ast) error
 }
 
-func (Type) Type() Type            { return Typ }
-func (Type) Nil() bool             { return false }
-func (t Type) Zero() bool          { return t == Void }
-func (t Type) Value() LitVal       { return t }
-func (*Type) New() (LitMut, error) { return new(Type), nil }
-func (t *Type) Ptr() interface{}   { return t }
+func (Type) Type() Type          { return Typ }
+func (Type) Nil() bool           { return false }
+func (t Type) Zero() bool        { return t == Void }
+func (t Type) Value() LitVal     { return t }
+func (*Type) New() LitMut        { return new(Type) }
+func (t *Type) Ptr() interface{} { return t }
 func (t *Type) Assign(p LitVal) error {
 	if p == nil || p.Nil() {
 		*t = Void

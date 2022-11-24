@@ -6,9 +6,9 @@ import (
 )
 
 func TestProxyAny(t *testing.T) {
-	reg := &Reg{Cache: &Cache{}}
+	reg := &PrxReg{}
 	var one interface{}
-	mut, err := reg.Proxy(&one)
+	mut, err := Proxy(reg, &one)
 	if err != nil {
 		t.Fatalf("parse one %#v", err)
 	}
@@ -21,7 +21,7 @@ func TestProxyAny(t *testing.T) {
 		t.Errorf("want %#v got %#v", want, one)
 	}
 	var any []interface{}
-	mut, err = reg.Proxy(&any)
+	mut, err = Proxy(reg, &any)
 	if err != nil {
 		t.Fatalf("parse one %#v", err)
 	}

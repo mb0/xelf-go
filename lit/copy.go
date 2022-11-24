@@ -11,16 +11,13 @@ func Copy(v Val) (Val, error) {
 		return v.Value(), nil
 	}
 	if m.Type().Kind&(knd.Keyr|knd.Idxr) == 0 {
-		n, err := m.New()
-		if err != nil {
-			return nil, err
-		}
+		n := m.New()
 		return n, n.Assign(m)
 	}
 	return deepCopy(v, make(map[Mut]Mut))
 }
 
-func deepCopy(v Val, cache map[Mut]Mut) (Val, error) {
+func deepCopy(v Val, cache map[Mut]Mut) (_ Val, err error) {
 	m, ok := v.(Mut)
 	if !ok {
 		return v.Value(), nil
@@ -28,10 +25,7 @@ func deepCopy(v Val, cache map[Mut]Mut) (Val, error) {
 	if n := cache[m]; n != nil {
 		return n, nil
 	}
-	n, err := m.New()
-	if err != nil {
-		return nil, err
-	}
+	n := m.New()
 	cache[m] = n
 	switch mc := m.(type) {
 	case Keyr:

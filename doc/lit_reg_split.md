@@ -39,22 +39,36 @@ Implementation
 --------------
 
 The type system was already changed to use the program environment to resolve type references and is
-discussed in the [field reference doc](./field_refs.md).
-
-We factor out a reflection cache and use a process-shared global by default. We can still provide
-isolated caches for tests. The new cache encapsulates the type reflection code for coarser grained
-locking.
-
-We keep the literal registry for mapping to user provided value implementations, and reduce its api
-to zero and proxy methods and use it explicitly at api boundaries.
+discussed in the [field reference doc](./field_refs.md). Now only sys.Inst takes a lookup function
+that usually wraps an exp.Env to resolve type reference.
 
 ParseVal and ParseMut are already independent from the registry because we use the new primitive
-Vals and Keyed literals.
+Vals and Keyed literals. We introduce AnyMut similar to AnyPrx to provide an independent Zero
+function.
+
+We factored out a reflection cache as PrxReg and use a process-shared global by default. We can
+still provide isolated caches for tests. The new cache encapsulates the type reflection and proxy
+code for coarser grained locking.
+
+We factored out a literal registry as MutReg for user provided mutable value implementations, and
+reduce its api to the Zero and SetRef method and use it explicitly at api boundaries.
+
+We keep a Regs type the embeds both PrxReg and MutReg to make it easier to pass around or initilized
+both new registries in one go. We provide the Reg interface that provides only Reflect and
+ProxyValue methods, but due to embedding is implemented by both Regs and PrxReg types.
 
 The proxy methods and values do inherently need the implementation cache to reduce the overhead of
 wrapping elements in mutable proxy implementations. It makes sense for proxies to keep a reference
-to the origin registry where all required types are already registered by definition. If we complete
-the separation from the type reference lookup, we can then use shared proxy values without worrying
-about managing registries, as long as we use concrete types everywhere.
+to the origin registry where all required types are already registered by definition. We therefor
+share proxies without updating the proxy registry.
 
-We still need to investigate in what circumstances we want to use the registered proxies.
+Conclusion
+----------
+
+The original concept was fundamental and invasive yet unclear and with mixed responsibilities.
+The new concept is clean, unobtrusive, convenient with good defaults. It took years to arrive at
+the concepts for this literal system in totality and it is better than it was every before.
+
+Because of all the changes we could remove the registry from a lot of code. The program constructor
+was rewritten as an extra to be more elegant and convenient. Overall this effort took some lots of
+work, but was very fruitful and is now completed.

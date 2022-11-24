@@ -14,8 +14,8 @@ import (
 )
 
 func TestFunc(t *testing.T) {
-	reg := &lit.Reg{}
-	echo, err := NewFunc(reg, "echo", func(s string) string { return s })
+	c := &lit.PrxReg{}
+	echo, err := NewFunc(c, "echo", func(s string) string { return s })
 	if err != nil {
 		t.Fatal("failed to create node spec for test Element")
 	}
@@ -27,7 +27,7 @@ func TestFunc(t *testing.T) {
 		{`(echo "a")`, `'a'`},
 	}
 	for _, test := range tests {
-		got, err := exp.NewProg(nil, reg, env).RunStr(test.raw, nil)
+		got, err := exp.NewProg(env, c).RunStr(test.raw, nil)
 		if err != nil {
 			t.Errorf("eval %s failed: %v", test.raw, err)
 			continue
@@ -88,6 +88,7 @@ func TestReflectFunc(t *testing.T) {
 }
 
 func TestFuncEval(t *testing.T) {
+	c := &lit.PrxReg{}
 	tests := []struct {
 		fun   interface{}
 		names []string
@@ -99,14 +100,13 @@ func TestFuncEval(t *testing.T) {
 		{fmt.Sprintf, nil, `(_ "Hi %s no. %d." "you" 9)`, `'Hi you no. 9.'`},
 	}
 	for _, test := range tests {
-		reg := &lit.Reg{}
-		f, err := NewFunc(reg, "_", test.fun, test.names...)
+		f, err := NewFunc(c, "_", test.fun, test.names...)
 		if err != nil {
 			t.Errorf("reflect for %+v err: %v", test.fun, err)
 			continue
 		}
 		env := exp.Builtins(lib.Specs{"_": f}.AddMap(lib.Core))
-		got, err := exp.NewProg(nil, reg, env).RunStr(test.raw, nil)
+		got, err := exp.NewProg(env, c).RunStr(test.raw, nil)
 		if err != nil {
 			t.Errorf("eval %s failed: %v", test.raw, err)
 			continue

@@ -122,16 +122,16 @@ func (u UUID) MarshalJSON() ([]byte, error) { return bfr.JSON(u) }
 func (t Time) MarshalJSON() ([]byte, error) { return bfr.JSON(t) }
 func (s Span) MarshalJSON() ([]byte, error) { return bfr.JSON(s) }
 
-func (*Bool) New() (Mut, error) { return new(Bool), nil }
-func (*Num) New() (Mut, error)  { return new(Num), nil }
-func (*Int) New() (Mut, error)  { return new(Int), nil }
-func (*Real) New() (Mut, error) { return new(Real), nil }
-func (*Char) New() (Mut, error) { return new(Char), nil }
-func (*Str) New() (Mut, error)  { return new(Str), nil }
-func (*Raw) New() (Mut, error)  { return new(Raw), nil }
-func (*UUID) New() (Mut, error) { return new(UUID), nil }
-func (*Time) New() (Mut, error) { return new(Time), nil }
-func (*Span) New() (Mut, error) { return new(Span), nil }
+func (*Bool) New() Mut { return new(Bool) }
+func (*Num) New() Mut  { return new(Num) }
+func (*Int) New() Mut  { return new(Int) }
+func (*Real) New() Mut { return new(Real) }
+func (*Char) New() Mut { return new(Char) }
+func (*Str) New() Mut  { return new(Str) }
+func (*Raw) New() Mut  { return new(Raw) }
+func (*UUID) New() Mut { return new(UUID) }
+func (*Time) New() Mut { return new(Time) }
+func (*Span) New() Mut { return new(Span) }
 
 func (v *Bool) Ptr() interface{} { return v }
 func (i *Num) Ptr() interface{}  { return i }

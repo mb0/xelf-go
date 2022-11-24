@@ -21,7 +21,7 @@ func TestMutEval(t *testing.T) {
 		{`(mut {a:{}} a.b:1)`, "{a:{b:1}}"},
 	}
 	for _, test := range tests {
-		got, err := exp.NewProg(nil, nil, Std).RunStr(test.raw, nil)
+		got, err := exp.NewProg(Std).RunStr(test.raw, nil)
 		if err != nil {
 			t.Errorf("eval %s failed: %v", test.raw, err)
 			continue
