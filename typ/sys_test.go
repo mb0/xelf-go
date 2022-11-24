@@ -1,6 +1,7 @@
 package typ
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 )
@@ -54,6 +55,15 @@ func TestInst(t *testing.T) {
 		{"<obj id:int@ par:.id child:list|.>", "<obj id:int@2 par:int@2 child:list|.>"},
 		{"<obj id:int@ body:<obj child:list|..>>", "<obj id:int@2 body:<obj child:list|..>>"},
 		{"<form@make typ@ lit|_>", "<form@make typ@2 lit|typ@2>"},
+		{"<@decl>", "<str>"},
+		{"<@.field>", "<str>"},
+	}
+	var lup Lookup = func(key string) (Type, error) {
+		switch key {
+		case "decl", ".field":
+			return Str, nil
+		}
+		return Void, fmt.Errorf("not found")
 	}
 	for _, test := range tests {
 		a, err := Parse(test.a)
@@ -63,7 +73,7 @@ func TestInst(t *testing.T) {
 		}
 		sys := NewSys()
 		sys.MaxID = 1
-		a, err = sys.Inst(nil, a)
+		a, err = sys.Inst(lup, a)
 		if err != nil {
 			t.Errorf("inst error for %s: %v", a, err)
 			continue

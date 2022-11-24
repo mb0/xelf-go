@@ -121,10 +121,6 @@ func resolveSel(e *Editor, path string) (Type, error) {
 }
 
 func (sys *Sys) resolveRef(lup Lookup, t Type) (Type, error) {
-	if t.Ref[0] == '.' {
-		// skip localref
-		return t, nil
-	}
 	if lup == nil {
 		return t, fmt.Errorf("no type lookup configured")
 	}
