@@ -15,7 +15,6 @@ var Std = exp.Builtins(make(lib.Specs).AddMap(lib.Std).AddMap(MustLib(
 
 var Str = FuncMap{
 	"index":    strings.Index,
-	"last":     strings.LastIndex,
 	"prefix":   strings.HasPrefix,
 	"suffix":   strings.HasSuffix,
 	"contains": strings.Contains,
