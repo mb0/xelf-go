@@ -203,13 +203,9 @@ func (e *FuncEnv) Lookup(s *exp.Sym, k string, eval bool) (exp.Exp, error) {
 	if !ok {
 		return e.Par.Lookup(s, k, eval)
 	}
-
 	l, err := e.Def.Select(k)
-	if eval {
-		return l, err
-	}
 	if err != nil {
-		if !e.mock || e.expl {
+		if eval || !e.mock || e.expl {
 			return s, err
 		}
 		idx, kk := -1, k[1:]
@@ -233,8 +229,10 @@ func (e *FuncEnv) Lookup(s *exp.Sym, k string, eval bool) (exp.Exp, error) {
 			e.Def = append(e.Def, exp.Tag{Tag: kk, Exp: l})
 		}
 	}
-	s.Type, s.Env, s.Rel = l.Res, e, k
-	return s, nil
+	if s.Update(l.Res, e, k); !eval {
+		return s, nil
+	}
+	return l, nil
 }
 func dotkey(k string) (string, bool) {
 	if k == "_" {

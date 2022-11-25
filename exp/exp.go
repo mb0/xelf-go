@@ -72,6 +72,9 @@ func (s *Sym) Source() ast.Src      { return s.Src }
 func (s *Sym) String() string       { return s.Sym }
 func (s *Sym) Print(p *bfr.P) error { return p.Fmt(s.Sym) }
 func (s *Sym) Clone() Exp           { return &Sym{s.Type, s.Sym, s.Src, nil, ""} }
+func (s *Sym) Update(t typ.Type, env Env, rel string) {
+	s.Type, s.Env, s.Rel = t, env, rel
+}
 
 // Tag is a named quasi expression that is resolved by its parent call.
 type Tag struct {

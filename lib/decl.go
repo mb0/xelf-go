@@ -97,11 +97,10 @@ type LetEnv struct {
 func (e *LetEnv) Parent() exp.Env { return e.Par }
 func (e *LetEnv) Lookup(s *exp.Sym, k string, eval bool) (exp.Exp, error) {
 	if a := e.Lets[k]; a != nil {
-		if eval {
-			return a, nil
+		if s.Update(a.Res, e, k); !eval {
+			return s, nil
 		}
-		s.Type, s.Env, s.Rel = a.Res, e, k
-		return s, nil
+		return a, nil
 	}
 	return e.Par.Lookup(s, k, eval)
 }

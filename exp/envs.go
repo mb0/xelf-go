@@ -35,11 +35,13 @@ func (e *DotEnv) Lookup(s *Sym, k string, eval bool) (Exp, error) {
 		return e.Par.Lookup(s, k, eval)
 	}
 	l, err := SelectLookup(e.Dot, k, eval)
-	if err != nil || eval {
-		return l, err
+	if err != nil {
+		return nil, err
 	}
-	s.Type, s.Env, s.Rel = l.Res, e, k
-	return s, nil
+	if s.Update(l.Res, e, k); !eval {
+		return s, nil
+	}
+	return l, nil
 }
 
 // DotKey returns whether k is a dot key or otherwise returns k with a leading dot removed.

@@ -104,20 +104,25 @@ func (p *Prog) Lookup(s *Sym, k string, eval bool) (res Exp, err error) {
 			break
 		}
 		l, err := SelectLookup(p.Arg, cor.Keyed(k[1:]), eval)
-		if err != nil || eval {
+		if err != nil {
 			return l, err
 		}
-		s.Type, s.Env, s.Rel = l.Res, p, k
-		return s, nil
-	}
-	if qual, rest := modQual(k); qual != "" {
-		m := p.File.Refs.Find(qual)
-		if m != nil {
-			v, err := lit.Select(m.Decl, rest)
-			if err != nil {
-				return s, err
+		if s.Update(l.Res, p, k); !eval {
+			return s, nil
+		}
+		return l, nil
+	default:
+		if qual, rest := modQual(k); qual != "" {
+			m := p.File.Refs.Find(qual)
+			if m != nil {
+				v, err := lit.Select(m.Decl, rest)
+				if err != nil {
+					return s, err
+				}
+				l := LitVal(v)
+				s.Update(l.Res, p, k)
+				return l, nil
 			}
-			return LitVal(v), nil
 		}
 	}
 	res, err = p.Root.Lookup(s, k, eval)
@@ -171,8 +176,7 @@ func (p *Prog) Resl(env Env, e Exp, h typ.Type) (Exp, error) {
 			return &Lit{Res: typ.Typ, Val: t, Src: a.Src}, nil
 		}
 		if a.Env == nil {
-			a.Env = env
-			a.Rel = a.Sym
+			a.Update(a.Type, env, a.Sym)
 		}
 		r, err := a.Env.Lookup(a, a.Rel, false)
 		if err != nil {
