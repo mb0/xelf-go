@@ -43,7 +43,7 @@ and then export the whole repl session as script file.
 Implementation
 --------------
 
-Modules are just qualified literal values, but as concept a language extension mechanism.
+Modules are just qualified object literal values, but as concept a language extension mechanism.
 Modules are unique per program and cannot have themselves as (indirect) dependency.
 
 Loaders locate, load and cache raw module sources by url. Sources are program independent and
@@ -99,9 +99,6 @@ module wrapper that support external processes using something like github.com/h
 Daql and layla used a corresponding file name extension to indicate the expected xelf environment.
 While we can still use explicit extensions, we should not encourage custom extension to simplify
 tooling. We can use the module system to ensure the expected environment.
-
-We should restrict module definitions to an abstract object literal value. A clear restriction makes
-it easier to resolve and reason about qualified names.
 
 Module refs allow local aliases that effect the reference name in that file. We need to allow
 aliases to disambiguate otherwise conflicting imports. Resolved type names must match these alias

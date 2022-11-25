@@ -1,5 +1,7 @@
 package exp
 
+import "xelf.org/xelf/lit"
+
 // File is a simple representation of any xelf input that store information about modules.
 type File struct {
 	// URL is the resource locator for this input, it should be empty or conform to net/url.
@@ -19,7 +21,7 @@ type Mod struct {
 	Name string
 
 	// Decl holds the exported module declarations, that are copied for each program.
-	Decl *Lit
+	Decl *lit.Obj
 }
 
 // ModRef represent a module reference with a possible alias the original import path.

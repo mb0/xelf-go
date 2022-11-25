@@ -13,9 +13,9 @@ import (
 func TestSysMods(t *testing.T) {
 	setup := func(prog *exp.Prog, s *Src) (*File, error) {
 		f := &exp.File{URL: s.URL}
-		decl := exp.LitVal(lit.MakeObj(lit.Keyed{
+		decl := lit.MakeObj(lit.Keyed{
 			{Key: "b", Val: new(lit.Int)},
-		}))
+		})
 		f.Refs = []exp.ModRef{
 			{Pub: true, Mod: &exp.Mod{File: f, Name: "foo", Decl: decl}},
 		}

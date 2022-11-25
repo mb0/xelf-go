@@ -3,7 +3,6 @@ package mod
 import (
 	"fmt"
 
-	"xelf.org/xelf/ast"
 	"xelf.org/xelf/exp"
 	"xelf.org/xelf/knd"
 	"xelf.org/xelf/lit"
@@ -117,9 +116,9 @@ func FindModEnv(env exp.Env) *ModEnv {
 	}
 	return nil
 }
-func NewModEnv(par exp.Env, file *File, src ast.Src) *ModEnv {
+func NewModEnv(par exp.Env, file *File) *ModEnv {
 	obj := &lit.Obj{Typ: typ.Type{Kind: knd.Mod | knd.Obj, Body: &typ.ParamBody{}}}
-	m := &Mod{File: file, Decl: &exp.Lit{Res: obj.Typ, Val: obj, Src: src}}
+	m := &Mod{File: file, Decl: obj}
 	file.Refs = append(file.Refs, exp.ModRef{Pub: true, Mod: m})
 	return &ModEnv{Par: par, Mod: m, obj: obj}
 }
@@ -130,7 +129,7 @@ func (e *ModEnv) SetName(name string) {
 	if o := e.obj; o != nil {
 		e.Mod.Name = name
 		o.Typ.Ref = name
-		e.Mod.Decl.Res = e.obj.Typ
+		e.Mod.Decl.Typ = e.obj.Typ
 	}
 }
 func (e *ModEnv) AddDecl(name string, v lit.Val) {

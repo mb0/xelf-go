@@ -19,7 +19,7 @@ func (s *moduleSpec) Resl(p *exp.Prog, env exp.Env, c *exp.Call, _ typ.Type) (_ 
 		return c, nil
 	}
 	name := c.Args[0].String()
-	me := NewModEnv(env, &p.File, c.Src)
+	me := NewModEnv(env, &p.File)
 	me.SetName(name)
 	c.Env = me
 	// eval elements to build the result type and value

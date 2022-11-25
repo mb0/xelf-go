@@ -113,7 +113,11 @@ func (p *Prog) Lookup(s *Sym, k string, eval bool) (res Exp, err error) {
 	if qual, rest := modQual(k); qual != "" {
 		m := p.File.Refs.Find(qual)
 		if m != nil {
-			return SelectLookup(m.Decl, rest, true)
+			v, err := lit.Select(m.Decl, rest)
+			if err != nil {
+				return s, err
+			}
+			return LitVal(v), nil
 		}
 	}
 	res, err = p.Root.Lookup(s, k, eval)
