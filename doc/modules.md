@@ -59,10 +59,10 @@ The module and file data structures are part of exp package. Every program envir
 file, and a list of all files and resolves qualified module symbols.
 
 The `module` form creates and registers a simple module with a module name and tags of named values
-and returns void. This form creates a mod env, that resolves its definitions as unqualified names.
+and returns null. This form creates a mod env, that resolves its definitions as unqualified names.
 The declared module is available after its declaration in the parent file env.
 
-The `import` form loads modules into the file env and returns void. Import takes constant strings as
+The `import` form loads modules into the file env and returns null. Import takes constant strings as
 module paths or tagged paths to alias a specific module. The imported modules are then available
 in the program env. A path fragment or the alias itself can be used to pick specific modules from a
 file with multiple modules.

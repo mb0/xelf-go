@@ -9,7 +9,7 @@ import (
 	"xelf.org/xelf/typ"
 )
 
-var Module = &moduleSpec{impl("<form@module name:sym tags?:tupl|tag void>")}
+var Module = &moduleSpec{impl("<form@module name:sym tags?:tupl|exp none>")}
 
 type moduleSpec struct{ exp.SpecBase }
 
@@ -45,11 +45,11 @@ func (s *moduleSpec) Resl(p *exp.Prog, env exp.Env, c *exp.Call, _ typ.Type) (_ 
 }
 
 func (s *moduleSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
-	return &exp.Lit{Val: typ.Void, Src: c.Src}, nil
+	return &exp.Lit{Res: typ.None, Val: lit.Null{}, Src: c.Src}, nil
 }
 
-var Import = &importSpec{impl("<form@import mods:<tupl|exp|alt str tag|str> void>"), false}
-var Export = &importSpec{impl("<form@export mods:<tupl|exp|alt str tag|str> void>"), true}
+var Import = &importSpec{impl("<form@import mods:<tupl|exp|alt str tag|str> none>"), false}
+var Export = &importSpec{impl("<form@export mods:<tupl|exp|alt str tag|str> none>"), true}
 
 type importSpec struct {
 	exp.SpecBase
@@ -113,7 +113,7 @@ func (s *importSpec) Resl(p *exp.Prog, env exp.Env, c *exp.Call, _ typ.Type) (_ 
 }
 
 func (s *importSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
-	return &exp.Lit{Val: typ.Void, Src: c.Src}, nil
+	return &exp.Lit{Res: typ.None, Val: lit.Null{}, Src: c.Src}, nil
 }
 
 func matchRef(m exp.ModRef, s string) bool {
