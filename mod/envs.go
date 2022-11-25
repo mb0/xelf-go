@@ -130,12 +130,22 @@ func (e *ModEnv) SetName(name string) {
 		e.Mod.Decl.Typ.Ref = name
 	}
 }
-func (e *ModEnv) AddDecl(name string, v lit.Val) {
+func (e *ModEnv) AddDecl(name string, v lit.Val) error {
 	if m := e.Mod; m != nil {
+		if name == "" || !cor.IsName(name) {
+			return fmt.Errorf("invalid module declaration name %q", name)
+		}
+		p := typ.P(name, v.Type())
 		pb := m.Decl.Typ.Body.(*typ.ParamBody)
-		pb.Params = append(pb.Params, typ.P(name, v.Type()))
+		for _, o := range pb.Params {
+			if p.Key == o.Key {
+				return fmt.Errorf("module declaration name %q is not unique", name)
+			}
+		}
+		pb.Params = append(pb.Params, p)
 		m.Decl.Vals = append(m.Decl.Vals, v)
 	}
+	return nil
 }
 
 // Publish checks and publishes the module to the file or returns an error.

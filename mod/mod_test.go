@@ -10,6 +10,31 @@ import (
 	"xelf.org/xelf/lit"
 )
 
+func TestModSpecs(t *testing.T) {
+	env := NewLoaderEnv(exp.Builtins(lib.Std), FileMods())
+	tests := []struct {
+		name string
+		raw  string
+		want string
+	}{
+		{"no result", `(module foo)`, "null"},
+		{"decl type", `(module foo <obj@Info name:str>) foo.Info`, "<obj@foo.Info>"},
+		{"decl spec", `(module foo rem) foo.rem`, "<form@rem int int int>"},
+	}
+	for _, test := range tests {
+		p := exp.NewProg(env)
+		p.File.URL = "testdata/"
+		res, err := p.RunStr(test.raw, nil)
+		if err != nil {
+			t.Errorf("%s got error: %v", test.name, err)
+			continue
+		}
+		if got := res.String(); got != test.want {
+			t.Errorf("%s got:\n%s\nwant:\n%s", test.name, got, test.want)
+		}
+	}
+}
+
 func TestSysMods(t *testing.T) {
 	setup := func(prog *exp.Prog, s *Src) (*File, error) {
 		f := &exp.File{URL: s.URL}
@@ -35,13 +60,8 @@ func TestSysMods(t *testing.T) {
 		{"import foo as spam", "(import spam:'test/foo') spam.b", "0"},
 	}
 	for _, test := range tests {
-		x, err := exp.Parse(test.raw)
-		if err != nil {
-			t.Errorf("%s parse failed: %v", test.name, err)
-			continue
-		}
 		p := exp.NewProg(env)
-		res, err := p.Run(x, nil)
+		res, err := p.RunStr(test.raw, nil)
 		if err != nil {
 			t.Errorf("%s resl failed: %v", test.name, err)
 			continue
@@ -59,8 +79,7 @@ func TestSysMods(t *testing.T) {
 }
 
 func TestFailMods(t *testing.T) {
-	fsmods := FileMods()
-	env := NewLoaderEnv(exp.Builtins(lib.Std), fsmods)
+	env := NewLoaderEnv(exp.Builtins(lib.Std), FileMods())
 	tests := []struct {
 		name string
 		raw  string
@@ -72,8 +91,14 @@ func TestFailMods(t *testing.T) {
 			"sym rec2.Foo unresolved"},
 		{"invalid name", `(import './foo')(module Foo)`,
 			`invalid module name "Foo"`},
-		{"invalid name", `(import './foo')(module foo)`,
+		{"reuse imported name", `(import './foo')(module foo)`,
 			`the module name "foo" is already in use`},
+		{"redeclare name", `(module foo)(module foo)`,
+			`the module name "foo" is already in use`},
+		{"invalid decl", `(module foo a.b:1)`,
+			`invalid module declaration name "a.b"`},
+		{"redeclare decl", `(module foo a:1 a:2)`,
+			`declaration name "a" is not unique`},
 	}
 	for _, test := range tests {
 		p := exp.NewProg(env)

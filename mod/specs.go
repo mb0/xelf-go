@@ -5,6 +5,7 @@ import (
 
 	"xelf.org/xelf/ast"
 	"xelf.org/xelf/exp"
+	"xelf.org/xelf/knd"
 	"xelf.org/xelf/lit"
 	"xelf.org/xelf/typ"
 )
@@ -26,20 +27,49 @@ func (s *moduleSpec) Resl(p *exp.Prog, env exp.Env, c *exp.Call, _ typ.Type) (_ 
 	tags := c.Args[1].(*exp.Tupl)
 	// create module type
 	for _, el := range tags.Els {
-		tag := el.(*exp.Tag)
-		if tag.Exp == nil {
-			return nil, ast.ErrReslSpec(tag.Src, c.Sig.Ref, fmt.Errorf("empty tag not allowed"))
+		tag, _ := el.(*exp.Tag)
+		if tag != nil {
+			el = tag.Exp
 		}
-		te, err := p.Resl(c.Env, tag.Exp, typ.Void)
+		if el == nil {
+			return nil, ast.ErrReslSpec(tag.Src, c.Sig.Ref,
+				fmt.Errorf("empty module declaration not allowed"))
+		}
+		el, err = p.Resl(c.Env, el, typ.Void)
 		if err != nil {
 			return nil, err
 		}
-		tl, err := p.Eval(c.Env, te)
+		l, err := p.Eval(c.Env, el)
 		if err != nil {
 			return nil, err
 		}
-		me.AddDecl(tag.Tag, tl.Val)
-		tag.Exp = tl
+		val := l.Val
+		var decl string
+		if tag != nil {
+			tag.Exp = l
+			decl = tag.Tag
+		} else if l.Res.Kind&knd.Typ != 0 {
+			t, err := typ.ToType(val)
+			if err != nil || t.Ref == "" {
+				return nil, fmt.Errorf("expected named type got %s", val)
+			}
+			decl = t.Ref
+			t.Ref = me.Mod.Name + "." + decl
+			val = t
+		} else if l.Res.Kind&knd.Spec != 0 {
+			t := val.Type()
+			if t.Ref == "" {
+				return nil, fmt.Errorf("expected named spec got %s", val)
+			}
+			// TODO we cannot simply update a spec type, so what do we do?
+			decl = t.Ref
+		} else {
+			return nil, fmt.Errorf("unexpected module declaration %s", val)
+		}
+		err = me.AddDecl(decl, val)
+		if err != nil {
+			return nil, err
+		}
 	}
 	return c, me.Publish()
 }
