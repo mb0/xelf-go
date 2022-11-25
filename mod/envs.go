@@ -152,9 +152,16 @@ func (e *ModEnv) Publish() error {
 
 func (e *ModEnv) Lookup(s *exp.Sym, k string, eval bool) (exp.Exp, error) {
 	if m := e.Mod; m != nil {
-		v, err := lit.Select(m.Decl, k)
+		key := k
+		if n := len(m.Name); n > 0 && len(k) > n+1 && k[n] == '.' && m.Name == k[:n] {
+			key = k[n+1:]
+		}
+		v, err := lit.Select(m.Decl, key)
 		if err == nil {
 			return exp.LitVal(v), nil
+		}
+		if key != k {
+			return nil, exp.ErrSymNotFound
 		}
 	}
 	return e.Par.Lookup(s, k, eval)
