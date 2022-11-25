@@ -3,6 +3,7 @@ package mod
 import (
 	"fmt"
 
+	"xelf.org/xelf/cor"
 	"xelf.org/xelf/exp"
 	"xelf.org/xelf/knd"
 	"xelf.org/xelf/lit"
@@ -80,7 +81,7 @@ func (le *LoaderEnv) LoadFile(prog *exp.Prog, loc *Loc) (f *File, err error) {
 	if err == nil {
 		err = ErrFileNotFound
 	}
-	return nil, fmt.Errorf("module load failed for %s:\n%v", src.URL, err)
+	return nil, fmt.Errorf("module load failed for %s:\n%v", loc, err)
 }
 
 func (le *LoaderEnv) Parent() exp.Env { return le.Par }
@@ -105,7 +106,6 @@ func (le *LoaderEnv) Lookup(s *exp.Sym, k string, eval bool) (exp.Exp, error) {
 type ModEnv struct {
 	Par exp.Env
 	Mod *Mod
-	obj *lit.Obj
 }
 
 func FindModEnv(env exp.Env) *ModEnv {
@@ -117,32 +117,42 @@ func FindModEnv(env exp.Env) *ModEnv {
 	return nil
 }
 func NewModEnv(par exp.Env, file *File) *ModEnv {
-	obj := &lit.Obj{Typ: typ.Type{Kind: knd.Mod | knd.Obj, Body: &typ.ParamBody{}}}
-	m := &Mod{File: file, Decl: obj}
-	file.Refs = append(file.Refs, exp.ModRef{Pub: true, Mod: m})
-	return &ModEnv{Par: par, Mod: m, obj: obj}
+	return &ModEnv{Par: par, Mod: &Mod{File: file, Decl: &lit.Obj{
+		Typ: typ.Type{Kind: knd.Mod | knd.Obj, Body: &typ.ParamBody{}},
+	}}}
 }
 
 func (e *ModEnv) Parent() exp.Env { return e.Par }
 
 func (e *ModEnv) SetName(name string) {
-	if o := e.obj; o != nil {
+	if m := e.Mod; m != nil {
 		e.Mod.Name = name
-		o.Typ.Ref = name
-		e.Mod.Decl.Typ = e.obj.Typ
+		e.Mod.Decl.Typ.Ref = name
 	}
 }
 func (e *ModEnv) AddDecl(name string, v lit.Val) {
-	if o := e.obj; o != nil {
-		pb := o.Typ.Body.(*typ.ParamBody)
+	if m := e.Mod; m != nil {
+		pb := m.Decl.Typ.Body.(*typ.ParamBody)
 		pb.Params = append(pb.Params, typ.P(name, v.Type()))
-		o.Vals = append(o.Vals, v)
+		m.Decl.Vals = append(m.Decl.Vals, v)
 	}
 }
 
+// Publish checks and publishes the module to the file or returns an error.
+// It must be called once at the end of module setup or evaluation.
+func (e *ModEnv) Publish() error {
+	if m := e.Mod; m != nil {
+		if m.Name == "" || !cor.IsKey(m.Name) {
+			return fmt.Errorf("invalid module name %q", m.Name)
+		}
+		return m.File.AddRefs(exp.ModRef{Pub: true, Mod: m})
+	}
+	return nil
+}
+
 func (e *ModEnv) Lookup(s *exp.Sym, k string, eval bool) (exp.Exp, error) {
-	if o := e.obj; o != nil {
-		v, err := lit.Select(o, k)
+	if m := e.Mod; m != nil {
+		v, err := lit.Select(m.Decl, k)
 		if err == nil {
 			return exp.LitVal(v), nil
 		}

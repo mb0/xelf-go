@@ -1,6 +1,10 @@
 package exp
 
-import "xelf.org/xelf/lit"
+import (
+	"fmt"
+
+	"xelf.org/xelf/lit"
+)
 
 // File is a simple representation of any xelf input that store information about modules.
 type File struct {
@@ -10,6 +14,16 @@ type File struct {
 
 	// Refs contains all declared and used modules for this file.
 	Refs ModRefs
+}
+
+func (f *File) AddRefs(refs ...ModRef) error {
+	for _, ref := range refs {
+		if key := ref.Key(); f.Refs.Find(key) != nil {
+			return fmt.Errorf("the module name %q is already in use", key)
+		}
+	}
+	f.Refs = append(f.Refs, refs...)
+	return nil
 }
 
 // Mod is a simple representation of a module.
@@ -32,11 +46,18 @@ type ModRef struct {
 	*Mod
 }
 
+func (ref ModRef) Key() string {
+	if ref.Alias != "" {
+		return ref.Alias
+	}
+	return ref.Name
+}
+
 type ModRefs []ModRef
 
 func (ms ModRefs) Find(k string) *ModRef {
 	for i, m := range ms {
-		if m.Alias != "" && m.Alias == k || m.Name == k {
+		if m.Key() == k {
 			return &ms[i]
 		}
 	}

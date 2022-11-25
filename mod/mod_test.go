@@ -13,13 +13,10 @@ import (
 func TestSysMods(t *testing.T) {
 	setup := func(prog *exp.Prog, s *Src) (*File, error) {
 		f := &exp.File{URL: s.URL}
-		decl := lit.MakeObj(lit.Keyed{
+		m := &exp.Mod{File: f, Name: "foo", Decl: lit.MakeObj(lit.Keyed{
 			{Key: "b", Val: new(lit.Int)},
-		})
-		f.Refs = []exp.ModRef{
-			{Pub: true, Mod: &exp.Mod{File: f, Name: "foo", Decl: decl}},
-		}
-		return f, nil
+		})}
+		return f, f.AddRefs(exp.ModRef{Pub: true, Mod: m})
 	}
 	mods := new(SysMods)
 	mods.Register(&Src{
@@ -69,10 +66,14 @@ func TestFailMods(t *testing.T) {
 		raw  string
 		want string
 	}{
-		{"recurse", `(import './rec1')`,
+		{"recurse 1", `(import './rec1')`,
 			"module load recursion detected for file:testdata/rec1.xelf"},
-		{"recurse", `(import './rec3')`,
+		{"recurse 2", `(import './rec3')`,
 			"sym rec2.Foo unresolved"},
+		{"invalid name", `(import './foo')(module Foo)`,
+			`invalid module name "Foo"`},
+		{"invalid name", `(import './foo')(module foo)`,
+			`the module name "foo" is already in use`},
 	}
 	for _, test := range tests {
 		p := exp.NewProg(env)

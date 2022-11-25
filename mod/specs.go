@@ -41,7 +41,7 @@ func (s *moduleSpec) Resl(p *exp.Prog, env exp.Env, c *exp.Call, _ typ.Type) (_ 
 		me.AddDecl(tag.Tag, tl.Val)
 		tag.Exp = tl
 	}
-	return c, nil
+	return c, me.Publish()
 }
 
 func (s *moduleSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
@@ -101,7 +101,10 @@ func (s *importSpec) Resl(p *exp.Prog, env exp.Env, c *exp.Call, _ typ.Type) (_ 
 				m.Alias = ref.Alias
 			}
 			m.Pub = s.export
-			p.File.Refs = append(p.File.Refs, m)
+			err = p.File.AddRefs(m)
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 	c.Env = env

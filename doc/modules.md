@@ -46,6 +46,8 @@ Implementation
 Modules are just qualified object literal values, but as concept a language extension mechanism.
 Modules are unique per program and cannot have themselves as (indirect) dependency.
 
+Module names must be simple keys that are unique within the parent file.
+
 Loaders locate, load and cache raw module sources by url. Sources are program independent and
 represented either as ast or as program specific setup hook.
 
@@ -61,10 +63,13 @@ and returns void. This form creates a mod env, that resolves its definitions as 
 The declared module is available after its declaration in the parent file env.
 
 The `import` form loads modules into the file env and returns void. Import takes constant strings as
-module paths or tagged paths to alias a specific module. The used modules are available after the
-call in the parent loader env. A path fragment can be used to pick specific modules from a file.
+module paths or tagged paths to alias a specific module. The imported modules are then available
+in the program env. A path fragment or the alias itself can be used to pick specific modules from a
+file with multiple modules.
 
 The `export` form loads modules just like the import form but also re-exports used modules.
+
+All specs and each source module element are evaluate completely when resolved.
 
 	# file: /lib/company.com/prod/mod.xelf
 	(module prod
@@ -97,8 +102,8 @@ We want to support process external code generators for the daql command. Maybe 
 module wrapper that support external processes using something like github.com/hashicorp/go-plugin.
 
 Daql and layla used a corresponding file name extension to indicate the expected xelf environment.
-While we can still use explicit extensions, we should not encourage custom extension to simplify
-tooling. We can use the module system to ensure the expected environment.
+While we can still use explicit extensions, we should not encourage it to simplify tooling. We can
+use the module system to ensure the expected environment.
 
 Module refs allow local aliases that effect the reference name in that file. We need to allow
 aliases to disambiguate otherwise conflicting imports. Resolved type names must match these alias
