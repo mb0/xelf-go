@@ -22,11 +22,16 @@ Providing tools and hooks for a xelf program to resolve external modules uses is
 and specifically for daql project files and repl as well as the layla project. To encapsulate these
 capabilities in modules is some work but would go a long way towards usability and extensibility.
 
+We want to import two versions of a module, or more generally allow importing modules with the same
+name. This would be especially handy for migrations, where we want to backup the project data with
+the corresponding project schemas and then later import both the old and new schema to migrate the
+backup data.
+
 Use case
 --------
 
 project conf: one often has a common project configuration as well as deployment target specific
-configuration, modules let use different files that are easily composed.
+configuration, modules let us use different files that are easily composed.
 
 daql repl: we want a generic xelf repl, that we use to load a plain xelf configuration file for the
 development db details, pull in the dom package to define a new schema, pull in gen to experiment
@@ -83,7 +88,7 @@ to use this as default for external modules. The use spec can load whole files o
 modules out and use aliases to resolve naming conflicts with one call.
 
 Daql packages dom and qry register module sources that prepare a program and provide extra data.
-The packages of course must still be imported into the go binary to register the module sources.
+The packages must still be imported into the go binary to register the module sources.
 
 Daql projects and schemas integrate with the new module system and export the node as dom property
 and all model types by name.
@@ -95,7 +100,19 @@ Daql and layla used a corresponding file name extension to indicate the expected
 While we can still use explicit extensions, we should not encourage custom extension to simplify
 tooling. We can use the module system to ensure the expected environment.
 
-We want to import two versions of the same module. This would be especially handy for migrations
-where we may want to import both the old and new schema. The thing that complicates multiple type
-versions is that we currently use a program scoped type registry that uses the declaration name for
-proxies and module types. We describe the [task in more detail](./lit_reg_split.md).
+We should rethink the spec names: if we use export a better word for the use spec would be import.
+The word 'use' is all too often ambiguous in descriptions. If we used more verbose names for the
+import and export we could decide to use 'module' to declare a module, to avoid any confusion with
+a modulo operator (where we use rem for remainder).
+
+We should restrict module definitions to an abstract object literal value. A clear restriction makes
+it easier to resolve and reason about qualified names.
+
+Module refs allow local aliases that effect the reference name in that file. We need to allow
+aliases to disambiguate otherwise conflicting imports. Resolved type names must match these alias
+references. We will need to check all values for type names and field refs when crossing a file
+boundary. Lucky enough we have all the information at hand when the prog env resolves a module
+symbol.
+
+We need to work modules to enforce conforming type names in declarations. We could also add a mod
+spec feature to accept named type declarations directly to avoid stutter.
