@@ -24,29 +24,29 @@ func TestFSMods(t *testing.T) {
 		want  string
 	}{
 		{"none", "1", nil, "1"},
-		{"simple", "(mod big a:'A') big.a", []string{"testdata/#big"}, `"A"`},
-		{"use foo", "(use './foo') foo.b", []string{"file:testdata/foo.xelf#foo"}, "2"},
-		{"use multi", "(use './multi') ([] bar.c spam.e egg.name)", []string{
+		{"simple", "(module big a:'A') big.a", []string{"testdata/#big"}, `"A"`},
+		{"import foo", "(import './foo') foo.b", []string{"file:testdata/foo.xelf#foo"}, "2"},
+		{"import multi", "(import './multi') ([] bar.c spam.e egg.name)", []string{
 			"file:testdata/multi.xelf#bar",
 			"file:testdata/multi.xelf#egg",
 			"file:testdata/multi.xelf#spam",
 		}, `[3,5,"ehh"]`},
-		{"use multi frag", "(use './multi#bar') bar.c", []string{
+		{"import multi frag", "(import './multi#bar') bar.c", []string{
 			"file:testdata/multi.xelf#bar",
 		}, `3`},
-		{"use multi frag alias", "(use foo:'./multi#bar') foo.c", []string{
+		{"import multi frag alias", "(import foo:'./multi#bar') foo.c", []string{
 			"file:testdata/multi.xelf#bar",
 		}, `3`},
-		{"use multi plain alias", "(use bar:'./multi') bar.c", []string{
+		{"import multi plain alias", "(import bar:'./multi') bar.c", []string{
 			"file:testdata/multi.xelf#bar",
 		}, `3`},
-		{"use liba", "(use 'name.org/liba') liba.name", []string{
+		{"import liba", "(import 'name.org/liba') liba.name", []string{
 			"file:testdata/lib/name.org/liba.xelf#liba",
 		}, `"liba"`},
-		{"use libb", "(use 'name.org/libb') libb.name", []string{
+		{"import libb", "(import 'name.org/libb') libb.name", []string{
 			"file:testdata/lib/name.org/libb.xelf#libb",
 		}, `"libb using liba"`},
-		{"use name.org", "(use 'name.org') prod.name", []string{
+		{"import name.org", "(import 'name.org') prod.name", []string{
 			"file:testdata/lib/name.org/liba.xelf#liba",
 			"file:testdata/lib/name.org/libb.xelf#libb",
 			"file:testdata/lib/name.org/mod.xelf#prod",

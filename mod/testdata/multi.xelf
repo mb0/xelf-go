@@ -1,3 +1,3 @@
-(mod bar c:3 d:4)
-(mod spam e:5 f:6)
-(mod egg name:"ehh")
+(module bar c:3 d:4)
+(module spam e:5 f:6)
+(module egg name:"ehh")

@@ -33,9 +33,9 @@ func TestSysMods(t *testing.T) {
 		raw  string
 		want string
 	}{
-		{"use foo", "(use 'test/foo') foo.b", "0"},
-		{"mut foo", "(use 'test/foo') (mut foo.b 2) foo.b", "2"},
-		{"use foo as spam", "(use spam:'test/foo') spam.b", "0"},
+		{"import foo", "(import 'test/foo') foo.b", "0"},
+		{"mutate foo", "(import 'test/foo') (mut foo.b 2) foo.b", "2"},
+		{"import foo as spam", "(import spam:'test/foo') spam.b", "0"},
 	}
 	for _, test := range tests {
 		x, err := exp.Parse(test.raw)
@@ -69,9 +69,9 @@ func TestFailMods(t *testing.T) {
 		raw  string
 		want string
 	}{
-		{"recurse", `(use './rec1')`,
+		{"recurse", `(import './rec1')`,
 			"module load recursion detected for file:testdata/rec1.xelf"},
-		{"recurse", `(use './rec3')`,
+		{"recurse", `(import './rec3')`,
 			"sym rec2.Foo unresolved"},
 	}
 	for _, test := range tests {

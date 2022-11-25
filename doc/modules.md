@@ -31,7 +31,7 @@ Use case
 --------
 
 project conf: one often has a common project configuration as well as deployment target specific
-configuration, modules let us use different files that are easily composed.
+configuration, modules let us import different files that are easily composed.
 
 daql repl: we want a generic xelf repl, that we use to load a plain xelf configuration file for the
 development db details, pull in the dom package to define a new schema, pull in gen to experiment
@@ -51,40 +51,40 @@ represented either as ast or as program specific setup hook.
 
 A loader environment stores module loaders and provides the foundational specs to interact with
 modules. The loader environment loads the module sources and evaluates them to a module file.
-Files provide a url and a list of declared and used modules.
+Files provide a url and a list of imported and exported modules.
 
 The module and file data structures are part of exp package. Every program environment contains root
 file, and a list of all files and resolves qualified module symbols.
 
-The `mod` form creates and registers a simple module with a module name and tags of named values and
-returns void. This form creates a mod env, that resolves its definitions as unqualified names. The
-declared module is available after its declaration in the parent file env.
+The `module` form creates and registers a simple module with a module name and tags of named values
+and returns void. This form creates a mod env, that resolves its definitions as unqualified names.
+The declared module is available after its declaration in the parent file env.
 
-The `use` form loads modules into the file env and returns void. Use takes constant strings as
+The `import` form loads modules into the file env and returns void. Import takes constant strings as
 module paths or tagged paths to alias a specific module. The used modules are available after the
 call in the parent loader env. A path fragment can be used to pick specific modules from a file.
 
-The `export` form loads modules just like the use form but also re-exports used modules.
+The `export` form loads modules just like the import form but also re-exports used modules.
 
 	# file: /lib/company.com/prod/mod.xelf
-	(mod prod
+	(module prod
 		Prod:<obj ID:int Name:Str>
 	)
 	# file: /home/work/util.xelf
-	(mod util
+	(module util
 		Mode:'dev'
 		DBName:'myproj-dev'
 		Foo:(fn a:str (lower a))
 	)
 	# file: /home/work/main.xelf
-	(use 'company.com/prod' './util')
+	(import 'company.com/prod' './util')
 	(prod.Prod id:1 name:(util.Foo 'test'))
 
 Discussion
 ----------
 
 I experienced that using the simple module name as qualifier like go does is very readable and want
-to use this as default for external modules. The use spec can load whole files or pick single
+to use this as default for external modules. The import spec can load whole files or pick single
 modules out and use aliases to resolve naming conflicts with one call.
 
 Daql packages dom and qry register module sources that prepare a program and provide extra data.
@@ -99,11 +99,6 @@ module wrapper that support external processes using something like github.com/h
 Daql and layla used a corresponding file name extension to indicate the expected xelf environment.
 While we can still use explicit extensions, we should not encourage custom extension to simplify
 tooling. We can use the module system to ensure the expected environment.
-
-We should rethink the spec names: if we use export a better word for the use spec would be import.
-The word 'use' is all too often ambiguous in descriptions. If we used more verbose names for the
-import and export we could decide to use 'module' to declare a module, to avoid any confusion with
-a modulo operator (where we use rem for remainder).
 
 We should restrict module definitions to an abstract object literal value. A clear restriction makes
 it easier to resolve and reason about qualified names.

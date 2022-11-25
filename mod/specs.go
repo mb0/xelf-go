@@ -9,12 +9,12 @@ import (
 	"xelf.org/xelf/typ"
 )
 
-var ModSpec = &modSpec{impl("<form@mod name:sym tags?:tupl|tag void>")}
+var Module = &moduleSpec{impl("<form@module name:sym tags?:tupl|tag void>")}
 
-type modSpec struct{ exp.SpecBase }
+type moduleSpec struct{ exp.SpecBase }
 
-func (s *modSpec) Value() lit.Val { return s }
-func (s *modSpec) Resl(p *exp.Prog, env exp.Env, c *exp.Call, _ typ.Type) (_ exp.Exp, err error) {
+func (s *moduleSpec) Value() lit.Val { return s }
+func (s *moduleSpec) Resl(p *exp.Prog, env exp.Env, c *exp.Call, _ typ.Type) (_ exp.Exp, err error) {
 	if c.Env != nil {
 		return c, nil
 	}
@@ -44,20 +44,20 @@ func (s *modSpec) Resl(p *exp.Prog, env exp.Env, c *exp.Call, _ typ.Type) (_ exp
 	return c, nil
 }
 
-func (s *modSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
+func (s *moduleSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 	return &exp.Lit{Val: typ.Void, Src: c.Src}, nil
 }
 
-var Use = &useSpec{impl("<form@use mods:<tupl|exp|alt str tag|str> void>"), false}
-var Export = &useSpec{impl("<form@export mods:<tupl|exp|alt str tag|str> void>"), true}
+var Import = &importSpec{impl("<form@import mods:<tupl|exp|alt str tag|str> void>"), false}
+var Export = &importSpec{impl("<form@export mods:<tupl|exp|alt str tag|str> void>"), true}
 
-type useSpec struct {
+type importSpec struct {
 	exp.SpecBase
 	export bool
 }
 
-func (s *useSpec) Value() lit.Val { return s }
-func (s *useSpec) Resl(p *exp.Prog, env exp.Env, c *exp.Call, _ typ.Type) (_ exp.Exp, err error) {
+func (s *importSpec) Value() lit.Val { return s }
+func (s *importSpec) Resl(p *exp.Prog, env exp.Env, c *exp.Call, _ typ.Type) (_ exp.Exp, err error) {
 	if c.Env != nil {
 		return c, nil
 	}
@@ -109,7 +109,7 @@ func (s *useSpec) Resl(p *exp.Prog, env exp.Env, c *exp.Call, _ typ.Type) (_ exp
 	return c, nil
 }
 
-func (s *useSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
+func (s *importSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 	return &exp.Lit{Val: typ.Void, Src: c.Src}, nil
 }
 

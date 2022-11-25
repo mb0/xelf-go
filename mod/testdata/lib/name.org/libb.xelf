@@ -1,2 +1,2 @@
-(use "./liba")
-(mod libb name:("libb using " liba.name))
+(import './liba')
+(module libb name:("libb using " liba.name))

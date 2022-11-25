@@ -90,10 +90,10 @@ func (le *LoaderEnv) Lookup(s *exp.Sym, k string, eval bool) (exp.Exp, error) {
 	var spec lit.Val
 	// we return the mod and use spec only here so we can expect a loader env in those specs
 	switch k {
-	case "mod":
-		spec = ModSpec
-	case "use":
-		spec = Use
+	case "module":
+		spec = Module
+	case "import":
+		spec = Import
 	case "export":
 		spec = Export
 	default:
