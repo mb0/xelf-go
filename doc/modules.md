@@ -110,6 +110,3 @@ aliases to disambiguate otherwise conflicting imports. Resolved type names must 
 references. We will need to check all values for type names and field refs when crossing a file
 boundary. Lucky enough we have all the information at hand when the prog env resolves a module
 symbol.
-
-We need to work modules to enforce conforming type names in declarations. We could also add a mod
-spec feature to accept named type declarations directly to avoid stutter.

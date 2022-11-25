@@ -17,8 +17,8 @@ type File struct {
 }
 
 func (f *File) AddRefs(refs ...ModRef) error {
-	for _, ref := range refs {
-		if key := ref.Key(); f.Refs.Find(key) != nil {
+	for _, fr := range f.Refs { // we more often add few refs, so invert to reduce worst case
+		if key := fr.Key(); ModRefs(refs).Find(key) != nil {
 			return fmt.Errorf("the module name %q is already in use", key)
 		}
 	}
@@ -46,6 +46,7 @@ type ModRef struct {
 	*Mod
 }
 
+// Key returns the alias or module name.
 func (ref ModRef) Key() string {
 	if ref.Alias != "" {
 		return ref.Alias
