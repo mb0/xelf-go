@@ -20,20 +20,22 @@ func (n *Ast) Print(b *bfr.P) error {
 		b.Fmt(n.Tok.String())
 	} else if n.Kind == knd.Tag && len(n.Seq) > 1 {
 		b.Fmt(n.Seq[0].String())
-		b.Fmt(n.Tok.String())
+		b.WriteRune(n.Tok.Rune)
 		if len(n.Seq) > 1 {
 			b.Fmt(n.Seq[1].String())
 		}
 	} else {
+		start, end := parens(n.Kind)
+		b.WriteRune(start)
 		for i, s := range n.Seq {
 			if i != 0 {
 				b.Byte(' ')
 			}
 			s.Print(b)
 		}
+		b.WriteRune(end)
 	}
 	return b.Err
-
 }
 func (n Ast) String() string {
 	if len(n.Seq) == 0 {
