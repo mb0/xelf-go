@@ -106,7 +106,7 @@ func ParseVal(a ast.Ast) (v Val, err error) {
 func ParseMut(a ast.Ast) (Mut, error) {
 	switch a.Kind {
 	case knd.Num:
-		n, err := strconv.ParseInt(a.Raw, 10, 64)
+		n, err := strconv.ParseFloat(a.Raw, 64)
 		if err != nil {
 			return nil, ast.ErrInvalid(a, knd.Num, err)
 		}

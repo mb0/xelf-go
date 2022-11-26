@@ -97,7 +97,7 @@ func TestFuncEval(t *testing.T) {
 	}{
 		{strings.ToLower, nil, `(_ 'HELLO')`, `'hello'`},
 		{time.Time.Format, []string{"t?", "format"}, `(_ format:'2006')`, `'0001'`},
-		{fmt.Sprintf, nil, `(_ "Hi %s no. %d." "you" 9)`, `'Hi you no. 9.'`},
+		{fmt.Sprintf, nil, `(_ "Hi %s no. %v." "you" 9)`, `'Hi you no. 9.'`},
 	}
 	for _, test := range tests {
 		f, err := NewFunc(c, "_", test.fun, test.names...)

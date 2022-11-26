@@ -17,7 +17,7 @@ import (
 type (
 	Null struct{}
 	Bool bool
-	Num  int64
+	Num  float64
 	Int  int64
 	Real float64
 	Char string
@@ -88,7 +88,7 @@ func (r Raw) Len() int  { return len(r) }
 
 func (Null) String() string   { return "null" }
 func (v Bool) String() string { return strconv.FormatBool(bool(v)) }
-func (i Num) String() string  { return fmt.Sprintf("%d", i) }
+func (i Num) String() string  { return fmt.Sprintf("%g", i) }
 func (i Int) String() string  { return fmt.Sprintf("%d", i) }
 func (r Real) String() string { return fmt.Sprintf("%g", r) }
 func (s Char) String() string { return string(s) }
@@ -168,7 +168,7 @@ func (i *Num) Parse(a ast.Ast) error {
 	if a.Kind != knd.Num {
 		return ast.ErrExpect(a, knd.Num)
 	}
-	n, err := strconv.ParseInt(a.Raw, 10, 64)
+	n, err := strconv.ParseFloat(a.Raw, 64)
 	if err != nil {
 		return ast.ErrInvalid(a, knd.Num, err)
 	}
@@ -292,7 +292,7 @@ func (v *Bool) Assign(p Val) error {
 }
 
 func (i *Num) Assign(p Val) error {
-	if n, err := ToInt(p); err != nil {
+	if n, err := ToReal(p); err != nil {
 		return err
 	} else {
 		*i = Num(n)

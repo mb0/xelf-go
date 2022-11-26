@@ -25,9 +25,12 @@ Implementation
 
 We change ast tokens to use num, char, idxr, keyr again.
 
-We introduce lit.Num and lit.Char to mirror lit.Int, lit.Str. The reason for num to be represented
-as int is, that anything that discerns floats from ints makes the unambiguous floats, while any int
-could also be float.
+We introduce lit.Num and lit.Char to mirror lit.Real and lit.Str. The ast can still use a real
+token, because any feature that discerns reals and ints make former match no other type, as a hint
+for the parser to use ParseInt for num marked tokens.
+
+The num value however must be backed by a float or it cannot provide a mutable version for all
+possible values.
 
 We introduce lit.Vals and lit.KeyVals, which are just dressed up []Val and []KeyVal respectively,
 that are idxr and keyr values on their own and can be partially reused by list and dict.
