@@ -76,13 +76,14 @@ err type with the meta kind err. It does not handle source position or other det
 instead wrap an error that does.
 
 And the error handling xelf api would look something like this:
-`<form@fail tupl? err>`
-`<form@try @ <alt? _ tag|_> _>`
-`(try (cache.get $id) err:(let res:(calc $)
-	(if (not (eq err "not found")) res
-		else:(try (cache.set $id res) res)
-	)
-))`
+
+	<form@fail tupl? err>
+	<form@try @ <alt? _ tag|_> _>
+	(try (cache.get $id) err:(let res:(calc $)
+		(if (not (eq err "not found")) res
+			else:(try (cache.set $id res) res)
+		)
+	))
 
 Where fail raises an error with the concatenated arguments and try takes one exp to try and another
 to evaluate with an err if the first failed. The second argument may be a tag to specify the err
