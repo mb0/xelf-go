@@ -17,7 +17,6 @@ type Regs struct {
 
 func NewRegs() *Regs    { return &Regs{PrxReg: &PrxReg{}} }
 func GlobalRegs() *Regs { g := *global; return &g }
-
 func DefaultRegs(rs *Regs) *Regs {
 	if rs == nil {
 		rs = &Regs{}

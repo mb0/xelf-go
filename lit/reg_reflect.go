@@ -4,41 +4,11 @@ import (
 	"fmt"
 	"reflect"
 	"strings"
-	"sync"
 
 	"xelf.org/xelf/cor"
 	"xelf.org/xelf/knd"
 	"xelf.org/xelf/typ"
 )
-
-type typInfo struct {
-	typ.Type
-	*params
-}
-type params struct {
-	ps  []typ.Param
-	idx [][]int
-}
-
-// PrxReg holds process-shared reflection and proxy information
-type PrxReg struct {
-	sync.RWMutex
-	proxy map[reflect.Type]Prx
-	param map[reflect.Type]typInfo
-}
-
-func (pr *PrxReg) setParam(rt reflect.Type, nfo typInfo) {
-	if pr.param == nil {
-		pr.param = make(map[reflect.Type]typInfo)
-	}
-	pr.param[rt] = nfo
-}
-func (pr *PrxReg) setProxy(rt reflect.Type, prx Prx) {
-	if pr.proxy == nil {
-		pr.proxy = make(map[reflect.Type]Prx)
-	}
-	pr.proxy[rt] = prx
-}
 
 // Reflect returns the xelf type for the reflect type or an error.
 func (pr *PrxReg) Reflect(t reflect.Type) (typ.Type, error) {
@@ -278,37 +248,6 @@ func (pr *PrxReg) addEmbed(pm *params, t reflect.Type, s *tstack, idx []int) (bo
 		return true, nil
 	}
 	return false, nil
-}
-
-// AddFrom updates the cache with entries from o.
-func (pr *PrxReg) AddFrom(o *PrxReg) {
-	if o == nil || pr == o {
-		return
-	}
-	o.RLock()
-	pr.Lock()
-	if len(o.proxy) > 0 {
-		if pr.proxy == nil {
-			pr.proxy = make(map[reflect.Type]Prx)
-		}
-		for rt, prx := range o.proxy {
-			if _, ok := pr.proxy[rt]; !ok {
-				pr.proxy[rt] = prx
-			}
-		}
-	}
-	if len(o.param) > 0 {
-		if pr.param == nil {
-			pr.param = make(map[reflect.Type]typInfo)
-		}
-		for rt, nfo := range o.param {
-			if _, ok := pr.param[rt]; !ok {
-				pr.param[rt] = nfo
-			}
-		}
-	}
-	pr.Unlock()
-	o.RUnlock()
 }
 
 type tstack struct {

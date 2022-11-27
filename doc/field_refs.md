@@ -28,7 +28,7 @@ Field references are pulled into the xelf language and also declare self referen
 keys. (Instead of using and managing derived model definitions.) Then model identifying information
 is kept through filter steps as long as the primary key is kept. The daql query can just return the
 result type that provides all type information. So reuse the existing xelf reference notation:
-`list|@prod.Prod.ID`.
+`list|int@prod.Prod.ID`.
 
 The reference field is now part of type structure and can be used to name concrete types. The ref
 field also replaces the type name of const, obj and spec types; this changes the type name syntax to

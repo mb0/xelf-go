@@ -12,7 +12,7 @@ encounter errors themselves preparing the values, we should not panic or ignore 
 elegant way to report an error is as value and break the iteration.
 
 That got me generally thinking about error handling in xelf again. So if nothing else, this time I
-wrote down my thoughts for next time. If we add error value we need to decide which type they
+wrote down my thoughts for next time. If we add error values we need to decide which type they
 return, what they print as and how they fit into the picture overall.
 
 Discussion
@@ -49,7 +49,7 @@ Do we use errors as a basic language concept or in corner cases?
 
 How to serialize errors? Do we receive it as input?
 
- * The simple solution would be to treat as any other char value.
+ * The simple solution would be to treat them as any other char value.
  * We often encounter error strings in result types for api endpoints.
  * If we send and receive errors we want to provide a mutable `*Err` and wrap native errors
    in proxies.

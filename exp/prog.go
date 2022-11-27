@@ -16,16 +16,6 @@ import (
 // The user can errors.Is(err, ErrDefer) and resume program resolution with more context provided.
 var ErrDefer = fmt.Errorf("deferred resolution")
 
-// Env is a scoped context to resolve symbols. Envs configure most of the program resolution.
-type Env interface {
-	// Parent returns the parent environment or nil.
-	Parent() Env
-
-	// Lookup resolves a part of a symbol and returns the result or an error.
-	// If eval is true we expect a *exp.Lit result or an error.
-	Lookup(s *Sym, k string, eval bool) (Exp, error)
-}
-
 // Prog is the entry context to resolve an expression in an environment.
 // Programs are bound to their expression and cannot be reused.
 type Prog struct {
@@ -136,16 +126,6 @@ func (p *Prog) Lookup(s *Sym, k string, eval bool) (res Exp, err error) {
 		}
 	}
 	return res, err
-}
-
-func modQual(k string) (q, _ string) {
-	dot := strings.IndexByte(k, '.')
-	if dot > 0 {
-		if q = k[:dot]; cor.IsKey(q) {
-			return q, k[dot+1:]
-		}
-	}
-	return "", k
 }
 
 // Resl resolves an expression using a type hint and returns the result or an error.
@@ -348,4 +328,14 @@ func (p *Prog) EvalArgs(c *Call) ([]*Lit, error) {
 func (p *Prog) NextFnID() uint {
 	p.fnid++
 	return p.fnid
+}
+
+func modQual(k string) (q, _ string) {
+	dot := strings.IndexByte(k, '.')
+	if dot > 0 {
+		if q = k[:dot]; cor.IsKey(q) {
+			return q, k[dot+1:]
+		}
+	}
+	return "", k
 }

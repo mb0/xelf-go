@@ -7,41 +7,6 @@ import (
 	"xelf.org/xelf/typ"
 )
 
-type Reg interface {
-	Reflect(rt reflect.Type) (typ.Type, error)
-	ProxyValue(ptr reflect.Value) (Mut, error)
-}
-
-// Conv converts val to type t and returns a reflect value or an error.
-func Conv(reg Reg, t reflect.Type, val Val) (reflect.Value, error) {
-	ptr := reflect.New(t)
-	mut, err := reg.ProxyValue(ptr)
-	if err != nil {
-		return reflect.Value{}, err
-	}
-	if !val.Nil() {
-		err = mut.Assign(val)
-		if err != nil {
-			return reflect.Value{}, err
-		}
-	}
-	return ptr.Elem(), nil
-}
-
-// Proxy returns a proxy value for ptr or an error.
-func Proxy(reg Reg, ptr interface{}) (Mut, error) {
-	return reg.ProxyValue(reflect.ValueOf(ptr))
-}
-
-// MustProxy returns a proxy value for ptr or panics.
-func MustProxy(reg Reg, ptr interface{}) Mut {
-	mut, err := Proxy(reg, ptr)
-	if err != nil {
-		panic(err)
-	}
-	return mut
-}
-
 // ProxyValue returns a proxy value for the reflect value ptr or an error.
 func (c *PrxReg) ProxyValue(ptr reflect.Value) (mut Mut, err error) {
 	if ptr.Kind() != reflect.Ptr {

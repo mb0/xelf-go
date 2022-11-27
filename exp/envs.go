@@ -9,6 +9,16 @@ import (
 // ErrSymNotFound is an error that indicates that a symbol was not found in the environment
 var ErrSymNotFound = fmt.Errorf("sym not found")
 
+// Env is a scoped context to resolve symbols. Envs configure most of the program resolution.
+type Env interface {
+	// Parent returns the parent environment or nil.
+	Parent() Env
+
+	// Lookup resolves a part of a symbol and returns the result or an error.
+	// If eval is true we expect a *exp.Lit result or an error.
+	Lookup(s *Sym, k string, eval bool) (Exp, error)
+}
+
 // Builtins is a root environment to resolve symbols to builtin specs and at last as types.
 type Builtins map[string]Spec
 
