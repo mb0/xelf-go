@@ -16,6 +16,12 @@ makes the command less useful or must find a way to integrate other runtimes.
 Implementation
 --------------
 
+We created the new xelf.org/cmd module that provides generic xelf command related helpers and the
+actual command package at xelf.org/cmd/xelf.
+
+We use the new xps package to load external runtime support from $XELF_PLUGINS into the process.
+This works really great.
+
 The command should provide a collection of helpers organised as subcommands:
 
  * help: show help text obviously
@@ -23,13 +29,10 @@ The command should provide a collection of helpers organised as subcommands:
  * sel:  select a path from the xelf file, a simple jq for xelf
  * json: convert xelf literal input to json output, should work with streams
  * mods: list all modules in path or searches for specific path
-
-These subcommand require evaluation:
-
  * test: resolves xelf input and reports problems
  * eval: evaluate xelf input
  * fix:  a specialized formatter that simplifies and standardizes the input
- * repl: maybe a repl, how do we handle daql runtimes?
+ * repl: a xelf repl that can load xelf plugins
 
 Discussion
 ----------
@@ -46,10 +49,18 @@ module system to expand program capabilities.
  * We could compile a new runner every time, that imports a list of go runtime packages. This would
    involve create a temporary module, fetching all dependencies and compiling it. This was easier to
    implement with GOPATH. And then we are still limited to runtimes written in go.
- * We could use the go plugin system, it fits our requirements well. It requires building special
-   go plugin binaries, but otherwise has none of the problems, work or overhead associated with the
+ * We decided to use go plugins, they fit our requirements well and only require building a special
+   go plugin binary, but otherwise has none of the problems, work or overhead associated with the
    other options. We would need an option to easily build and locate plugins. Go plugins must be
    build with the same go runtime version and results in reasonably large plugin files.
+
+Using the plugin system we can provide the same features as the daql repl.
+
+We currently load all plugins that we can find whenever a program is prepared. This is wasteful
+if all we do is evaluating simple expressions. We could use a xps meta file that declares all
+the xelf modules it provides. That way we could add a lazy module registry that only loads the
+plugins it needs once. It is also the case that dapgx provides all daql modules through its
+package dependencies. So we load the dapgx plugin we do not have to load the daql plugin too.
 
 Links
 -----
