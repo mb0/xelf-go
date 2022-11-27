@@ -56,14 +56,19 @@ module system to expand program capabilities.
 
 Using the plugin system we can provide the same features as the daql repl.
 
-We currently load all plugins that we can find whenever a program is prepared. This is wasteful
-if all we do is evaluating simple expressions. We could use a xps meta file that declares all
-the xelf modules it provides. That way we could add a lazy module registry that only loads the
-plugins it needs once. It is also the case that dapgx provides all daql modules through its
-package dependencies. So we load the dapgx plugin we do not have to load the daql plugin too.
+We currently load all plugins that we can find whenever a program is prepared. This is wasteful if
+all we do is evaluating simple expressions. We could use a plugin manifest file that declares all
+the xelf module paths it provides. That way we could add a lazy module registry that only loads the
+plugins it needs once. It is also the case that plugins overlap: dapgx for example provides all daql
+modules through its package dependencies, so if we load the dapgx plugin we can skip loading the
+daql plugin.
+
+It would be great for daql qry backend providers to use modules in the same way. For now we can
+simply provide an empty module that ensures the provider is registered.
 
 Links
 -----
 
+ * https://pkg.go.dev/plugin go plugin package docs
  * https://appliedgo.net/plugins/ gives a good overview over external plugins in go
  * https://github.com/hashicorp/go-plugin is an implementation using net/rpc or grpc

@@ -2,37 +2,51 @@
 package xps
 
 import (
-	"fmt"
-	"io/fs"
 	"os"
 	"path/filepath"
 	"plugin"
-	"strings"
 )
 
+// EnvRoots returns root paths from the $XELF_PLUGINS environment variable.
 func EnvRoots() []string { return filepath.SplitList(os.Getenv("XELF_PLUGINS")) }
 
-// Plugin wraps a go plugin with path and name information.
-type Plug struct {
-	*plugin.Plugin
-	Path string
-	Name string
+// Manifest provides the plugin path, name and a list of provided module paths.
+type Manifest struct {
+	Path string   `json:"-"`
+	Name string   `json:"name"`
+	Mods []string `json:"mods,omitempty"`
 }
 
-func (p Plug) String() string { return p.Path }
-
-func FindAll(roots []string) (res []string) {
-	for _, root := range roots {
-		res = findAll(root, res)
+func (m Manifest) String() string { return m.Path }
+func (m Manifest) PlugPath() string {
+	if n := len(m.Path); n > 8 && m.Path[n-8:] == ".so.xelf" {
+		return m.Path[:n-5]
 	}
-	return res
+	return ""
 }
 
-func LoadAll(roots []string) (res []Plug, err error) {
+// Plug wraps a go plugin with a manifest. The manifest must use the '.so.xelf' file extension,
+// thereby encoding the expected location of the plugin binary.
+type Plug struct {
+	Manifest
+	*plugin.Plugin
+}
+
+// Load returns the plugin at the plugin manifest path p or an error.
+func Load(path string) (*Plug, error) {
+	m, err := Read(path)
+	if err != nil {
+		return nil, err
+	}
+	return loadPlug(m)
+}
+
+// LoadAll finds, opens and returns all plugins in roots or an error.
+func LoadAll(roots []string) ([]*Plug, error) {
 	all := FindAll(roots)
-	for _, found := range all {
-		p := Plug{Path: found}
-		p.Plugin, err = plugin.Open(found)
+	res := make([]*Plug, 0, len(all))
+	for _, m := range all {
+		p, err := loadPlug(m)
 		if err != nil {
 			return res, err
 		}
@@ -41,73 +55,8 @@ func LoadAll(roots []string) (res []Plug, err error) {
 	return res, nil
 }
 
-func Load(roots []string, name string) (p Plug, err error) {
-	for _, root := range roots {
-		if p.Path = find(root, name); p.Path != "" {
-			break
-		}
-	}
-	if p.Path == "" {
-		return p, fmt.Errorf("plugin %s not found", name)
-	}
-	p.Name = name
-	p.Plugin, err = plugin.Open(p.Path)
+func loadPlug(m Manifest) (p *Plug, err error) {
+	p = &Plug{Manifest: m}
+	p.Plugin, err = plugin.Open(m.PlugPath())
 	return p, err
-}
-
-func find(root, name string) string {
-	if !isdir(root) {
-		return ""
-	}
-	dir := filepath.Join(root, name)
-	if isdir(dir) {
-		if p := dir + "/xps/xps.so"; isfile(p) {
-			return p
-		}
-		if p := dir + "/xps/" + name + "-xps.so"; isfile(p) {
-			return p
-		}
-	}
-	if p := dir + ".so"; isfile(p) {
-		return p
-	}
-	if p := dir + "-xps.so"; isfile(p) {
-		return p
-	}
-	return ""
-}
-
-func findAll(root string, res []string) []string {
-	if !isdir(root) {
-		return res
-	}
-	dir := os.DirFS(root)
-	fs.WalkDir(dir, ".", func(path string, e fs.DirEntry, err error) error {
-		if err != nil {
-			return err
-		}
-		n := e.Name()
-		if e.IsDir() {
-			if (n[0] == '.' && n != ".") || n == "node_modules" || n == "testdata" {
-				return fs.SkipDir
-			}
-			return nil
-		}
-		if len(n) > 3 && n[0] != '.' && n[len(n)-3:] == ".so" {
-			if strings.Contains(path, "xps") {
-				res = append(res, filepath.Join(root, path))
-			}
-		}
-		return nil
-	})
-	return res
-}
-
-func isdir(p string) bool {
-	fi, err := os.Stat(p)
-	return err == nil && fi.IsDir()
-}
-func isfile(p string) bool {
-	fi, err := os.Stat(p)
-	return err == nil && !fi.IsDir()
 }
