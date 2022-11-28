@@ -20,7 +20,11 @@ func Select(val Val, path string) (Val, error) {
 // SelectPath returns the selected value at path from val or an error.
 func SelectPath(val Val, path cor.Path) (_ Val, err error) {
 	for i, s := range path {
-		if t, ok := val.Value().(typ.Type); ok {
+		if val.Type().Kind&knd.Typ != 0 {
+			t, err := typ.ToType(val)
+			if err != nil {
+				return nil, err
+			}
 			return typ.SelectPath(t, path[i:])
 		}
 		if s.Sel {
@@ -38,29 +42,29 @@ func SelectPath(val Val, path cor.Path) (_ Val, err error) {
 }
 
 func SelectKey(val Val, key string) (Val, error) {
-	switch a := val.(type) {
-	case Null:
-		return a, nil
-	case Keyr:
-		return a.Key(key)
-	default:
-		if a, ok := val.Value().(Keyr); ok {
+	if val != nil && !val.Nil() {
+		if a, ok := val.(Keyr); ok {
+			return a.Key(key)
+		} else if a, ok := Unwrap(val).(Keyr); ok {
 			return a.Key(key)
 		}
+	}
+	if val == (Null{}) {
+		return val, nil
 	}
 	return nil, fmt.Errorf("key segment %q expects keyr got %[2]T %[2]s", key, val)
 }
 
 func SelectIdx(val Val, idx int) (res Val, err error) {
-	switch a := val.(type) {
-	case Null:
-		return a, nil
-	case Idxr:
-		return a.Idx(idx)
-	default:
-		if a, ok := val.Value().(Idxr); ok {
+	if val != nil && !val.Nil() {
+		if a, ok := val.(Idxr); ok {
+			return a.Idx(idx)
+		} else if a, ok := Unwrap(val).(Idxr); ok {
 			return a.Idx(idx)
 		}
+	}
+	if val == (Null{}) {
+		return val, nil
 	}
 	return nil, fmt.Errorf("idx segment %d expects idxr got %[2]T %[2]s", idx, val)
 }
@@ -194,7 +198,7 @@ func CreatePath(mut Mut, path cor.Path, val Val) (err error) {
 	var ev Val
 	isAny := et == typ.Void || et.Kind&knd.Data == knd.Data
 	if isAny && len(npath) == 1 {
-		ev = val.Value()
+		ev = Unwrap(val)
 	} else {
 		if isAny {
 			if npath[1].Key == "" {
@@ -212,7 +216,7 @@ func CreatePath(mut Mut, path cor.Path, val Val) (err error) {
 		if err != nil {
 			return err
 		}
-		ev = z.Value()
+		ev = Unwrap(z)
 	}
 	if o, ok := cur.(*OptMut); ok {
 		o.Null = false

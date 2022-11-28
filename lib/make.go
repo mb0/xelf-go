@@ -101,5 +101,5 @@ func (s *makeSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 			}
 		}
 	}
-	return &exp.Lit{Res: t, Val: res.Value(), Src: c.Src}, nil
+	return &exp.Lit{Res: t, Val: res, Src: c.Src}, nil
 }

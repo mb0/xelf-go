@@ -75,6 +75,7 @@ func (x *ObjPrx) Assign(v Val) (err error) {
 		return x.setNull()
 	}
 	switch o := v.Value().(type) {
+	case Null:
 	case Keyr:
 		err = o.IterKey(func(k string, v Val) error {
 			return x.SetKey(k, v)

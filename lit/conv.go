@@ -7,32 +7,30 @@ import (
 	"xelf.org/xelf/cor"
 )
 
+type Wrapper interface{ Unwrap() Val }
+
 func Unwrap(v Val) Val {
-	switch p := v.(type) {
-	case *AnyPrx:
-		if !p.Nil() {
-			return p.val
-		}
-	case *OptMut:
-		if !p.Nil() {
-			return p.LitMut
-		}
+	for w, ok := v.(Wrapper); ok; w, ok = v.(Wrapper) {
+		v = w.Unwrap()
+	}
+	if v == nil {
+		v = Null{}
 	}
 	return v
 }
 
 func ToBool(v Val) (b Bool, err error) {
+	if v == nil || v.Nil() {
+		return
+	}
 	switch v := v.(type) {
-	case nil:
-	case Null:
 	case Bool:
 		b = v
 	case *Bool:
-		if v != nil {
-			b = *v
-		}
+		b = *v
 	default:
 		switch v := v.Value().(type) {
+		case Null:
 		case Bool:
 			b = v
 		default:
@@ -43,31 +41,25 @@ func ToBool(v Val) (b Bool, err error) {
 }
 
 func ToInt(v Val) (n Int, err error) {
+	if v == nil || v.Nil() {
+		return
+	}
 	switch v := v.(type) {
-	case nil:
-	case Null:
+	case *Num:
+		n = Int(*v)
+	case *Int:
+		n = *v
+	case *Real:
+		n = Int(*v)
 	case Num:
 		n = Int(v)
 	case Int:
 		n = v
 	case Real:
 		n = Int(v)
-	case *Num:
-		if v != nil {
-			n = Int(*v)
-		}
-	case *Int:
-		if v != nil {
-			n = *v
-		}
-	case *Real:
-		if v != nil {
-			n = Int(*v)
-		}
 	default:
 		switch v := v.Value().(type) {
-		case Num:
-			n = Int(v)
+		case Null:
 		case Int:
 			n = v
 		case Real:
@@ -80,31 +72,25 @@ func ToInt(v Val) (n Int, err error) {
 }
 
 func ToReal(v Val) (n Real, err error) {
+	if v == nil || v.Nil() {
+		return
+	}
 	switch v := v.(type) {
-	case nil:
-	case Null:
+	case *Num:
+		n = Real(*v)
+	case *Int:
+		n = Real(*v)
+	case *Real:
+		n = *v
 	case Num:
 		n = Real(v)
 	case Int:
 		n = Real(v)
 	case Real:
 		n = v
-	case *Num:
-		if v != nil {
-			n = Real(*v)
-		}
-	case *Int:
-		if v != nil {
-			n = Real(*v)
-		}
-	case *Real:
-		if v != nil {
-			n = *v
-		}
 	default:
 		switch v := v.Value().(type) {
-		case Num:
-			n = Real(v)
+		case Null:
 		case Int:
 			n = Real(v)
 		case Real:
@@ -117,27 +103,23 @@ func ToReal(v Val) (n Real, err error) {
 }
 
 func ToStr(v Val) (s Str, err error) {
+	if v == nil || v.Nil() {
+		return
+	}
 	switch v := v.(type) {
-	case nil:
-	case Null:
-	case Str:
-		s = v
+	case *Char:
+		s = Str(*v)
+	case *Str:
+		s = *v
 	case Char:
 		s = Str(v)
-	case *Str:
-		if v != nil {
-			s = *v
-		}
-	case *Char:
-		if v != nil {
-			s = Str(*v)
-		}
+	case Str:
+		s = v
 	default:
 		switch v := v.Value().(type) {
+		case Null:
 		case Str:
 			s = v
-		case Char:
-			s = Str(v)
 		case Raw:
 			s = Str(cor.FormatRaw(v))
 		case UUID:
@@ -154,22 +136,19 @@ func ToStr(v Val) (s Str, err error) {
 }
 
 func ToRaw(v Val) (r Raw, err error) {
+	if v == nil || v.Nil() {
+		return
+	}
 	switch v := v.(type) {
-	case nil:
-	case Null:
+	case *Raw:
+		r = *v
 	case Raw:
 		r = v
-	case *Raw:
-		if v != nil {
-			r = *v
-		}
 	default:
 		switch v := v.Value().(type) {
+		case Null:
 		case Raw:
 			r = v
-		case Char:
-			n, err := cor.ParseRaw(string(v))
-			return Raw(n), err
 		case Str:
 			n, err := cor.ParseRaw(string(v))
 			return Raw(n), err
@@ -187,22 +166,19 @@ func ToRaw(v Val) (r Raw, err error) {
 }
 
 func ToUUID(v Val) (u UUID, err error) {
+	if v == nil || v.Nil() {
+		return
+	}
 	switch v := v.(type) {
-	case nil:
-	case Null:
+	case *UUID:
+		u = *v
 	case UUID:
 		u = v
-	case *UUID:
-		if v != nil {
-			u = *v
-		}
 	default:
 		switch v := v.Value().(type) {
+		case Null:
 		case UUID:
 			u = v
-		case Char:
-			n, err := cor.ParseUUID(string(v))
-			return UUID(n), err
 		case Str:
 			n, err := cor.ParseUUID(string(v))
 			return UUID(n), err
@@ -217,22 +193,19 @@ func ToUUID(v Val) (u UUID, err error) {
 }
 
 func ToTime(v Val) (t Time, err error) {
+	if v == nil || v.Nil() {
+		return
+	}
 	switch v := v.(type) {
-	case nil:
-	case Null:
+	case *Time:
+		t = *v
 	case Time:
 		t = v
-	case *Time:
-		if v != nil {
-			t = *v
-		}
 	default:
 		switch v := v.Value().(type) {
+		case Null:
 		case Time:
 			t = v
-		case Char:
-			n, err := cor.ParseTime(string(v))
-			return Time(n), err
 		case Str:
 			n, err := cor.ParseTime(string(v))
 			return Time(n), err
@@ -244,22 +217,19 @@ func ToTime(v Val) (t Time, err error) {
 }
 
 func ToSpan(v Val) (s Span, err error) {
+	if v == nil || v.Nil() {
+		return
+	}
 	switch v := v.(type) {
-	case nil:
-	case Null:
+	case *Span:
+		s = *v
 	case Span:
 		s = v
-	case *Span:
-		if v != nil {
-			s = *v
-		}
 	default:
 		switch v := v.Value().(type) {
+		case Null:
 		case Span:
 			s = v
-		case Char:
-			n, err := cor.ParseSpan(string(v))
-			return Span(n), err
 		case Str:
 			n, err := cor.ParseSpan(string(v))
 			return Span(n), err

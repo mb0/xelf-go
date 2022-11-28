@@ -3,25 +3,18 @@ package lit
 import "xelf.org/xelf/knd"
 
 func Copy(v Val) (Val, error) {
-	if v == nil {
-		return nil, nil
+	if v.Nil() {
+		return v, nil
 	}
-	m, ok := v.(Mut)
-	if !ok {
-		return v.Value(), nil
-	}
-	if m.Type().Kind&(knd.Keyr|knd.Idxr) == 0 {
-		n := m.New()
-		return n, n.Assign(m)
+	if v.Type().Kind&(knd.Keyr|knd.Idxr) == 0 {
+		n := v.Mut().New()
+		return n, n.Assign(v)
 	}
 	return deepCopy(v, make(map[Mut]Mut))
 }
 
 func deepCopy(v Val, cache map[Mut]Mut) (_ Val, err error) {
-	m, ok := v.(Mut)
-	if !ok {
-		return v.Value(), nil
-	}
+	m := v.Mut()
 	if n := cache[m]; n != nil {
 		return n, nil
 	}

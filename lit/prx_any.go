@@ -35,11 +35,16 @@ func anyVal(v reflect.Value) Val {
 }
 
 func (x *AnyPrx) NewWith(v reflect.Value) Mut { return &AnyPrx{x.with(v), anyVal(v)} }
-
+func (x *AnyPrx) Unwrap() Val {
+	if x.Nil() {
+		return Null{}
+	}
+	return x.val
+}
 func (x *AnyPrx) New() Mut   { return x.NewWith(x.new()) }
 func (x *AnyPrx) Zero() bool { return x.Nil() || x.val.Zero() }
 func (x *AnyPrx) Mut() Mut   { return x }
-func (x *AnyPrx) Value() Val { return x.val.Value() }
+func (x *AnyPrx) Value() Val { return x.Unwrap().Value() }
 func (x *AnyPrx) Parse(a ast.Ast) (err error) {
 	if isNull(a) {
 		x.val = Null{}
@@ -62,7 +67,7 @@ func (x *AnyPrx) Assign(v Val) (err error) {
 	x.elem().Set(reflect.ValueOf(x.val))
 	return nil
 }
-func (x *AnyPrx) String() string               { return x.val.String() }
-func (x *AnyPrx) MarshalJSON() ([]byte, error) { return x.val.MarshalJSON() }
+func (x *AnyPrx) String() string               { return x.Unwrap().String() }
+func (x *AnyPrx) MarshalJSON() ([]byte, error) { return x.Unwrap().MarshalJSON() }
 func (x *AnyPrx) UnmarshalJSON(b []byte) error { return unmarshal(b, x) }
-func (x *AnyPrx) Print(b *bfr.P) error         { return x.val.Print(b) }
+func (x *AnyPrx) Print(b *bfr.P) error         { return x.Unwrap().Print(b) }

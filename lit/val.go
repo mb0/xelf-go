@@ -72,10 +72,10 @@ func (s Span) Zero() bool { return s == 0 }
 
 func (Null) Value() Val   { return Null{} }
 func (v Bool) Value() Val { return v }
-func (i Num) Value() Val  { return i }
+func (i Num) Value() Val  { return Real(i) }
 func (i Int) Value() Val  { return i }
 func (r Real) Value() Val { return r }
-func (s Char) Value() Val { return s }
+func (s Char) Value() Val { return Str(s) }
 func (s Str) Value() Val  { return s }
 func (r Raw) Value() Val  { return r }
 func (u UUID) Value() Val { return u }

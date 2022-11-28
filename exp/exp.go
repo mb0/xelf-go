@@ -54,7 +54,7 @@ func (a *Lit) Value() lit.Val {
 	if a == nil || a.Val == nil {
 		return lit.Null{}
 	}
-	return a.Val.Value()
+	return a.Val
 }
 
 // Sym is a symbol expression which caches the resolving environment and a relative name.

@@ -62,3 +62,9 @@ It still itself implements Spec and should be used as such.
 
 We add a `lit.Val.Mut() (lit.Mut)` function to the api. It returns the same or a new mutable value.
 We change the embedded opt mut field to LitMut to remove the name conflict.
+
+We redefine `lit.Val.Value() (lit.Val)` to always convert to minimal set of types. Idxr and Keyr
+values can return as is to avoid excessive allocations, users can simply use an implementation
+of choice and assign.In places where we used it to unwrap wrapper types we correctly use
+`lit.Unwrap(lit.Val)` function that now unwraps all layers of wrapper values. We add a small Wrapper
+interface to allow external wrapper implementations.

@@ -17,21 +17,23 @@ func (o *AnyMut) Type() typ.Type {
 	}
 	return o.Typ
 }
+func (o *AnyMut) Unwrap() Val {
+	if o == nil || o.val == nil {
+		return Null{}
+	}
+	return o.val
+}
 func (o *AnyMut) Nil() bool  { return o == nil || o.val == nil || o.val.Nil() }
 func (o *AnyMut) Zero() bool { return o == nil || o.val == nil || o.val.Zero() }
 func (o *AnyMut) Mut() Mut   { return o }
-func (o *AnyMut) Value() Val {
-	if o.val != nil {
-		return o.val.Value()
-	}
-	return Null{}
-}
-func (o *AnyMut) String() string               { return o.Value().String() }
-func (o *AnyMut) MarshalJSON() ([]byte, error) { return o.Value().MarshalJSON() }
-func (o *AnyMut) UnmarshalJSON(b []byte) error { return unmarshal(b, o) }
+func (o *AnyMut) Value() Val { return o.Unwrap().Value() }
 
-func (o *AnyMut) Print(p *bfr.P) error { return o.Value().Print(p) }
-func (o *AnyMut) New() Mut             { return &AnyMut{Typ: o.Typ} }
+func (o *AnyMut) String() string               { return o.Unwrap().String() }
+func (o *AnyMut) MarshalJSON() ([]byte, error) { return o.Unwrap().MarshalJSON() }
+func (o *AnyMut) UnmarshalJSON(b []byte) error { return unmarshal(b, o) }
+func (o *AnyMut) Print(p *bfr.P) error         { return o.Unwrap().Print(p) }
+
+func (o *AnyMut) New() Mut { return &AnyMut{Typ: o.Typ} }
 func (o *AnyMut) Ptr() interface{} {
 	if m, ok := o.val.(Mut); ok {
 		return m.Ptr()

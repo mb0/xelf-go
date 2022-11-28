@@ -53,8 +53,7 @@ func (x *ListPrx) Assign(v Val) (err error) {
 	}
 	e := x.elem()
 	n := e.Slice(0, 0)
-	v = v.Value()
-	switch o := v.(type) {
+	switch o := Unwrap(v).(type) {
 	case Idxr:
 		err = o.IterIdx(func(i int, el Val) error {
 			val, err := Conv(x.Reg, e.Type().Elem(), el)

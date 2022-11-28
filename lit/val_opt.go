@@ -14,36 +14,24 @@ type OptMut struct {
 	Null bool
 }
 
-func (o *OptMut) Type() typ.Type { return typ.Opt(o.LitMut.Type()) }
-func (o *OptMut) Nil() bool      { return o.Null }
-func (o *OptMut) Zero() bool     { return o.Null || o.LitMut.Zero() }
-func (o *OptMut) Mut() Mut       { return o }
-func (o *OptMut) Value() Val {
-	if o.Null {
+func (o *OptMut) Unwrap() Val {
+	if o.Nil() {
 		return Null{}
 	}
-	return o.LitMut.Value()
+	return o.LitMut
 }
-func (o *OptMut) String() string {
-	if o.Null {
-		return "null"
-	}
-	return o.LitMut.String()
-}
-func (o *OptMut) MarshalJSON() ([]byte, error) {
-	if o.Null {
-		return []byte("null"), nil
-	}
-	return o.LitMut.MarshalJSON()
-}
-func (o *OptMut) UnmarshalJSON(b []byte) error { return unmarshal(b, o) }
 
-func (o *OptMut) Print(p *bfr.P) error {
-	if o.Null {
-		return p.Fmt("null")
-	}
-	return o.LitMut.Print(p)
-}
+func (o *OptMut) Type() typ.Type { return typ.Opt(o.LitMut.Type()) }
+func (o *OptMut) Nil() bool      { return o == nil || o.Null }
+func (o *OptMut) Zero() bool     { return o.Null || o.LitMut.Zero() }
+func (o *OptMut) Mut() Mut       { return o }
+func (o *OptMut) Value() Val     { return o.Unwrap().Value() }
+func (o *OptMut) String() string { return o.Unwrap().String() }
+
+func (o *OptMut) MarshalJSON() ([]byte, error) { return o.Unwrap().MarshalJSON() }
+func (o *OptMut) UnmarshalJSON(b []byte) error { return unmarshal(b, o) }
+func (o *OptMut) Print(p *bfr.P) error         { return o.Unwrap().Print(p) }
+
 func (o *OptMut) New() Mut { return &OptMut{o.LitMut.New(), nil, true} }
 func (o *OptMut) Parse(a ast.Ast) error {
 	if isNull(a) {

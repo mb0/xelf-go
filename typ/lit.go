@@ -16,18 +16,17 @@ var (
 // This interface does in principle belong to the lit package.
 type LitVal interface {
 	Type() Type
-	// Nil returns whether this is a null literal.
+	// Nil returns whether this is a null value.
 	Nil() bool
 	// Zero returns whether this is a zero value.
 	Zero() bool
-	// Value returns a simple value representation using these types:
-	// Type, Null, Bool, Int, Real, Str, Raw, UUID, Time, Span for primitive values
-	// Composite literals are returned as is and implement either or both Idxr  Keyr.
+	// Value returns a simple value restricted to these types: Null, Bool, Int, Real, Str, Raw,
+	// UUID, Time, Span, Type, Idxr, Keyr and *SpecRef.
 	Value() LitVal
 	// Mut returns the effective mutable itself or a new mutable for this value.
 	Mut() LitMut
 	// String returns a string content for char literals and xelf format for other literals.
-	// Use bfr.String(l) to get quoted char literals.
+	// Use bfr.String(v) to get quoted char literals.
 	String() string
 	// Print writes this literal to the given printer or returns an error.
 	Print(*bfr.P) error
@@ -47,7 +46,7 @@ type LitMut interface {
 	// Assign assigns the given value to this mutable or returns an error.
 	Assign(LitVal) error
 	// Parse reads the given ast into this mutable or returns an error.
-	// The registry parameter is stricly optional, proxies should bring a registry if required.
+	// The registry parameter is strictly optional, proxies should bring a registry if required.
 	Parse(ast.Ast) error
 }
 
@@ -80,14 +79,14 @@ func (t *Type) Parse(a ast.Ast) error {
 }
 
 func ToType(v LitVal) (t Type, err error) {
+	if v == nil || v.Nil() {
+		return
+	}
 	switch v := v.(type) {
-	case nil:
 	case Type:
 		t = v
 	case *Type:
-		if v != nil {
-			t = *v
-		}
+		t = *v
 	default:
 		switch v := v.Value().(type) {
 		case Type:
