@@ -1,49 +1,87 @@
 package lit
 
-import "xelf.org/xelf/knd"
+import (
+	"errors"
 
+	"xelf.org/xelf/knd"
+)
+
+// Copy deep copies v or returns an error. It uses the same value implementations,
+// but may turn none-mutable primitive values into a mutable representation.
 func Copy(v Val) (Val, error) {
-	if v.Nil() {
-		return v, nil
-	}
-	if v.Type().Kind&(knd.Keyr|knd.Idxr) == 0 {
+	return Edit(v, func(v Val) (Val, error) {
 		n := v.Mut().New()
 		return n, n.Assign(v)
-	}
-	return deepCopy(v, make(map[Mut]Mut))
+	})
 }
 
-func deepCopy(v Val, cache map[Mut]Mut) (_ Val, err error) {
-	m := v.Mut()
-	if n := cache[m]; n != nil {
-		return n, nil
+// SkipCont can be returned from EditFunc to skip over the contained values.
+var SkipCont = errors.New("skip contained values")
+
+// EditFunc edits and returns v, a new value, SkipCont, BreakIter or any other error.
+type EditFunc func(v Val) (Val, error)
+
+// Edit edits v and returns the result or an error.
+// Function f is never called with nil.
+func Edit(v Val, f EditFunc) (r Val, err error) {
+	if v == nil || v.Nil() {
+		return v, nil
 	}
-	n := m.New()
-	cache[m] = n
-	switch mc := m.(type) {
-	case Keyr:
-		nc := n.(Keyr)
-		err = mc.IterKey(func(key string, el Val) error {
-			nel, err := deepCopy(el, cache)
-			if err != nil {
-				return err
-			}
-			return nc.SetKey(key, nel)
-		})
-	case Idxr:
-		nc := n.(Idxr)
-		err = mc.IterIdx(func(idx int, el Val) error {
-			nel, err := deepCopy(el, cache)
-			if err != nil {
-				return err
-			}
-			return nc.SetIdx(idx, nel)
-		})
-	default:
-		err = n.Assign(m)
+	if r, err = f(v); err != nil {
+		if err == SkipCont {
+			err = nil
+		}
+	} else if hasCont(r) {
+		e := editor{Func: f, seen: map[Val]Val{v: r}}
+		return r, e.editCont(r)
 	}
-	if err != nil {
-		return nil, err
-	}
-	return n, nil
+	return r, err
 }
+
+type editor struct {
+	Func EditFunc
+	seen map[Val]Val
+}
+
+func (e *editor) editVal(v Val) (r Val, err error) {
+	if v == nil || v.Nil() {
+		return v, nil
+	}
+	if r, ok := e.seen[v]; ok {
+		return r, SkipCont
+	}
+	if r, err = e.Func(v); err != nil {
+		if err == SkipCont {
+			e.seen[v] = r
+			err = nil
+		}
+	} else {
+		e.seen[v] = r
+		if hasCont(r) {
+			err = e.editCont(r)
+		}
+	}
+	return r, err
+}
+func (e *editor) editCont(v Val) error {
+	switch a := Unwrap(v).(type) {
+	case Idxr:
+		return a.IterIdx(func(idx int, el Val) error {
+			r, err := e.editVal(el)
+			if err != nil || r == el {
+				return err
+			}
+			return a.SetIdx(idx, r)
+		})
+	case Keyr:
+		return a.IterKey(func(key string, el Val) error {
+			r, err := e.editVal(el)
+			if err != nil || r == el {
+				return err
+			}
+			return a.SetKey(key, r)
+		})
+	}
+	return nil
+}
+func hasCont(v Val) bool { return !v.Zero() && v.Type().Kind&(knd.Keyr|knd.Idxr) != 0 }
