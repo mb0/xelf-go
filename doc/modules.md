@@ -39,37 +39,37 @@ with code generation, pull in mig to migrate the db and insert some fixtures, pu
 results from the database, pull in a script with reporting helpers, that use layla for pdf reports
 and then export the whole repl session as script file.
 
-
 Implementation
 --------------
 
-Modules are just qualified object literal values, but as concept a language extension mechanism.
-Modules are unique per program and cannot have themselves as (indirect) dependency.
-
-Module names must be simple keys that are unique within the parent file.
+Modules are just object literals qualified by a simple key, but as concept a language extension
+mechanism. Modules are unique per program and cannot have themselves as (indirect) dependency.
 
 Loaders locate, load and cache raw module sources by url. Sources are program independent and
 represented either as ast or as program specific setup hook.
 
 A loader environment stores module loaders and provides the foundational specs to interact with
 modules. The loader environment loads the module sources and evaluates them to a module file.
-Files provide a url and a list of imported and exported modules.
+Files provide a url and a list of references to imported and exported modules. Module reference keys
+must be unique with the file. Module reference aliases can be used to disambiguate otherwise
+conflicting imports.
 
-The module and file data structures are part of exp package. Every program environment contains root
-file, and a list of all files and resolves qualified module symbols.
+The module and file data structures are part of exp package. Every program environment contains a
+root file, and a list of all loaded files. The program resolves qualified module symbols and
+attempts to update all name types crossing a file boundary to ensure valid references.
 
 The `module` form creates and registers a simple module with a module name and tags of named values
 and returns null. This form creates a mod env, that resolves its definitions as unqualified names.
-The declared module is available after its declaration in the parent file env.
+The declared module is available after its declaration in the parent program env.
 
-The `import` form loads modules into the file env and returns null. Import takes constant strings as
-module paths or tagged paths to alias a specific module. The imported modules are then available
+The `import` form loads modules into the program env and returns null. Import takes constant strings
+as module paths or tagged paths to alias a specific module. The imported modules are then available
 in the program env. A path fragment or the alias itself can be used to pick specific modules from a
 file with multiple modules.
 
 The `export` form loads modules just like the import form but also re-exports used modules.
 
-All specs and each source module element are evaluate completely when resolved.
+All module specs and source module declarations are evaluate full when resolved.
 
 	# file: /lib/company.com/prod/mod.xelf
 	(module prod
@@ -100,13 +100,6 @@ go-based code generators too.
 Daql projects and schemas integrate with the new module system and export the node as dom property
 and all model types by name.
 
-
 Daql and layla used a corresponding file name extension to indicate the expected xelf environment.
 While we can still use explicit extensions, we should not encourage it to simplify tooling. We can
 use the module system to ensure the expected environment.
-
-Module refs allow local aliases that effect the reference name in that file. We need to allow
-aliases to disambiguate otherwise conflicting imports. Resolved type names must match these alias
-references. We will need to check all values for type names and field refs when crossing a file
-boundary. Lucky enough we have all the information at hand when the prog env resolves a module
-symbol.
