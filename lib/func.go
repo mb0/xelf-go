@@ -13,7 +13,6 @@ var Fn = &fnSpec{impl("<form@fn tupl?|tag|typ exp|@1 func@|@1>")}
 
 type fnSpec struct{ exp.SpecBase }
 
-func (s *fnSpec) Value() lit.Val { return s }
 func (s *fnSpec) Resl(p *exp.Prog, env exp.Env, c *exp.Call, h typ.Type) (_ exp.Exp, err error) {
 	fe := &FuncEnv{Par: env}
 	tags, ok := c.Args[0].(*exp.Tupl)
@@ -45,7 +44,7 @@ func (s *fnSpec) Resl(p *exp.Prog, env exp.Env, c *exp.Call, h typ.Type) (_ exp.
 	if fe.rec {
 		fe.recur = &recurSpec{exp.SpecBase{Decl: ft}, fe, fe.Def, x.Clone(), nil}
 	}
-	return &exp.Lit{Res: ft, Val: spec}, nil
+	return &exp.Lit{Res: ft, Val: exp.NewSpecRef(spec)}, nil
 }
 
 func (s *fnSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
@@ -84,7 +83,6 @@ type funcSpec struct {
 	act exp.Exp
 }
 
-func (s *funcSpec) Value() lit.Val { return s }
 func (s *funcSpec) Resl(p *exp.Prog, env exp.Env, c *exp.Call, h typ.Type) (exp.Exp, error) {
 	_, err := s.SpecBase.Resl(p, env, c, h)
 	if err != nil {
@@ -135,7 +133,6 @@ type recurSpec struct {
 	spec *funcSpec
 }
 
-func (s *recurSpec) Value() lit.Val { return s }
 func (s *recurSpec) Resl(p *exp.Prog, env exp.Env, c *exp.Call, h typ.Type) (_ exp.Exp, err error) {
 	// we want to resolve the first layer of a recursion once
 	if s.spec == nil {
@@ -196,7 +193,7 @@ func (e *FuncEnv) Lookup(s *exp.Sym, k string, eval bool) (exp.Exp, error) {
 				kv.Exp = &l
 				r.def[i] = kv
 			}
-			return &exp.Lit{Res: r.Decl, Val: &r}, nil
+			return &exp.Lit{Res: r.Decl, Val: exp.NewSpecRef(&r)}, nil
 		}
 	}
 	k, ok := dotkey(k)

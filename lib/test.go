@@ -24,7 +24,6 @@ var (
 	Le    = &compSpec{impl("<form@le <alt num str span time> tupl|_ bool>"), 1, true}
 )
 
-func (s *compSpec) Value() lit.Val { return s }
 func (s *compSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 	args, err := p.EvalArgs(c)
 	if err != nil {
@@ -66,7 +65,6 @@ type inSpec struct {
 	neg bool
 }
 
-func (s *inSpec) Value() lit.Val { return s }
 func (s *inSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 	args, err := p.EvalArgs(c)
 	if err != nil {

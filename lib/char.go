@@ -14,7 +14,6 @@ var Cat = &catSpec{impl("<form@cat tupl str>")}
 
 type catSpec struct{ exp.SpecBase }
 
-func (s *catSpec) Value() lit.Val { return s }
 func (s *catSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 	args, err := p.EvalArgs(c)
 	if err != nil {
@@ -31,7 +30,6 @@ var Sep = &sepSpec{impl("<form@sep str tupl str>")}
 
 type sepSpec struct{ exp.SpecBase }
 
-func (s *sepSpec) Value() lit.Val { return s }
 func (s *sepSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 	args, err := p.EvalArgs(c)
 	if err != nil {
@@ -59,7 +57,6 @@ type rawSpec struct {
 	JSON bool
 }
 
-func (s *rawSpec) Value() lit.Val { return s }
 func (s *rawSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 	args, err := p.EvalArgs(c)
 	if err != nil {

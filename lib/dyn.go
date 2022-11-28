@@ -14,7 +14,6 @@ var Dyn = &dynSpec{impl("<form@dyn tupl|exp @>")}
 
 type dynSpec struct{ exp.SpecBase }
 
-func (s *dynSpec) Value() lit.Val { return s }
 func (s *dynSpec) Resl(p *exp.Prog, env exp.Env, c *exp.Call, h typ.Type) (exp.Exp, error) {
 	if c.Env == nil {
 		c.Env = env

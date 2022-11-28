@@ -12,7 +12,6 @@ var Mut = &mutSpec{impl("<form@mut any data? tupl?|tag _>")}
 
 type mutSpec struct{ exp.SpecBase }
 
-func (s *mutSpec) Value() lit.Val { return s }
 func (s *mutSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 	fst, err := p.Eval(c.Env, c.Args[0])
 	if err != nil {
@@ -51,7 +50,6 @@ var Append = &appendSpec{impl("<form@append list tupl? _>")}
 
 type appendSpec struct{ exp.SpecBase }
 
-func (s *appendSpec) Value() lit.Val { return s }
 func (s *appendSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 	fst, err := p.Eval(c.Env, c.Args[0])
 	if err != nil {

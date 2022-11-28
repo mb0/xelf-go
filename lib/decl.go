@@ -3,7 +3,6 @@ package lib
 import (
 	"xelf.org/xelf/exp"
 	"xelf.org/xelf/knd"
-	"xelf.org/xelf/lit"
 	"xelf.org/xelf/typ"
 )
 
@@ -11,7 +10,6 @@ var Dot = &dotSpec{impl("<form@dot any exp|@1 @1>")}
 
 type dotSpec struct{ exp.SpecBase }
 
-func (s *dotSpec) Value() lit.Val { return s }
 func (s *dotSpec) Resl(p *exp.Prog, env exp.Env, c *exp.Call, h typ.Type) (_ exp.Exp, err error) {
 	de, ok := c.Env.(*exp.DotEnv)
 	if !ok {
@@ -44,7 +42,6 @@ var Let = &letSpec{impl("<form@let tupl|tag exp|@1 @1>")}
 
 type letSpec struct{ exp.SpecBase }
 
-func (s *letSpec) Value() lit.Val { return s }
 func (s *letSpec) Resl(p *exp.Prog, env exp.Env, c *exp.Call, h typ.Type) (_ exp.Exp, err error) {
 	le, ok := c.Env.(*LetEnv)
 	if !ok {

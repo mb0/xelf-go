@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"xelf.org/xelf/exp"
-	"xelf.org/xelf/lit"
 	"xelf.org/xelf/typ"
 )
 
@@ -12,7 +11,6 @@ var Do = &doSpec{impl("<form@do tupl|exp @>")}
 
 type doSpec struct{ exp.SpecBase }
 
-func (s *doSpec) Value() lit.Val { return s }
 func (s *doSpec) Resl(p *exp.Prog, env exp.Env, c *exp.Call, h typ.Type) (exp.Exp, error) {
 	// we must resolve all expressions in order for side effects
 	els := c.Args[0].(*exp.Tupl).Els

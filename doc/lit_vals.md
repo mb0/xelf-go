@@ -52,3 +52,10 @@ with updated type. We should be careful that the new type is compatible.
 
 We can add a value wrapper that provides a new type or even an ast value that uses raw input until
 evaluated we can probably reuse and maybe unify with AnyMut and OptMut.
+
+Implementation
+--------------
+
+SpecRef is now a mutable value, it supports null specs, new and assign but not parse.
+It is the only spec value representation, Spec itself does not need to implement Val anymore.
+It still itself implements Spec and should be used as such.

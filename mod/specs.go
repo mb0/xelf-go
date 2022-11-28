@@ -14,7 +14,6 @@ var Module = &moduleSpec{impl("<form@module name:sym tags?:tupl|exp none>")}
 
 type moduleSpec struct{ exp.SpecBase }
 
-func (s *moduleSpec) Value() lit.Val { return s }
 func (s *moduleSpec) Resl(p *exp.Prog, env exp.Env, c *exp.Call, _ typ.Type) (_ exp.Exp, err error) {
 	if c.Env != nil {
 		return c, nil
@@ -87,7 +86,6 @@ type importSpec struct {
 	export bool
 }
 
-func (s *importSpec) Value() lit.Val { return s }
 func (s *importSpec) Resl(p *exp.Prog, env exp.Env, c *exp.Call, _ typ.Type) (_ exp.Exp, err error) {
 	if c.Env != nil {
 		return c, nil

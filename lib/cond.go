@@ -9,7 +9,6 @@ var If = &ifSpec{impl("<form@if <tupl cond:any then:exp|@1> else:exp?|@1 @1>")}
 
 type ifSpec struct{ exp.SpecBase }
 
-func (s *ifSpec) Value() lit.Val { return s }
 func (s *ifSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 	els := c.Args[0].(*exp.Tupl).Els
 	for i := 0; i < len(els); i += 2 {
@@ -33,7 +32,6 @@ var Swt = &swtSpec{impl("<form@swt @1 <tupl case:@1 then:exp|@2> else:exp?|@2 @2
 
 type swtSpec struct{ exp.SpecBase }
 
-func (s *swtSpec) Value() lit.Val { return s }
 func (s *swtSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 	arg, err := p.Eval(c.Env, c.Args[0])
 	if err != nil {
@@ -62,7 +60,6 @@ var Df = &dfSpec{impl("<form@df tupl|@1 @1!>")}
 
 type dfSpec struct{ exp.SpecBase }
 
-func (s *dfSpec) Value() lit.Val { return s }
 func (s *dfSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 	// cases
 	for _, cas := range c.Args[0].(*exp.Tupl).Els {

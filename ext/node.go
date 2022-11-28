@@ -72,8 +72,6 @@ func NewNodeSpec(decl typ.Type, node Node, rs Rules) *NodeSpec {
 	return &NodeSpec{exp.SpecBase{Decl: decl}, rs, node}
 }
 
-func (s *NodeSpec) Value() lit.Val { return s }
-
 func (s *NodeSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 	l, err := lit.Copy(s.Node)
 	if err != nil {

@@ -13,7 +13,6 @@ var Make = &makeSpec{impl("<form@make typ tupl? tupl?|tag lit|_>")}
 
 type makeSpec struct{ exp.SpecBase }
 
-func (s *makeSpec) Value() lit.Val { return s }
 func (s *makeSpec) Resl(p *exp.Prog, env exp.Env, c *exp.Call, h typ.Type) (exp.Exp, error) {
 	if c.Env == nil {
 		c.Env = env

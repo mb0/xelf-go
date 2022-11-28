@@ -11,7 +11,6 @@ var Add = &addSpec{impl("<form@add num@ tupl?|num _>")}
 
 type addSpec struct{ exp.SpecBase }
 
-func (s *addSpec) Value() lit.Val { return s }
 func (s *addSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 	args, err := p.EvalArgs(c)
 	if err != nil {
@@ -35,7 +34,6 @@ var Mul = &mulSpec{impl("<form@mul num@ tupl?|num _>")}
 
 type mulSpec struct{ exp.SpecBase }
 
-func (s *mulSpec) Value() lit.Val { return s }
 func (s *mulSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 	args, err := p.EvalArgs(c)
 	if err != nil {
@@ -59,7 +57,6 @@ var Sub = &subSpec{impl("<form@sub num@ tupl|num _>")}
 
 type subSpec struct{ exp.SpecBase }
 
-func (s *subSpec) Value() lit.Val { return s }
 func (s *subSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 	args, err := p.EvalArgs(c)
 	if err != nil {
@@ -84,7 +81,6 @@ var Div = &divSpec{impl("<form@div num@ tupl|num _>")}
 
 type divSpec struct{ exp.SpecBase }
 
-func (s *divSpec) Value() lit.Val { return s }
 func (s *divSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 	args, err := p.EvalArgs(c)
 	if err != nil {
@@ -109,7 +105,6 @@ var Rem = &remSpec{impl("<form@rem int int int>")}
 
 type remSpec struct{ exp.SpecBase }
 
-func (s *remSpec) Value() lit.Val { return s }
 func (s *remSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 	args, err := p.EvalArgs(c)
 	if err != nil {
@@ -130,7 +125,6 @@ var Abs = &absSpec{impl("<form@abs num@ _>")}
 
 type absSpec struct{ exp.SpecBase }
 
-func (s *absSpec) Value() lit.Val { return s }
 func (s *absSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 	args, err := p.EvalArgs(c)
 	if err != nil {
@@ -150,7 +144,6 @@ var Neg = &negSpec{impl("<form@neg num@ _>")}
 
 type negSpec struct{ exp.SpecBase }
 
-func (s *negSpec) Value() lit.Val { return s }
 func (s *negSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 	args, err := p.EvalArgs(c)
 	if err != nil {
@@ -167,7 +160,6 @@ var Min = &minSpec{impl("<form@min num@ tupl?|num _>")}
 
 type minSpec struct{ exp.SpecBase }
 
-func (s *minSpec) Value() lit.Val { return s }
 func (s *minSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 	args, err := p.EvalArgs(c)
 	if err != nil {
@@ -193,7 +185,6 @@ var Max = &maxSpec{impl("<form@max num@ tupl?|num _>")}
 
 type maxSpec struct{ exp.SpecBase }
 
-func (s *maxSpec) Value() lit.Val { return s }
 func (s *maxSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 	args, err := p.EvalArgs(c)
 	if err != nil {

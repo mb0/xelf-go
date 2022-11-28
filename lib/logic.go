@@ -18,7 +18,6 @@ type logicSpec struct {
 	zero, init, neg bool
 }
 
-func (s *logicSpec) Value() lit.Val { return s }
 func (s *logicSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 	r := s.zero
 	args := c.Args[0].(*exp.Tupl).Els
@@ -42,7 +41,6 @@ var Err = &errSpec{impl("<form@err tupl?|exp @>")}
 
 type errSpec struct{ exp.SpecBase }
 
-func (s *errSpec) Value() lit.Val { return s }
 func (s *errSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 	return nil, ast.ErrUserErr(c.Src, c.String(), nil)
 }

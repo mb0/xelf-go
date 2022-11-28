@@ -74,7 +74,6 @@ func NewFunc(reg lit.Reg, name string, val interface{}, names ...string) (*Func,
 	return s, nil
 }
 
-func (s *Func) Value() lit.Val { return s }
 func (s *Func) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 	args, err := p.EvalArgs(c)
 	if err != nil {

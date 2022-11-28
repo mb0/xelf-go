@@ -13,7 +13,6 @@ var Len = &lenSpec{impl("<form@len <alt? list keyr str raw> int>")}
 
 type lenSpec struct{ exp.SpecBase }
 
-func (s *lenSpec) Value() lit.Val { return s }
 func (s *lenSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 	args, err := p.EvalArgs(c)
 	if err != nil {
@@ -40,7 +39,6 @@ type foldSpec struct {
 	Right bool
 }
 
-func (s *foldSpec) Value() lit.Val { return s }
 func (s *foldSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 	args, err := p.EvalArgs(c)
 	if err != nil {
@@ -81,7 +79,6 @@ var Range = &rangeSpec{impl("<form@range n:int f?:<func int @1> list|@1>")}
 
 type rangeSpec struct{ exp.SpecBase }
 
-func (s *rangeSpec) Value() lit.Val { return s }
 func (s *rangeSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 	args, err := p.EvalArgs(c)
 	if err != nil {

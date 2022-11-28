@@ -91,11 +91,11 @@ func (le *LoaderEnv) Lookup(s *exp.Sym, k string, eval bool) (exp.Exp, error) {
 	// we return the mod and use spec only here so we can expect a loader env in those specs
 	switch k {
 	case "module":
-		spec = Module
+		spec = exp.NewSpecRef(Module)
 	case "import":
-		spec = Import
+		spec = exp.NewSpecRef(Import)
 	case "export":
-		spec = Export
+		spec = exp.NewSpecRef(Export)
 	default:
 		return le.Par.Lookup(s, k, eval)
 	}
