@@ -16,9 +16,9 @@ type Editor struct {
 }
 type editMap map[Body]Type
 
-// Copy edits type t it and all offspring types with f and returns the result or an error.
+// Copy edits type t and all offspring types with f and returns the result or an error.
 func Edit(t Type, f EditFunc) (Type, error) {
-	e := Editor{Type: t, seen: make(editMap)}
+	e := Editor{Type: t}
 	return e.edit(f)
 }
 
@@ -40,13 +40,12 @@ func (e *Editor) edit(f EditFunc) (res Type, err error) {
 			return t, nil
 		}
 	}
-	res, err = f(e)
-	if err != nil {
+	if res, err = f(e); err != nil {
 		return
 	}
-	if old != nil {
+	if old != nil && e.seen != nil {
 		if len(e.seen) > 127 {
-			panic("runaway type edit")
+			return res, fmt.Errorf("runaway type edit")
 		}
 		e.seen[old] = res
 	}
@@ -54,6 +53,12 @@ func (e *Editor) edit(f EditFunc) (res Type, err error) {
 		return res, nil
 	}
 	var sub Type
+	if e.seen == nil {
+		e.seen = make(editMap)
+		if old != nil {
+			e.seen[old] = res
+		}
+	}
 	switch b := res.Body.(type) {
 	case *ElBody:
 		sub, err = e.sub(b.El, f)
