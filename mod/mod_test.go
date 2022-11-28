@@ -18,8 +18,8 @@ func TestModSpecs(t *testing.T) {
 		want string
 	}{
 		{"no result", `(module foo)`, "null"},
-		{"decl type", `(module foo <obj@Info name:str>) foo.Info`, "<obj@foo.Info>"},
-		{"decl spec", `(module foo rem) foo.rem`, "<form@rem int int int>"},
+		{"decl type", `(import './foo') foo.Info`, "<obj@foo.Info>"},
+		{"decl spec", `(import './foo') foo.rem`, "<form@foo.rem int int int>"},
 	}
 	for _, test := range tests {
 		p := exp.NewProg(env)

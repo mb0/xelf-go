@@ -61,8 +61,9 @@ func (s *moduleSpec) Resl(p *exp.Prog, env exp.Env, c *exp.Call, _ typ.Type) (_ 
 			if t.Ref == "" {
 				return nil, fmt.Errorf("expected named spec got %s", val)
 			}
-			// TODO we cannot simply update a spec type, so what do we do?
 			decl = t.Ref
+			t.Ref = me.Mod.Name + "." + decl
+			val = &exp.SpecRef{Spec: val.(exp.Spec), Decl: t}
 		} else {
 			return nil, fmt.Errorf("unexpected module declaration %s", val)
 		}

@@ -73,3 +73,15 @@ func (s *SpecBase) Resl(p *Prog, env Env, c *Call, h typ.Type) (Exp, error) {
 	c.Sig, err = p.Sys.Update(c.Sig)
 	return c, err
 }
+
+// SpecRef can wrap any spec with a new type.
+type SpecRef struct {
+	Spec
+	Decl typ.Type
+}
+
+func (s *SpecRef) Type() typ.Type               { return s.Decl }
+func (s *SpecRef) Value() lit.Val               { return s }
+func (s *SpecRef) String() string               { return s.Decl.String() }
+func (s *SpecRef) Print(p *bfr.P) error         { return s.Decl.Print(p) }
+func (s *SpecRef) MarshalJSON() ([]byte, error) { return s.Decl.MarshalJSON() }
