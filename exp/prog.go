@@ -3,7 +3,6 @@ package exp
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"xelf.org/xelf/ast"
 	"xelf.org/xelf/cor"
@@ -102,14 +101,8 @@ func (p *Prog) Lookup(s *Sym, k string, eval bool) (res Exp, err error) {
 		}
 		return l, nil
 	default:
-		if qual, rest := modQual(k); qual != "" {
-			m := p.File.Refs.Find(qual)
-			if m != nil {
-				v, err := lit.Select(m.Decl, rest)
-				if err != nil {
-					return s, err
-				}
-				l := LitVal(v)
+		if qual, rest := SplitQualifier(k); qual != "" {
+			if l, err := LookupMod(p, qual, rest); err == nil {
 				s.Update(l.Res, p, k)
 				return l, nil
 			}
@@ -328,14 +321,4 @@ func (p *Prog) EvalArgs(c *Call) ([]*Lit, error) {
 func (p *Prog) NextFnID() uint {
 	p.fnid++
 	return p.fnid
-}
-
-func modQual(k string) (q, _ string) {
-	dot := strings.IndexByte(k, '.')
-	if dot > 0 {
-		if q = k[:dot]; cor.IsKey(q) {
-			return q, k[dot+1:]
-		}
-	}
-	return "", k
 }

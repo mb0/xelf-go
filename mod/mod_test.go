@@ -20,6 +20,10 @@ func TestModSpecs(t *testing.T) {
 		{"no result", `(module foo)`, "null"},
 		{"decl type", `(import './foo') foo.Info`, "<obj@foo.Info>"},
 		{"decl spec", `(import './foo') foo.rem`, "<form@foo.rem int int int>"},
+		{"decl type alias", `(import f:'./foo') f.Info`, "<obj@f.Info>"},
+		{"decl spec alias", `(import f:'./foo') f.rem`, "<form@f.rem int int int>"},
+		{"redecl type alias", `(import b:'./f') b.Info`, "<obj@b.Info>"},
+		{"redecl spec alias", `(import b:'./f') b.rem`, "<form@b.rem int int int>"},
 	}
 	for _, test := range tests {
 		p := exp.NewProg(env)

@@ -3,7 +3,6 @@ Field References
 
 We want to unify schema types and references to improve utility of the type system.
 
-
 Problem
 -------
 
@@ -35,7 +34,8 @@ field also replaces the type name of const, obj and spec types; this changes the
 `<func@atoi str int>`. Reference resolution specializes the type, sets a type id and normalizes the
 reference. The reference must always resolve to a assignable super-type.
 
-Work on a [Module System](./modules.md) introduced a clean concept for qualified names.
+Work on a [Module System](./modules.md) introduced a clean concept for qualified names. It provides
+aliases, but handles them by updating named types at every file boundary.
 
 Type ref lookup api was changed to allow references to the whole environment. The resolved type
 names are determined by the lookup function. Overall this adds lots of power and flexibility.

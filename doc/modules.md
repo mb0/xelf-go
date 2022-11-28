@@ -93,13 +93,13 @@ to use this as default for external modules. The import spec can load whole file
 modules out and use aliases to resolve naming conflicts with one call.
 
 Daql packages dom and qry register module sources that prepare a program and provide extra data.
-The packages must still be imported into the go binary to register the module sources.
+The packages must either be imported into the go binary to register the module sources or we can use
+the xelf plugin system to load module plugins on demand. We can use the module plugin system to for
+go-based code generators too.
 
 Daql projects and schemas integrate with the new module system and export the node as dom property
 and all model types by name.
 
-We want to support process external code generators for the daql command. Maybe we can add a plugin
-module wrapper that support external processes using something like github.com/hashicorp/go-plugin.
 
 Daql and layla used a corresponding file name extension to indicate the expected xelf environment.
 While we can still use explicit extensions, we should not encourage it to simplify tooling. We can
