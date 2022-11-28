@@ -14,6 +14,7 @@ type Vals []Val
 func (v Vals) Type() typ.Type                { return typ.Idxr }
 func (v *Vals) Nil() bool                    { return v == nil }
 func (v *Vals) Zero() bool                   { return v == nil || len(*v) == 0 }
+func (v *Vals) Mut() Mut                     { return v }
 func (v *Vals) Value() Val                   { return v }
 func (v *Vals) UnmarshalJSON(b []byte) error { return unmarshal(b, v) }
 func (v Vals) MarshalJSON() ([]byte, error)  { return bfr.JSON(v) }
@@ -133,6 +134,7 @@ type List struct {
 
 func (l *List) Type() typ.Type   { return typ.ListOf(l.El) }
 func (l *List) Nil() bool        { return l == nil }
+func (l *List) Mut() Mut         { return l }
 func (l *List) Value() Val       { return l }
 func (l *List) New() Mut         { return &List{l.El, nil} }
 func (l *List) Ptr() interface{} { return l }

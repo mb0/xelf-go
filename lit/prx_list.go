@@ -15,6 +15,7 @@ func (x *ListPrx) NewWith(v reflect.Value) Mut { return &ListPrx{x.with(v)} }
 
 func (x *ListPrx) New() Mut   { return x.NewWith(x.new()) }
 func (x *ListPrx) Zero() bool { return x.Nil() || x.Len() == 0 }
+func (x *ListPrx) Mut() Mut   { return x }
 func (x *ListPrx) Value() Val {
 	if x.Nil() && x.isptr() {
 		return Null{}

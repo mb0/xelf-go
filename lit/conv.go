@@ -15,7 +15,7 @@ func Unwrap(v Val) Val {
 		}
 	case *OptMut:
 		if !p.Nil() {
-			return p.Mut
+			return p.LitMut
 		}
 	}
 	return v

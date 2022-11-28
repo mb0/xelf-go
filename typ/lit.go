@@ -24,6 +24,8 @@ type LitVal interface {
 	// Type, Null, Bool, Int, Real, Str, Raw, UUID, Time, Span for primitive values
 	// Composite literals are returned as is and implement either or both Idxr  Keyr.
 	Value() LitVal
+	// Mut returns the effective mutable itself or a new mutable for this value.
+	Mut() LitMut
 	// String returns a string content for char literals and xelf format for other literals.
 	// Use bfr.String(l) to get quoted char literals.
 	String() string
@@ -53,6 +55,7 @@ func (Type) Type() Type          { return Typ }
 func (Type) Nil() bool           { return false }
 func (t Type) Zero() bool        { return t == Void }
 func (t Type) Value() LitVal     { return t }
+func (t Type) Mut() LitMut       { return &t }
 func (*Type) New() LitMut        { return new(Type) }
 func (t *Type) Ptr() interface{} { return t }
 func (t *Type) Assign(p LitVal) error {

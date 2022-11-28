@@ -48,7 +48,7 @@ func TestDiff(t *testing.T) {
 		if !ok {
 			mut = MustProxy(c, &a)
 		}
-		mut = &OptMut{Mut: mut}
+		mut = &OptMut{LitMut: mut}
 		err = Apply(mut, d)
 		if err != nil {
 			t.Errorf("apply failed %s %s: %v", test.a, got, err)

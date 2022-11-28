@@ -87,9 +87,9 @@ func NewSpecRef(s Spec) *SpecRef { return &SpecRef{Spec: s, Decl: s.Type()} }
 func (s *SpecRef) Nil() bool  { return s == nil }
 func (s *SpecRef) Zero() bool { return s == nil || s.Spec == nil }
 
-func (s *SpecRef) Type() typ.Type   { return s.Decl }
-func (s *SpecRef) Value() lit.Val   { return s }
-func (s *SpecRef) Mutable() lit.Mut { return s }
+func (s *SpecRef) Type() typ.Type { return s.Decl }
+func (s *SpecRef) Value() lit.Val { return s }
+func (s *SpecRef) Mut() lit.Mut   { return s }
 
 func (s *SpecRef) String() string               { return s.Decl.String() }
 func (s *SpecRef) Print(p *bfr.P) error         { return s.Decl.Print(p) }

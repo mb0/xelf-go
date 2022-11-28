@@ -181,7 +181,7 @@ func CreatePath(mut Mut, path cor.Path, val Val) (err error) {
 		o, ok := cur.(*OptMut)
 		if ok {
 			o.Null = val.Nil()
-			cur = o.Mut
+			cur = o.LitMut
 		}
 		return cur.Assign(val)
 	}
@@ -216,7 +216,7 @@ func CreatePath(mut Mut, path cor.Path, val Val) (err error) {
 	}
 	if o, ok := cur.(*OptMut); ok {
 		o.Null = false
-		cur = o.Mut
+		cur = o.LitMut
 	}
 	if s.Key != "" {
 		if a, ok := cur.(Keyr); ok {

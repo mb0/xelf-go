@@ -19,6 +19,7 @@ func (o *AnyMut) Type() typ.Type {
 }
 func (o *AnyMut) Nil() bool  { return o == nil || o.val == nil || o.val.Nil() }
 func (o *AnyMut) Zero() bool { return o == nil || o.val == nil || o.val.Zero() }
+func (o *AnyMut) Mut() Mut   { return o }
 func (o *AnyMut) Value() Val {
 	if o.val != nil {
 		return o.val.Value()

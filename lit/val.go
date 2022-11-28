@@ -82,6 +82,18 @@ func (u UUID) Value() Val { return u }
 func (t Time) Value() Val { return t }
 func (s Span) Value() Val { return s }
 
+func (Null) Mut() Mut   { return &AnyMut{typ.None, Null{}} }
+func (v Bool) Mut() Mut { return &v }
+func (i Num) Mut() Mut  { return &i }
+func (i Int) Mut() Mut  { return &i }
+func (r Real) Mut() Mut { return &r }
+func (s Char) Mut() Mut { return &s }
+func (s Str) Mut() Mut  { return &s }
+func (r Raw) Mut() Mut  { return &r }
+func (u UUID) Mut() Mut { return &u }
+func (t Time) Mut() Mut { return &t }
+func (s Span) Mut() Mut { return &s }
+
 func (s Char) Len() int { return len(s) }
 func (s Str) Len() int  { return len(s) }
 func (r Raw) Len() int  { return len(r) }

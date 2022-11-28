@@ -59,3 +59,6 @@ Implementation
 SpecRef is now a mutable value, it supports null specs, new and assign but not parse.
 It is the only spec value representation, Spec itself does not need to implement Val anymore.
 It still itself implements Spec and should be used as such.
+
+We add a `lit.Val.Mut() (lit.Mut)` function to the api. It returns the same or a new mutable value.
+We change the embedded opt mut field to LitMut to remove the name conflict.

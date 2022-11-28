@@ -7,6 +7,7 @@ import (
 	"xelf.org/xelf/ast"
 	"xelf.org/xelf/bfr"
 	"xelf.org/xelf/knd"
+	"xelf.org/xelf/typ"
 )
 
 type MapPrx struct{ proxy }
@@ -15,6 +16,7 @@ func (x *MapPrx) NewWith(v reflect.Value) Mut { return &MapPrx{x.with(v)} }
 
 func (x *MapPrx) New() Mut   { return x.NewWith(x.new()) }
 func (x *MapPrx) Zero() bool { return x.Len() == 0 }
+func (x *MapPrx) Mut() Mut   { return x }
 func (x *MapPrx) Value() Val {
 	if x.Nil() {
 		return Null{}
@@ -170,7 +172,7 @@ func (x *MapPrx) entry(key string, val reflect.Value) (Mut, error) {
 		return nil, err
 	}
 	if special {
-		prx = &proxyEntry{m: x, key: key, Mut: prx}
+		prx = &proxyEntry{m: x, key: key, LitMut: prx}
 	}
 	return prx, nil
 }
@@ -178,15 +180,15 @@ func (x *MapPrx) entry(key string, val reflect.Value) (Mut, error) {
 type proxyEntry struct {
 	m   *MapPrx
 	key string
-	Mut
+	typ.LitMut
 }
 
 func (x *proxyEntry) Assign(v Val) error {
-	err := x.Mut.Assign(v)
+	err := x.LitMut.Assign(v)
 	if err != nil {
 		return err
 	}
-	return x.m.SetKey(x.key, x.Mut)
+	return x.m.SetKey(x.key, x.LitMut)
 }
 
 func clearMap(v reflect.Value) {

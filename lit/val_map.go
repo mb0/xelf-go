@@ -17,6 +17,7 @@ type Map struct {
 func (h *Map) Type() typ.Type               { return typ.DictOf(h.El) }
 func (h *Map) Nil() bool                    { return h == nil }
 func (h *Map) Zero() bool                   { return len(h.M) == 0 }
+func (h *Map) Mut() Mut                     { return h }
 func (h *Map) Value() Val                   { return h }
 func (h *Map) MarshalJSON() ([]byte, error) { return bfr.JSON(h) }
 func (h *Map) UnmarshalJSON(b []byte) error { return unmarshal(b, h) }

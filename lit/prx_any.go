@@ -38,6 +38,7 @@ func (x *AnyPrx) NewWith(v reflect.Value) Mut { return &AnyPrx{x.with(v), anyVal
 
 func (x *AnyPrx) New() Mut   { return x.NewWith(x.new()) }
 func (x *AnyPrx) Zero() bool { return x.Nil() || x.val.Zero() }
+func (x *AnyPrx) Mut() Mut   { return x }
 func (x *AnyPrx) Value() Val { return x.val.Value() }
 func (x *AnyPrx) Parse(a ast.Ast) (err error) {
 	if isNull(a) {

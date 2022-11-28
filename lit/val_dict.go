@@ -18,6 +18,7 @@ type Keyed []KeyVal
 func (d Keyed) Type() typ.Type                { return typ.Keyr }
 func (d *Keyed) Nil() bool                    { return d == nil }
 func (d *Keyed) Zero() bool                   { return d == nil || len(*d) == 0 }
+func (d *Keyed) Mut() Mut                     { return d }
 func (d *Keyed) Value() Val                   { return d }
 func (d *Keyed) UnmarshalJSON(b []byte) error { return unmarshal(b, d) }
 func (d Keyed) MarshalJSON() ([]byte, error)  { return bfr.JSON(d) }
@@ -187,6 +188,7 @@ type Dict struct {
 
 func (d *Dict) Type() typ.Type   { return typ.DictOf(d.El) }
 func (d *Dict) Nil() bool        { return d == nil }
+func (d *Dict) Mut() Mut         { return d }
 func (d *Dict) Value() Val       { return d }
 func (d *Dict) New() Mut         { return &Dict{d.El, nil} }
 func (d *Dict) Ptr() interface{} { return d }

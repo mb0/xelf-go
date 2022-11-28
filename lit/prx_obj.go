@@ -36,6 +36,7 @@ func (x *ObjPrx) Zero() bool {
 	}
 	return true
 }
+func (x *ObjPrx) Mut() Mut { return x }
 func (x *ObjPrx) Value() Val {
 	if x.Nil() {
 		return Null{}

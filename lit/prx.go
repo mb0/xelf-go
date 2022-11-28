@@ -75,6 +75,7 @@ func (x *IntPrx) NewWith(v reflect.Value) Mut { return &IntPrx{x.with(v)} }
 
 func (x *IntPrx) New() Mut   { return x.NewWith(x.new()) }
 func (x *IntPrx) Zero() bool { return x.Nil() || x.value() == 0 }
+func (x *IntPrx) Mut() Mut   { return x }
 func (x *IntPrx) Value() Val {
 	if x.Nil() {
 		return Null{}
@@ -139,6 +140,7 @@ func (x *RealPrx) NewWith(v reflect.Value) Mut { return &RealPrx{x.with(v)} }
 
 func (x *RealPrx) New() Mut   { return x.NewWith(x.new()) }
 func (x *RealPrx) Zero() bool { return x.Nil() || x.value() == 0 }
+func (x *RealPrx) Mut() Mut   { return x }
 func (x *RealPrx) Value() Val {
 	if x.Nil() {
 		return Null{}
