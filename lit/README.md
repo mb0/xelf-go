@@ -19,39 +19,45 @@ We have three ways to parse an `Ast` to a value implementations:
     The parse method can be optimize and allows user defined values.
 
 There are other some helper methods:
- * `Read`, `ReadInto`, `ReadIntoMut` to read from a named reader
- * `Parse`, `ParseInto`, `ParseIntoMut` to read from a string
+ * `Read`,  `ReadInto`  to read from a named reader
+ * `Parse`, `ParseInto` to read from a string
 
 We have another set of interfaces to cover capabilities:
- * `Idxr` for indexable values like list or strc
- * `Apdr` for appendable values like list
- * `Keyr` for keyable values like dict or strc
+ * `Idxr`     for indexable values like list or obj
+ * `Appender` for appendable values like idxr, list
+ * `Keyr`     for keyable values like dict or obj
+ * `Wrapper`  for value wrappers that would hide the other interfaces
 
-`Reg` is a registry for custom mutable values and provides api to work proxies in general. Reg uses
-the global reflection cache by default, to support self referential types and improve efficiency.
+`Reg` is a registry interface for a reflection and proxy cache. Caching is required, not only to
+improve performance, but to support self referential types. `PrxReg` is the notable implementation
+that can be shared as process global cache. The interface provides:
 
-The registry must be used to creating new values or proxies. These operations are used all over the
-place and do happen deep in call stacks. Passing the registry through as argument looks bad and is
-not even used by some value implementations. We obviously have the registry available wherever we
-first initialize types so we just save the registry in the value implementation.
+ * `Reflect(reflect.Typ) (typ.Type, error)`
+ * `ProxyValue(reflect.Value) (Mut, error)`
 
-The primary values (bool, int, real, str…) and type have implementations that can be used as value
-`Bool` or as mutable `*Bool`. We allow the values for primary types because working with pointers to
-primitives is cumbersome `(*lit.Bool)(cor.Bool(true))`. Both options however only represent an bool,
-therefor we use an OptMut internally that has a null flag (similar to sql.NullX types but works for
-any mutable value). The Null type has only a value implementation.
+`MutReg` is a second optional registry for named and user-provided value implementations. It
+provides a custom Zero method as api, that can be used instead of the generic package function.
+
+`Regs` is a simple struct that embeds both registries, to make it easier to pass around.
+
+The registry must be used to creating new proxy values. Created proxies keep a reference to their
+origin registry to create proxies for contained values. Proxy values may point to a pointer and
+represent an optional type directly.
+
+The primary value implementations can be used as value `Bool` or as mutable `*Bool`, because working
+exclusively with pointer types is cumbersome for simple values: `(*lit.Bool)(cor.Bool(true))`. Both
+options however only represent a value with the type `bool`, we provide an OptMut wrapper with a
+null flag of type `<bool?>`. The Null type has only a value implementation.
 
 Other implementations are always mutable variants, because we would gain nothing from using a value
 type implicitly addressed and wrapped in an interface and instead would increase code complexity.
 
-All proxy values can point to pointer and then represent null directly without using an OptMut.
-
 The generic `Map` implementation can explicitly be used instead of dicts by users provided types to
-make working with dicts easier. `Dict` is a useful default because they preserve order which may be
+make working with dicts easier. `Dict` is a useful default because it preserves order which may be
 important for some internal conversions and program resolution.
 
-Another special implementation is the `AnyPrx` that proxies to interface values values with resolved
-type alternatives and manage a literal value to represent that interface value.
+Another special implementation is the `AnyPrx` that proxies to interface values with resolved type
+alternatives and manage a literal that represents that interface value.
 
 The `MapPrx` uses a neat trick to provide mutable element values even though go map elements are not
 addressable without using a pointer element type.

@@ -8,15 +8,20 @@ import (
 
 var global = NewRegs()
 
-// Regs is a registry for custom mutable values and provides api to work proxies in general. Regs uses
-// the global reflection cache by default, to support self referential types and improve efficiency.
+// Regs embeds both PrxReg and MutReg to make it easier to provide and pass around.
+// It implements the Reg interface by embedding PrxReg.
 type Regs struct {
 	*PrxReg
 	MutReg
 }
 
-func NewRegs() *Regs    { return &Regs{PrxReg: &PrxReg{}} }
+// NewRegs returns a new instance with a pristine PrxReg.
+func NewRegs() *Regs { return &Regs{PrxReg: &PrxReg{}} }
+
+// GlobalRegs returns the global default registry.
 func GlobalRegs() *Regs { g := *global; return &g }
+
+// Default applies sensible defaults to rs and returns it.
 func DefaultRegs(rs *Regs) *Regs {
 	if rs == nil {
 		rs = &Regs{}
@@ -42,7 +47,8 @@ func UpdateRegs(rs, o *Regs) {
 // MutReg stores a map of custom mutable implementations by reference.
 type MutReg map[string]Mut
 
-// Zero returns a mutable zero value for t.
+// Zero returns a mutable zero value for t. It provides registered mutables for name types and falls
+// back to the default zero function.
 func (mr MutReg) Zero(t typ.Type) Mut {
 	if mr != nil {
 		k := t.Kind & knd.All

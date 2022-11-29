@@ -9,6 +9,7 @@ import (
 	"xelf.org/xelf/typ"
 )
 
+// AnyPrx proxies to an interface value and manage a literal that represents that interface value.
 type AnyPrx struct {
 	proxy
 	val Val

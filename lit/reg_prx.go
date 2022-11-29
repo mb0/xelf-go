@@ -7,6 +7,7 @@ import (
 	"xelf.org/xelf/typ"
 )
 
+// Reg is a registry interface for a reflection and proxy cache
 type Reg interface {
 	Reflect(rt reflect.Type) (typ.Type, error)
 	ProxyValue(ptr reflect.Value) (Mut, error)
