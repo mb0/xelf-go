@@ -44,7 +44,7 @@ func (a *Lit) Print(p *bfr.P) error {
 	return a.Val.Print(p)
 }
 func (a *Lit) Clone() Exp {
-	v, err := lit.Copy(a.Val)
+	v, err := lit.Clone(a.Val)
 	if err != nil {
 		panic(fmt.Errorf("unhandled err in lit clone:\n%w", err))
 	}

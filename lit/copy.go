@@ -6,9 +6,9 @@ import (
 	"xelf.org/xelf/knd"
 )
 
-// Copy deep copies v or returns an error. It uses the same value implementations,
+// Clone deep copies v or returns an error. It uses the same value implementations,
 // but may turn none-mutable primitive values into a mutable representation.
-func Copy(v Val) (Val, error) {
+func Clone(v Val) (Val, error) {
 	return Edit(v, func(v Val) (Val, error) {
 		n := v.Mut().New()
 		return n, n.Assign(v)

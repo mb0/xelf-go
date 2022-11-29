@@ -73,7 +73,7 @@ func NewNodeSpec(decl typ.Type, node Node, rs Rules) *NodeSpec {
 }
 
 func (s *NodeSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
-	l, err := lit.Copy(s.Node)
+	l, err := lit.Clone(s.Node)
 	if err != nil {
 		return nil, err
 	}
