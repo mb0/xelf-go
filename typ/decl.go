@@ -102,7 +102,7 @@ func Form(name string, ps ...Param) Type {
 }
 
 func El(t Type) Type {
-	if b, ok := t.Body.(*ElBody); ok && b.El.Kind != knd.Void {
+	if b, ok := t.Body.(*ElBody); ok {
 		return b.El
 	}
 	return Void

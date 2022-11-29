@@ -2,7 +2,7 @@ package typ
 
 import "xelf.org/xelf/knd"
 
-const kndVal = knd.All | knd.Exp
+const kndVal = knd.Any | knd.Exp
 
 // AssignableTo returns whether *all* values represented by type t can be assigned to dst.
 func (t Type) AssignableTo(dst Type) bool {
@@ -72,8 +72,7 @@ func (t Type) AssignableTo(dst Type) bool {
 }
 
 // ConvertibleTo returns whether *any* value represented by type t can be assigned to dst.
-// That means str is convertible to time, even though only a subset of strings can successfully
-// converted to a time value.
+// That means char is convertible to time, but str is not.
 func (t Type) ConvertibleTo(dst Type) bool {
 	if t.ID > 0 && t.ID == dst.ID {
 		return true
@@ -141,6 +140,18 @@ func (t Type) ConvertibleTo(dst Type) bool {
 	return false
 }
 
+// ResolvableTo returns whether the resolved value of t is convertible to the resolved dest.
+// That call|char, call or exp are all possibly resolvable to time, but not call|str.
+func (t Type) ResolvableTo(dst Type) bool {
+	var tids, dstids []int32
+	t, tids = unwrapExp(t)
+	dst, dstids = unwrapExp(dst)
+	if idMatch(tids, dstids) {
+		return true
+	}
+	return t.ConvertibleTo(dst)
+}
+
 func expr(t Type) (knd.Kind, Type) {
 	k := t.Kind & knd.Exp
 	if k == knd.Void {
@@ -150,12 +161,35 @@ func expr(t Type) (knd.Kind, Type) {
 }
 
 func elem(t Type) Type {
-	if t.Body == nil {
-		return Any
+	if el := El(t); el != Void {
+		return el
 	}
-	b, ok := t.Body.(*ElBody)
-	if !ok {
-		return Void
+	return Any
+}
+
+func unwrapExp(t Type) (_ Type, ids []int32) {
+	for t.Kind&knd.Exp != 0 {
+		if t.ID > 0 {
+			ids = append(ids, t.ID)
+		}
+		t = elem(t)
 	}
-	return b.El
+	return t, ids
+}
+
+func idMatch(a, b []int32) bool {
+	if len(a) < len(b) {
+		a, b = b, a
+	}
+	if len(b) == 0 {
+		return false
+	}
+	for _, x := range a {
+		for _, y := range b {
+			if x == y {
+				return true
+			}
+		}
+	}
+	return false
 }
