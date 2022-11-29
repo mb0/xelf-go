@@ -7,6 +7,7 @@ import (
 	"xelf.org/xelf/ast"
 	"xelf.org/xelf/bfr"
 	"xelf.org/xelf/knd"
+	"xelf.org/xelf/typ"
 )
 
 type ListPrx struct{ proxy }
@@ -21,6 +22,12 @@ func (x *ListPrx) Value() Val {
 		return Null{}
 	}
 	return x
+}
+func (x *ListPrx) As(t typ.Type) (Val, error) {
+	if x.typ == t {
+		return x, nil
+	}
+	return &ListPrx{x.typed(t)}, nil
 }
 func (x *ListPrx) Parse(a ast.Ast) error {
 	if isNull(a) {

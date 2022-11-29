@@ -27,6 +27,14 @@ func (o *AnyMut) Nil() bool  { return o == nil || o.val == nil || o.val.Nil() }
 func (o *AnyMut) Zero() bool { return o == nil || o.val == nil || o.val.Zero() }
 func (o *AnyMut) Mut() Mut   { return o }
 func (o *AnyMut) Value() Val { return o.Unwrap().Value() }
+func (o *AnyMut) As(t typ.Type) (_ Val, err error) {
+	if o.val != nil {
+		return o.val.As(t)
+	}
+	// TODO check typ
+	o.Typ = t
+	return o, err
+}
 
 func (o *AnyMut) String() string               { return o.Unwrap().String() }
 func (o *AnyMut) MarshalJSON() ([]byte, error) { return o.Unwrap().MarshalJSON() }

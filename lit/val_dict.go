@@ -15,11 +15,19 @@ type KeyVal struct {
 }
 type Keyed []KeyVal
 
-func (d Keyed) Type() typ.Type                { return typ.Keyr }
-func (d *Keyed) Nil() bool                    { return d == nil }
-func (d *Keyed) Zero() bool                   { return d == nil || len(*d) == 0 }
-func (d *Keyed) Mut() Mut                     { return d }
-func (d *Keyed) Value() Val                   { return d }
+func (d Keyed) Type() typ.Type { return typ.Keyr }
+func (d *Keyed) Nil() bool     { return d == nil }
+func (d *Keyed) Zero() bool    { return d == nil || len(*d) == 0 }
+func (d *Keyed) Mut() Mut      { return d }
+func (d *Keyed) Value() Val    { return d }
+func (d *Keyed) As(t typ.Type) (Val, error) {
+	if t == typ.Keyr {
+		return d, nil
+	}
+	// TODO check typ
+	return &Dict{Typ: t, Keyed: *d}, nil
+}
+
 func (d *Keyed) UnmarshalJSON(b []byte) error { return unmarshal(b, d) }
 func (d Keyed) MarshalJSON() ([]byte, error)  { return bfr.JSON(d) }
 func (d Keyed) String() string                { return bfr.String(d) }
@@ -195,9 +203,14 @@ func (d *Dict) Type() typ.Type {
 	}
 	return d.Typ
 }
-func (d *Dict) Nil() bool        { return d == nil }
-func (d *Dict) Mut() Mut         { return d }
-func (d *Dict) Value() Val       { return d }
+func (d *Dict) Nil() bool  { return d == nil }
+func (d *Dict) Mut() Mut   { return d }
+func (d *Dict) Value() Val { return d }
+func (d *Dict) As(t typ.Type) (Val, error) {
+	// TODO check typ
+	d.Typ = t
+	return d, nil
+}
 func (d *Dict) New() Mut         { return &Dict{d.Typ, nil} }
 func (d *Dict) Ptr() interface{} { return d }
 func (d *Dict) Key(k string) (Val, error) {

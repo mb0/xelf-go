@@ -37,6 +37,7 @@ func (x *proxy) Ptr() interface{}             { return x.val.Interface() }
 func (x *proxy) Reflect() reflect.Value       { return x.val.Elem() }
 func (x *proxy) new() reflect.Value           { return reflect.New(x.val.Type().Elem()) }
 func (x *proxy) with(ptr reflect.Value) proxy { return newProxy(x.Reg, x.typ, ptr) }
+func (x *proxy) typed(t typ.Type) proxy       { return newProxy(x.Reg, t, x.val) }
 func (x *proxy) unmarshal(b []byte, mut Mut) error {
 	return ReadInto(bytes.NewReader(b), "", mut)
 }
@@ -82,6 +83,13 @@ func (x *IntPrx) Value() Val {
 	}
 	return Int(x.value())
 }
+func (x *IntPrx) As(t typ.Type) (Val, error) {
+	if x.typ == t {
+		return x, nil
+	}
+	return &IntPrx{x.typed(t)}, nil
+}
+
 func (x *IntPrx) Parse(a ast.Ast) error {
 	if isNull(a) {
 		return x.setNull()
@@ -146,6 +154,12 @@ func (x *RealPrx) Value() Val {
 		return Null{}
 	}
 	return Real(x.value())
+}
+func (x *RealPrx) As(t typ.Type) (Val, error) {
+	if x.typ == t {
+		return x, nil
+	}
+	return &RealPrx{x.typed(t)}, nil
 }
 func (x *RealPrx) Parse(a ast.Ast) error {
 	if isNull(a) {

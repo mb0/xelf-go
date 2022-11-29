@@ -23,6 +23,12 @@ func (x *MapPrx) Value() Val {
 	}
 	return x
 }
+func (x *MapPrx) As(t typ.Type) (Val, error) {
+	if x.typ == t {
+		return x, nil
+	}
+	return &MapPrx{x.typed(t)}, nil
+}
 func (x *MapPrx) Parse(a ast.Ast) error {
 	if isNull(a) {
 		return x.setNull()

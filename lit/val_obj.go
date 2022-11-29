@@ -40,8 +40,13 @@ func (s *Obj) Zero() bool {
 	}
 	return true
 }
-func (s *Obj) Value() Val                   { return s }
-func (s *Obj) Mut() Mut                     { return s }
+func (s *Obj) Mut() Mut   { return s }
+func (s *Obj) Value() Val { return s }
+func (s *Obj) As(t typ.Type) (Val, error) {
+	// TODO check typ
+	s.Typ = t
+	return s, nil
+}
 func (s *Obj) MarshalJSON() ([]byte, error) { return bfr.JSON(s) }
 func (s *Obj) UnmarshalJSON(b []byte) error { return unmarshal(b, s) }
 func (s *Obj) String() string               { return bfr.String(s) }

@@ -88,8 +88,15 @@ func (s *SpecRef) Nil() bool  { return s == nil }
 func (s *SpecRef) Zero() bool { return s == nil || s.Spec == nil }
 
 func (s *SpecRef) Type() typ.Type { return s.Decl }
-func (s *SpecRef) Value() lit.Val { return s }
 func (s *SpecRef) Mut() lit.Mut   { return s }
+func (s *SpecRef) Value() lit.Val { return s }
+func (s *SpecRef) As(t typ.Type) (lit.Val, error) {
+	if s.Decl == t {
+		return s, nil
+	}
+	// TODO check that t is compatible
+	return &SpecRef{Spec: s.Spec, Decl: t}, nil
+}
 
 func (s *SpecRef) String() string               { return s.Decl.String() }
 func (s *SpecRef) Print(p *bfr.P) error         { return s.Decl.Print(p) }

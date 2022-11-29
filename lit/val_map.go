@@ -27,6 +27,11 @@ func (h *Map) Nil() bool  { return h == nil }
 func (h *Map) Zero() bool { return len(h.M) == 0 }
 func (h *Map) Mut() Mut   { return h }
 func (h *Map) Value() Val { return h }
+func (h *Map) As(t typ.Type) (Val, error) {
+	// TODO check type
+	h.Typ = t
+	return h, nil
+}
 
 func (h *Map) MarshalJSON() ([]byte, error) { return bfr.JSON(h) }
 func (h *Map) UnmarshalJSON(b []byte) error { return unmarshal(b, h) }

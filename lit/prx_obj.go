@@ -43,6 +43,13 @@ func (x *ObjPrx) Value() Val {
 	}
 	return x
 }
+func (x *ObjPrx) As(t typ.Type) (Val, error) {
+	if x.typ == t {
+		return x, nil
+	}
+	// TODO edit params
+	return &ObjPrx{x.typed(t), x.params}, nil
+}
 func (x *ObjPrx) Parse(a ast.Ast) error {
 	if isNull(a) {
 		return x.setNull()

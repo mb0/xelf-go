@@ -82,6 +82,18 @@ func (u UUID) Value() Val { return u }
 func (t Time) Value() Val { return t }
 func (s Span) Value() Val { return s }
 
+func (n Null) As(t typ.Type) (Val, error) { return primAs(n, t, typ.None) }
+func (v Bool) As(t typ.Type) (Val, error) { return primAs(v, t, typ.Bool) }
+func (i Num) As(t typ.Type) (Val, error)  { return primAs(i, t, typ.Num) }
+func (i Int) As(t typ.Type) (Val, error)  { return primAs(i, t, typ.Int) }
+func (r Real) As(t typ.Type) (Val, error) { return primAs(r, t, typ.Real) }
+func (s Char) As(t typ.Type) (Val, error) { return primAs(s, t, typ.Char) }
+func (s Str) As(t typ.Type) (Val, error)  { return primAs(s, t, typ.Str) }
+func (r Raw) As(t typ.Type) (Val, error)  { return primAs(r, t, typ.Raw) }
+func (u UUID) As(t typ.Type) (Val, error) { return primAs(u, t, typ.UUID) }
+func (t Time) As(n typ.Type) (Val, error) { return primAs(t, n, typ.Time) }
+func (s Span) As(t typ.Type) (Val, error) { return primAs(s, t, typ.Span) }
+
 func (Null) Mut() Mut   { return &AnyMut{typ.None, Null{}} }
 func (v Bool) Mut() Mut { return &v }
 func (i Num) Mut() Mut  { return &i }
@@ -385,15 +397,11 @@ func (t Time) After(o Time) bool { return time.Time(t).After(time.Time(o)) }
 
 func (s Span) Seconds() float64 { return time.Duration(s).Seconds() }
 
-func mustRef(ref reflect.Type, v reflect.Value) (Mut, error) {
-	t := v.Type()
-	if t != ref {
-		if !t.ConvertibleTo(ref) {
-			return nil, fmt.Errorf("cannot %s convert to %s", v.Type(), ref)
-		}
-		v = v.Convert(ref)
+func primAs(v Val, t, o typ.Type) (Val, error) {
+	if o == t {
+		return v, nil
 	}
-	return v.Interface().(Mut), nil
+	return &AnyMut{Typ: t, val: v}, nil
 }
 
 func isNull(a ast.Ast) bool { return a.Kind == knd.Sym && a.Raw == "null" }
@@ -419,7 +427,6 @@ func unmarshal(b []byte, m Mut) error {
 }
 
 var (
-	ptrNull = reflect.TypeOf((*Null)(nil))
 	ptrBool = reflect.TypeOf((*Bool)(nil))
 	ptrNum  = reflect.TypeOf((*Num)(nil))
 	ptrInt  = reflect.TypeOf((*Int)(nil))

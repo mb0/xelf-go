@@ -45,6 +45,12 @@ func (x *AnyPrx) New() Mut   { return x.NewWith(x.new()) }
 func (x *AnyPrx) Zero() bool { return x.Nil() || x.val.Zero() }
 func (x *AnyPrx) Mut() Mut   { return x }
 func (x *AnyPrx) Value() Val { return x.Unwrap().Value() }
+func (x *AnyPrx) As(t typ.Type) (Val, error) {
+	if x.typ == t {
+		return x, nil
+	}
+	return &AnyPrx{x.typed(t), x.val}, nil
+}
 func (x *AnyPrx) Parse(a ast.Ast) (err error) {
 	if isNull(a) {
 		x.val = Null{}

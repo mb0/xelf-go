@@ -26,6 +26,14 @@ func (o *OptMut) Nil() bool      { return o == nil || o.Null }
 func (o *OptMut) Zero() bool     { return o.Null || o.LitMut.Zero() }
 func (o *OptMut) Mut() Mut       { return o }
 func (o *OptMut) Value() Val     { return o.Unwrap().Value() }
+func (o *OptMut) As(t typ.Type) (Val, error) {
+	// TODO check typ
+	v, err := o.LitMut.As(t)
+	if err != nil {
+		o.LitMut = v.Mut()
+	}
+	return o, err
+}
 func (o *OptMut) String() string { return o.Unwrap().String() }
 
 func (o *OptMut) MarshalJSON() ([]byte, error) { return o.Unwrap().MarshalJSON() }

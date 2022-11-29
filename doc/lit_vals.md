@@ -47,13 +47,24 @@ We may want to drop the resolved type of exp.Lit so we have only the value type.
 a lot of type confusion and would keep the type near to the backing value. We still need exp.Lit to
 provide source info and implement exp.Exp.
 
-Instead we could provide a Mut.EditType(typ.EditFunc) api that returns the same or a new mutable
-with updated type. We should be careful that the new type is compatible. Instead we could make it
-easier to edit value types. We probably need to be thorough and edit even element values, that means
-we also need a value editor with state to handle self referential values.
+Instead we could provide an edit type api for values that returns the same or a new mutable with
+updated type. We should be careful that the new type is compatible. We probably need to be thorough
+and edit even element values, that means we also need a value editor with state to handle self
+referential values.
+
+What do we mean by compatible type when updating a value type?
+ * The current value must certainly be assignable to values of that type.
+ * But the value could be very generic (think AstVal) or missing, because it is unresolved.
+ * So in what way should the current type restrict the new type?
+ * We could limit type editing to only restrict or specify the old type and not generalize it.
+ * Do we want to generize types for if branch results, or conversions.
 
 We can add a value wrapper that provides a new type or even an ast value that uses raw input until
 evaluated we can probably reuse and maybe unify with AnyMut and OptMut.
+
+We noticed that List, Dict and Map allocate a new element type body for every call to Type, this
+is wasteful if we want to use the value type information to match values; and unfortunate if want
+use list types with names or ids.
 
 Implementation
 --------------
@@ -71,6 +82,10 @@ of choice and assign.In places where we used it to unwrap wrapper types we corre
 `lit.Unwrap(lit.Val)` function that now unwraps all layers of wrapper values. We add a small Wrapper
 interface to allow external wrapper implementations.
 
-We noticed that List, Dict and Map allocate a new element type body for every call to Type, this
-is wasteful if we want to use the value type information to match values; and unfortunate if want
-use list types with names or ids.
+We add `Val.As(typ.Type) (Val, error)` and `Edit(Val, EditFunc) (Val, error)` to the lit package.
+Together with 'typ.Edit' we can provide a generic type editing function for values.
+
+The new `As(Type)` method provides a general type conversion mechanism for compatible types. It
+can help with type checking when mutating values.
+
+We changed List, Dict and Map to store the full type to avoid allocations when checking value types.

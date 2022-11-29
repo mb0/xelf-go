@@ -11,11 +11,18 @@ import (
 
 type Vals []Val
 
-func (v Vals) Type() typ.Type                { return typ.Idxr }
-func (v *Vals) Nil() bool                    { return v == nil }
-func (v *Vals) Zero() bool                   { return v == nil || len(*v) == 0 }
-func (v *Vals) Mut() Mut                     { return v }
-func (v *Vals) Value() Val                   { return v }
+func (v Vals) Type() typ.Type { return typ.Idxr }
+func (v *Vals) Nil() bool     { return v == nil }
+func (v *Vals) Zero() bool    { return v == nil || len(*v) == 0 }
+func (v *Vals) Mut() Mut      { return v }
+func (v *Vals) Value() Val    { return v }
+func (v *Vals) As(t typ.Type) (Val, error) {
+	if t == typ.Idxr {
+		return v, nil
+	}
+	// TODO check type
+	return &List{Typ: t, Vals: *v}, nil
+}
 func (v *Vals) UnmarshalJSON(b []byte) error { return unmarshal(b, v) }
 func (v Vals) MarshalJSON() ([]byte, error)  { return bfr.JSON(v) }
 func (v Vals) String() string                { return bfr.String(v) }
@@ -135,16 +142,20 @@ type List struct {
 func NewList(el typ.Type, vs ...Val) *List {
 	return &List{typ.ListOf(el), vs}
 }
-
 func (l *List) Type() typ.Type {
 	if l.Typ == typ.Void {
 		l.Typ = typ.List
 	}
 	return l.Typ
 }
-func (l *List) Nil() bool        { return l == nil }
-func (l *List) Mut() Mut         { return l }
-func (l *List) Value() Val       { return l }
+func (l *List) Nil() bool  { return l == nil }
+func (l *List) Mut() Mut   { return l }
+func (l *List) Value() Val { return l }
+func (l *List) As(t typ.Type) (Val, error) {
+	// TODO check type
+	l.Typ = t
+	return l, nil
+}
 func (l *List) New() Mut         { return &List{l.Typ, nil} }
 func (l *List) Ptr() interface{} { return l }
 
