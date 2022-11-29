@@ -128,8 +128,8 @@ func editTypes(val lit.Val, edit typ.EditFunc) lit.Val {
 		for _, el := range v.Vals {
 			vs = append(vs, editTypes(el, edit))
 		}
-		el, _ := typ.Edit(v.El, edit)
-		return &lit.List{El: el, Vals: vs}
+		t, _ := typ.Edit(v.Typ, edit)
+		return &lit.List{Typ: t, Vals: vs}
 	case *lit.Keyed:
 		ks := make(lit.Keyed, 0, len(*v))
 		for _, kv := range *v {
@@ -143,15 +143,15 @@ func editTypes(val lit.Val, edit typ.EditFunc) lit.Val {
 			kv.Val = editTypes(kv.Val, edit)
 			ks = append(ks, kv)
 		}
-		el, _ := typ.Edit(v.El, edit)
-		return &lit.Dict{El: el, Keyed: ks}
+		t, _ := typ.Edit(v.Typ, edit)
+		return &lit.Dict{Typ: t, Keyed: ks}
 	case *lit.Map:
 		m := make(map[string]lit.Val, len(v.M))
 		for k, v := range v.M {
 			m[k] = editTypes(v, edit)
 		}
-		el, _ := typ.Edit(v.El, edit)
-		return &lit.Map{El: el, M: m}
+		t, _ := typ.Edit(v.Typ, edit)
+		return &lit.Map{Typ: t, M: m}
 	case *lit.Obj:
 		vs := make(lit.Vals, 0, len(v.Vals))
 		for _, el := range v.Vals {

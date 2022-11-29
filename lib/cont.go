@@ -105,13 +105,13 @@ func (s *rangeSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 				return nil, err
 			}
 		}
-		list = &lit.List{El: exp.SigRes(f.Type()).Type, Vals: res}
+		list = lit.NewList(exp.SigRes(f.Type()).Type, res...)
 		return &exp.Lit{Res: list.Type(), Val: list, Src: c.Src}, nil
 	} else {
 		for i := range res {
 			res[i] = lit.Int(i)
 		}
-		list = &lit.List{El: typ.Int, Vals: res}
+		list = lit.NewList(typ.Int, res...)
 	}
 	return &exp.Lit{Res: list.Type(), Val: list, Src: c.Src}, nil
 }

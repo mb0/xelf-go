@@ -48,7 +48,9 @@ a lot of type confusion and would keep the type near to the backing value. We st
 provide source info and implement exp.Exp.
 
 Instead we could provide a Mut.EditType(typ.EditFunc) api that returns the same or a new mutable
-with updated type. We should be careful that the new type is compatible.
+with updated type. We should be careful that the new type is compatible. Instead we could make it
+easier to edit value types. We probably need to be thorough and edit even element values, that means
+we also need a value editor with state to handle self referential values.
 
 We can add a value wrapper that provides a new type or even an ast value that uses raw input until
 evaluated we can probably reuse and maybe unify with AnyMut and OptMut.
@@ -68,3 +70,7 @@ values can return as is to avoid excessive allocations, users can simply use an 
 of choice and assign.In places where we used it to unwrap wrapper types we correctly use
 `lit.Unwrap(lit.Val)` function that now unwraps all layers of wrapper values. We add a small Wrapper
 interface to allow external wrapper implementations.
+
+We noticed that List, Dict and Map allocate a new element type body for every call to Type, this
+is wasteful if we want to use the value type information to match values; and unfortunate if want
+use list types with names or ids.

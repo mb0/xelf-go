@@ -10,15 +10,24 @@ import (
 )
 
 type Map struct {
-	El typ.Type
-	M  map[string]Val
+	Typ typ.Type
+	M   map[string]Val
 }
 
-func (h *Map) Type() typ.Type               { return typ.DictOf(h.El) }
-func (h *Map) Nil() bool                    { return h == nil }
-func (h *Map) Zero() bool                   { return len(h.M) == 0 }
-func (h *Map) Mut() Mut                     { return h }
-func (h *Map) Value() Val                   { return h }
+func NewMap(el typ.Type) *Map {
+	return &Map{Typ: typ.DictOf(el)}
+}
+func (h *Map) Type() typ.Type {
+	if h.Typ == typ.Void {
+		h.Typ = typ.Dict
+	}
+	return h.Typ
+}
+func (h *Map) Nil() bool  { return h == nil }
+func (h *Map) Zero() bool { return len(h.M) == 0 }
+func (h *Map) Mut() Mut   { return h }
+func (h *Map) Value() Val { return h }
+
 func (h *Map) MarshalJSON() ([]byte, error) { return bfr.JSON(h) }
 func (h *Map) UnmarshalJSON(b []byte) error { return unmarshal(b, h) }
 func (h *Map) String() string               { return bfr.String(h) }
@@ -38,7 +47,7 @@ func (h *Map) Print(p *bfr.P) (err error) {
 	return p.Byte('}')
 }
 
-func (h *Map) New() Mut         { return &Map{h.El, nil} }
+func (h *Map) New() Mut         { return &Map{h.Typ, nil} }
 func (h *Map) Ptr() interface{} { return h }
 func (h *Map) Parse(a ast.Ast) error {
 	if isNull(a) {
@@ -108,9 +117,6 @@ func (h *Map) SetKey(k string, el Val) error {
 	if el == nil { // if el is explicitly nil delete the value
 		delete(h.M, k)
 		return nil
-	}
-	if h.El != typ.Void {
-		// TODO check and convert el
 	}
 	if h.M == nil {
 		h.M = make(map[string]Val)

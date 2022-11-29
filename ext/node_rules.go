@@ -71,10 +71,10 @@ func OffsetKeyer(offset int) IdxKeyer {
 
 // ListPrepper resolves args using p and env and returns a list or an error.
 func ListPrepper(p *exp.Prog, env exp.Env, _ Node, _ string, arg exp.Exp) (lit.Val, error) {
-	res := &lit.List{}
+	res := &lit.List{Typ: typ.List}
 	switch a := arg.(type) {
 	case *exp.Tupl:
-		res.Vals = make([]lit.Val, 0, len(a.Els))
+		res.Vals = make(lit.Vals, 0, len(a.Els))
 		for _, el := range a.Els {
 			aa, err := p.Eval(env, el)
 			if err != nil {
@@ -89,7 +89,7 @@ func ListPrepper(p *exp.Prog, env exp.Env, _ Node, _ string, arg exp.Exp) (lit.V
 		if err != nil {
 			return nil, err
 		}
-		res.Vals = []lit.Val{aa.Val}
+		res.Vals = lit.Vals{aa.Val}
 	}
 	return res, nil
 }
@@ -164,10 +164,7 @@ func ExtraSetter(m string) KeySetter {
 		err = lit.CreatePath(n, path, v)
 		if err != nil {
 			path = append(cor.Path{{Key: m}}, path...)
-			e := lit.CreatePath(n, path, v)
-			if e == nil {
-				return nil
-			}
+			err = lit.CreatePath(n, path, v)
 		}
 		return err
 	}

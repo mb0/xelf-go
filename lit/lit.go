@@ -111,9 +111,9 @@ func zero(t typ.Type) Mut {
 	case knd.Span:
 		return new(Span)
 	case knd.List:
-		return &List{El: typ.ContEl(t)}
+		return &List{Typ: t}
 	case knd.Dict:
-		return &Dict{El: typ.ContEl(t)}
+		return &Dict{Typ: t}
 	case knd.Obj:
 		m, err := NewObj(t)
 		if err != nil { // TODO: should not happen

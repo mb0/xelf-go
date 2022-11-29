@@ -128,15 +128,24 @@ func (v Vals) IterIdx(it func(int, Val) error) error {
 }
 
 type List struct {
-	El typ.Type
+	Typ typ.Type
 	Vals
 }
 
-func (l *List) Type() typ.Type   { return typ.ListOf(l.El) }
+func NewList(el typ.Type, vs ...Val) *List {
+	return &List{typ.ListOf(el), vs}
+}
+
+func (l *List) Type() typ.Type {
+	if l.Typ == typ.Void {
+		l.Typ = typ.List
+	}
+	return l.Typ
+}
 func (l *List) Nil() bool        { return l == nil }
 func (l *List) Mut() Mut         { return l }
 func (l *List) Value() Val       { return l }
-func (l *List) New() Mut         { return &List{l.El, nil} }
+func (l *List) New() Mut         { return &List{l.Typ, nil} }
 func (l *List) Ptr() interface{} { return l }
 
 func checkIdx(idx, l int) (int, error) {

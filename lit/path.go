@@ -70,7 +70,7 @@ func SelectIdx(val Val, idx int) (res Val, err error) {
 }
 
 func SelectList(val Val, path cor.Path) (_ Val, err error) {
-	res := &List{}
+	res := &List{Typ: typ.List}
 	switch a := val.(type) {
 	case *Vals:
 		res.Vals = make([]Val, 0, len(*a))
@@ -122,7 +122,10 @@ func collectIdxrVal(v Val, path cor.Path, into *List) (err error) {
 	if err != nil {
 		return err
 	}
-	into.El = typ.Alt(into.El, v.Type())
+	el := typ.ContEl(into.Typ)
+	if n := typ.Alt(el, v.Type()); el != n {
+		into.Typ = typ.ListOf(n)
+	}
 	into.Vals = append(into.Vals, v)
 	return nil
 }

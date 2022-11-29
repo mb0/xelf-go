@@ -182,15 +182,23 @@ func (d *Keyed) IterKey(it func(string, Val) error) error {
 }
 
 type Dict struct {
-	El typ.Type
+	Typ typ.Type
 	Keyed
 }
 
-func (d *Dict) Type() typ.Type   { return typ.DictOf(d.El) }
+func NewDict(el typ.Type, ks ...KeyVal) *Dict {
+	return &Dict{typ.DictOf(el), ks}
+}
+func (d *Dict) Type() typ.Type {
+	if d.Typ == typ.Void {
+		d.Typ = typ.Dict
+	}
+	return d.Typ
+}
 func (d *Dict) Nil() bool        { return d == nil }
 func (d *Dict) Mut() Mut         { return d }
 func (d *Dict) Value() Val       { return d }
-func (d *Dict) New() Mut         { return &Dict{d.El, nil} }
+func (d *Dict) New() Mut         { return &Dict{d.Typ, nil} }
 func (d *Dict) Ptr() interface{} { return d }
 func (d *Dict) Key(k string) (Val, error) {
 	if d != nil {
