@@ -25,7 +25,8 @@ type LitVal interface {
 	Value() LitVal
 	// Mut returns the effective mutable itself or a new mutable for this value.
 	Mut() LitMut
-	// As returns the same or a new value with a new type or an error.
+	// As returns the same or a new value with the given type or an error.
+	// The value type must be convertible to the new type and the value conversion must succeed.
 	As(Type) (LitVal, error)
 	// String returns a string content for char literals and xelf format for other literals.
 	// Use bfr.String(v) to get quoted char literals.
@@ -61,8 +62,7 @@ func (t Type) As(o Type) (LitVal, error) {
 	if o == Typ {
 		return t, nil
 	}
-	// TODO what to do? we should probably wrap in an AnyPrx but have no access to it.
-	return nil, fmt.Errorf("cannot re-type a type")
+	return &Wrap{Typ: o, Val: &t}, nil
 }
 func (*Type) New() LitMut        { return new(Type) }
 func (t *Type) Ptr() interface{} { return t }

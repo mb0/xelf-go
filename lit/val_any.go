@@ -6,60 +6,65 @@ import (
 	"xelf.org/xelf/typ"
 )
 
-type AnyMut struct {
-	Typ typ.Type
-	val Val
+func AnyWrap(t typ.Type) *typ.Wrap {
+	return Wrap(&Any{}, t)
 }
 
-func (o *AnyMut) Type() typ.Type {
-	if o.val != nil {
-		return o.val.Type()
-	}
-	return o.Typ
+func Wrap(m Mut, t typ.Type) *typ.Wrap {
+	return &typ.Wrap{Typ: t, Val: m}
 }
-func (o *AnyMut) Unwrap() Val {
-	if o == nil || o.val == nil {
+
+type Any struct{ Val }
+
+func (w *Any) Unwrap() Val {
+	if w.Val == nil {
 		return Null{}
 	}
-	return o.val
+	return w.Val
 }
-func (o *AnyMut) Nil() bool  { return o == nil || o.val == nil || o.val.Nil() }
-func (o *AnyMut) Zero() bool { return o == nil || o.val == nil || o.val.Zero() }
-func (o *AnyMut) Mut() Mut   { return o }
-func (o *AnyMut) Value() Val { return o.Unwrap().Value() }
-func (o *AnyMut) As(t typ.Type) (_ Val, err error) {
-	if o.val != nil {
-		return o.val.As(t)
+func (w *Any) Type() typ.Type {
+	if w.Val == nil || w.Val.Type() == typ.None {
+		return typ.Any
 	}
-	// TODO check typ
-	o.Typ = t
-	return o, err
+	return w.Unwrap().Type()
+}
+func (w *Any) Nil() bool  { return w.Val == nil || w.Val.Nil() }
+func (w *Any) Zero() bool { return w.Val == nil || w.Val.Zero() }
+func (w *Any) Mut() Mut   { return w }
+func (w *Any) Value() Val { return w.Unwrap().Value() }
+func (w *Any) As(t typ.Type) (Val, error) {
+	if w.Val != nil {
+		return w.Val.As(t)
+	}
+	return &typ.Wrap{Typ: t, Val: w}, nil
 }
 
-func (o *AnyMut) String() string               { return o.Unwrap().String() }
-func (o *AnyMut) MarshalJSON() ([]byte, error) { return o.Unwrap().MarshalJSON() }
-func (o *AnyMut) UnmarshalJSON(b []byte) error { return unmarshal(b, o) }
-func (o *AnyMut) Print(p *bfr.P) error         { return o.Unwrap().Print(p) }
+func (w *Any) Print(p *bfr.P) error         { return w.Unwrap().Print(p) }
+func (w *Any) String() string               { return w.Unwrap().String() }
+func (w *Any) MarshalJSON() ([]byte, error) { return w.Unwrap().MarshalJSON() }
+func (w *Any) UnmarshalJSON(b []byte) error { return unmarshal(b, w) }
 
-func (o *AnyMut) New() Mut { return &AnyMut{Typ: o.Typ} }
-func (o *AnyMut) Ptr() interface{} {
-	if m, ok := o.val.(Mut); ok {
+func (w *Any) New() Mut { return &Any{} }
+func (w *Any) Ptr() interface{} {
+	if m, ok := w.Val.(Mut); ok {
 		return m.Ptr()
-	}
-	return o
-}
-func (o *AnyMut) Parse(a ast.Ast) (err error) {
-	o.val, err = ParseMut(a)
-	return err
-}
-func (o *AnyMut) Assign(v Val) error {
-	switch v.(type) {
-	case nil:
-		o.val = nil
-	case Null:
-		o.val = nil
-	default:
-		o.val = v
 	}
 	return nil
 }
+func (w *Any) Parse(a ast.Ast) (err error) {
+	w.Val, err = ParseMut(a)
+	return err
+}
+func (w *Any) Assign(v Val) error {
+	switch v.(type) {
+	case nil:
+		w.Val = nil
+	case Null:
+		w.Val = nil
+	default:
+		w.Val = v
+	}
+	return nil
+}
+
+func init() { typ.WrapNull = AnyWrap }

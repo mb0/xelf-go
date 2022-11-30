@@ -78,15 +78,25 @@ type Prx interface {
 	NewWith(ptr reflect.Value) Mut
 }
 
+func EditTypes(v Val, f typ.EditFunc) (Val, error) {
+	return Edit(v, func(v Val) (Val, error) {
+		if v.Nil() {
+			return v, nil
+		}
+		t, err := typ.Edit(v.Type(), f)
+		if err != nil {
+			return nil, err
+		}
+		return v.As(t)
+	})
+}
+
 // Zero returns a mutable assignable to a value of type t or null.
 func Zero(t typ.Type) Mut {
-	m := zero(t)
-	if m == nil {
-		m = &AnyMut{Typ: t}
-	} else if t.Kind&knd.None != 0 {
-		m = &OptMut{m, nil, true}
+	if m := zero(t); m != nil {
+		return m
 	}
-	return m
+	return &Any{}
 }
 
 func zero(t typ.Type) Mut {

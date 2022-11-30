@@ -176,20 +176,15 @@ func CreatePath(mut Mut, path cor.Path, val Val) (err error) {
 			break
 		}
 		if nmut.Nil() {
-			x, ok := nmut.(*OptMut)
-			if !ok {
+			if x, ok := nmut.(*typ.Wrap); ok {
+				x.OK = true
+			} else {
 				break
 			}
-			x.Null = false
 		}
 		cur, npath = nmut, path[i+1:]
 	}
 	if len(npath) == 0 {
-		o, ok := cur.(*OptMut)
-		if ok {
-			o.Null = val.Nil()
-			cur = o.LitMut
-		}
 		return cur.Assign(val)
 	}
 	s := npath[0]
@@ -221,9 +216,9 @@ func CreatePath(mut Mut, path cor.Path, val Val) (err error) {
 		}
 		ev = Unwrap(z)
 	}
-	if o, ok := cur.(*OptMut); ok {
-		o.Null = false
-		cur = o.LitMut
+	if x, ok := cur.(*typ.Wrap); ok {
+		x.OK = true
+		cur = x.Val
 	}
 	if s.Key != "" {
 		if a, ok := cur.(Keyr); ok {

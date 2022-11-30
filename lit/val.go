@@ -15,7 +15,7 @@ import (
 )
 
 type (
-	Null struct{}
+	Null = typ.Null
 	Bool bool
 	Num  float64
 	Int  int64
@@ -34,7 +34,6 @@ func NewUUID() UUID { return UUID(cor.NewUUID()) }
 // Now returns a new lit time value truncated to millisecond precision.
 func Now() Time { return Time(time.Now().Truncate(time.Millisecond)) }
 
-func (Null) Type() typ.Type { return typ.None }
 func (Bool) Type() typ.Type { return typ.Bool }
 func (Num) Type() typ.Type  { return typ.Num }
 func (Int) Type() typ.Type  { return typ.Int }
@@ -46,7 +45,6 @@ func (UUID) Type() typ.Type { return typ.UUID }
 func (Time) Type() typ.Type { return typ.Time }
 func (Span) Type() typ.Type { return typ.Span }
 
-func (Null) Nil() bool   { return true }
 func (v Bool) Nil() bool { return false }
 func (i Num) Nil() bool  { return false }
 func (i Int) Nil() bool  { return false }
@@ -58,7 +56,6 @@ func (u UUID) Nil() bool { return false }
 func (t Time) Nil() bool { return false }
 func (s Span) Nil() bool { return false }
 
-func (Null) Zero() bool   { return true }
 func (v Bool) Zero() bool { return bool(!v) }
 func (i Num) Zero() bool  { return i == 0 }
 func (i Int) Zero() bool  { return i == 0 }
@@ -70,7 +67,6 @@ func (u UUID) Zero() bool { return u == UUID{} }
 func (t Time) Zero() bool { return time.Time(t).IsZero() }
 func (s Span) Zero() bool { return s == 0 }
 
-func (Null) Value() Val   { return Null{} }
 func (v Bool) Value() Val { return v }
 func (i Num) Value() Val  { return Real(i) }
 func (i Int) Value() Val  { return i }
@@ -82,19 +78,17 @@ func (u UUID) Value() Val { return u }
 func (t Time) Value() Val { return t }
 func (s Span) Value() Val { return s }
 
-func (n Null) As(t typ.Type) (Val, error) { return primAs(n, t, typ.None) }
-func (v Bool) As(t typ.Type) (Val, error) { return primAs(v, t, typ.Bool) }
-func (i Num) As(t typ.Type) (Val, error)  { return primAs(i, t, typ.Num) }
-func (i Int) As(t typ.Type) (Val, error)  { return primAs(i, t, typ.Int) }
-func (r Real) As(t typ.Type) (Val, error) { return primAs(r, t, typ.Real) }
-func (s Char) As(t typ.Type) (Val, error) { return primAs(s, t, typ.Char) }
-func (s Str) As(t typ.Type) (Val, error)  { return primAs(s, t, typ.Str) }
-func (r Raw) As(t typ.Type) (Val, error)  { return primAs(r, t, typ.Raw) }
-func (u UUID) As(t typ.Type) (Val, error) { return primAs(u, t, typ.UUID) }
-func (t Time) As(n typ.Type) (Val, error) { return primAs(t, n, typ.Time) }
-func (s Span) As(t typ.Type) (Val, error) { return primAs(s, t, typ.Span) }
+func (v Bool) As(t typ.Type) (Val, error) { return wrapPrim(&v, t, typ.Bool) }
+func (i Num) As(t typ.Type) (Val, error)  { return wrapPrim(&i, t, typ.Num) }
+func (i Int) As(t typ.Type) (Val, error)  { return wrapPrim(&i, t, typ.Int) }
+func (r Real) As(t typ.Type) (Val, error) { return wrapPrim(&r, t, typ.Real) }
+func (s Char) As(t typ.Type) (Val, error) { return wrapPrim(&s, t, typ.Char) }
+func (s Str) As(t typ.Type) (Val, error)  { return wrapPrim(&s, t, typ.Str) }
+func (r Raw) As(t typ.Type) (Val, error)  { return wrapPrim(&r, t, typ.Raw) }
+func (u UUID) As(t typ.Type) (Val, error) { return wrapPrim(&u, t, typ.UUID) }
+func (t Time) As(n typ.Type) (Val, error) { return wrapPrim(&t, n, typ.Time) }
+func (s Span) As(t typ.Type) (Val, error) { return wrapPrim(&s, t, typ.Span) }
 
-func (Null) Mut() Mut   { return &AnyMut{typ.None, Null{}} }
 func (v Bool) Mut() Mut { return &v }
 func (i Num) Mut() Mut  { return &i }
 func (i Int) Mut() Mut  { return &i }
@@ -110,7 +104,6 @@ func (s Char) Len() int { return len(s) }
 func (s Str) Len() int  { return len(s) }
 func (r Raw) Len() int  { return len(r) }
 
-func (Null) String() string   { return "null" }
 func (v Bool) String() string { return strconv.FormatBool(bool(v)) }
 func (i Num) String() string  { return fmt.Sprintf("%g", i) }
 func (i Int) String() string  { return fmt.Sprintf("%d", i) }
@@ -122,7 +115,6 @@ func (u UUID) String() string { return cor.FormatUUID(u) }
 func (t Time) String() string { return cor.FormatTime(time.Time(t)) }
 func (s Span) String() string { return cor.FormatSpan(time.Duration(s)) }
 
-func (Null) Print(p *bfr.P) error   { return p.Fmt("null") }
 func (v Bool) Print(p *bfr.P) error { return p.Fmt(v.String()) }
 func (i Num) Print(p *bfr.P) error  { return p.Fmt(i.String()) }
 func (i Int) Print(p *bfr.P) error  { return p.Fmt(i.String()) }
@@ -134,7 +126,6 @@ func (u UUID) Print(p *bfr.P) error { return p.Quote(u.String()) }
 func (t Time) Print(p *bfr.P) error { return p.Quote(t.String()) }
 func (s Span) Print(p *bfr.P) error { return p.Quote(s.String()) }
 
-func (Null) MarshalJSON() ([]byte, error)   { return []byte("null"), nil }
 func (v Bool) MarshalJSON() ([]byte, error) { return []byte(v.String()), nil }
 func (i Num) MarshalJSON() ([]byte, error)  { return []byte(i.String()), nil }
 func (i Int) MarshalJSON() ([]byte, error)  { return []byte(i.String()), nil }
@@ -397,11 +388,11 @@ func (t Time) After(o Time) bool { return time.Time(t).After(time.Time(o)) }
 
 func (s Span) Seconds() float64 { return time.Duration(s).Seconds() }
 
-func primAs(v Val, t, o typ.Type) (Val, error) {
+func wrapPrim(v Mut, t, o typ.Type) (Val, error) {
 	if o == t {
 		return v, nil
 	}
-	return &AnyMut{Typ: t, val: v}, nil
+	return Wrap(v, t), nil
 }
 
 func isNull(a ast.Ast) bool { return a.Kind == knd.Sym && a.Raw == "null" }

@@ -47,17 +47,17 @@ We may want to drop the resolved type of exp.Lit so we have only the value type.
 a lot of type confusion and would keep the type near to the backing value. We still need exp.Lit to
 provide source info and implement exp.Exp.
 
-Instead we could provide an edit type api for values that returns the same or a new mutable with
+Instead we could provide type editing api for values that returns the same or a new mutable with
 updated type. We should be careful that the new type is compatible. We probably need to be thorough
 and edit even element values, that means we also need a value editor with state to handle self
 referential values.
 
 What do we mean by compatible type when updating a value type?
  * The current value must certainly be assignable to values of that type.
- * But the value could be very generic (think AstVal) or missing, because it is unresolved.
- * So in what way should the current type restrict the new type?
- * We could limit type editing to only restrict or specify the old type and not generalize it.
- * Do we want to generize types for if branch results, or conversions.
+ * Therefor the current type must be assignable to the new type. That covers `<int>` to `<num>` or
+   about any type generalization, but would fail for `<num>` to `<int>` - type specialization.
+ * We can use a convertible-to check, that covers both cases, but it would cover more than we want.
+ * We need to check the actual value and determine whether the conversion is ok.
 
 We can add a value wrapper that provides a new type or even an ast value that uses raw input until
 evaluated we can probably reuse and maybe unify with AnyMut and OptMut.
@@ -65,6 +65,33 @@ evaluated we can probably reuse and maybe unify with AnyMut and OptMut.
 We noticed that List, Dict and Map allocate a new element type body for every call to Type, this
 is wasteful if we want to use the value type information to match values; and unfortunate if want
 use list types with names or ids.
+
+We noticed too that a type `<int>` used as value identifies as `<typ>` and not as `<typ|int>`. We do
+that to avoid the allocation. The same is true for the expression types. All these types use element
+bodies and not a flag kind, so we can differentiate between `<typ?|int>` and `<typ|int?>`. It would
+be great if we can report the full type without allocation and without work to keep the types in
+sync.
+
+Almost all type bodies are basically dressed up pointers to either a type or a slice. But
+specifically for element bodies we could use type pointer directly instead to the same effect.
+
+We could eventually drop the SelBody and use an element body too, but would need to reuse the type
+ref field, a selection should never be named or a reference.
+
+If we add a broader value conversion api to values, type values need to support this too. One way is
+to pull a value wrapper into the typ package that decorates types. This would effectively mean, that
+we have two type values, this is however already the case for every other value that is wrapped.
+
+But this gives rise to another challenge to use a wrapper in package typ we want the null value
+there too. We can use the same wrapper to wrap null successfully, but then we can still not provide
+the wrapper as default any value, because we need to have access to a literal parser.
+
+So we can really only define the wrapper for none null mutable values to support parsing? We cannot
+pull the literal parser into the typ package without all the default implementations with it.
+This is all fine for providing wrappers for type values itself, but makes it impossible to support
+null mutable or typed null wrapper… unless we also provide a typed raw ast value that we can use to
+defer parsing. Or we add a hook for the typ package for providing parsing capabilities for wrapped
+nulls.
 
 Implementation
 --------------
@@ -77,15 +104,24 @@ We add a `lit.Val.Mut() (lit.Mut)` function to the api. It returns the same or a
 We change the embedded opt mut field to LitMut to remove the name conflict.
 
 We redefine `lit.Val.Value() (lit.Val)` to always convert to minimal set of types. Idxr and Keyr
-values can return as is to avoid excessive allocations, users can simply use an implementation
-of choice and assign.In places where we used it to unwrap wrapper types we correctly use
-`lit.Unwrap(lit.Val)` function that now unwraps all layers of wrapper values. We add a small Wrapper
+values can return as-is to avoid excessive allocations, users can simply create an implementation
+of choice and use assign. In places where we used it to unwrap wrapper types, we now correctly use
+`lit.Unwrap(lit.Val)` function that unwraps all layers of wrapper values. We add a small Wrapper
 interface to allow external wrapper implementations.
 
-We add `Val.As(typ.Type) (Val, error)` and `Edit(Val, EditFunc) (Val, error)` to the lit package.
-Together with 'typ.Edit' we can provide a generic type editing function for values.
-
-The new `As(Type)` method provides a general type conversion mechanism for compatible types. It
-can help with type checking when mutating values.
-
 We changed List, Dict and Map to store the full type to avoid allocations when checking value types.
+
+We add `typ.Wrap` as value wrapper that allows generic type redefinition to compatible types. It
+also covers null handling for values that do not. It unifies and obsoletes OptMut and AnyMut.
+We introduce `typ.AstVal` to defer value parsing and `lit.Any` as a simplified replacement for
+AnyMut. Both provide orthogonal features that stand on their own, but they also provide different
+strategies to work around the fact, that the wrapper has no access to literal parsers and
+value implementations directly. Finally we add a WrapNull hook to the typ package that the lit
+package assigns to on init, that provides an any value that can gives access to literal parsers.
+
+We add `Val.As(typ.Type) (Val, error)` and `lit.Edit(Val, EditFunc) (Val, error)` to the value api.
+Together with 'typ.Edit' we can provide a `lit.EditTypes(Val, typ.EditFunc) (Val, error)` function.
+
+The new `As(Type)` method provides a general conversion mechanism to compatible types. The value
+type must be convertible to the new type, and any actual value conversion must succeed as well.
+The method can help with adding type checking to value mutations.

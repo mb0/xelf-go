@@ -3,7 +3,6 @@ package lit
 import "testing"
 
 func TestDiff(t *testing.T) {
-	c := &PrxReg{}
 	tests := []struct {
 		a, b string
 		want string
@@ -44,11 +43,7 @@ func TestDiff(t *testing.T) {
 			t.Errorf("for %s and %s want %s got %s", test.a, test.b, test.want, got)
 			continue
 		}
-		mut, ok := a.(Mut)
-		if !ok {
-			mut = MustProxy(c, &a)
-		}
-		mut = &OptMut{LitMut: mut}
+		mut := a.Mut()
 		err = Apply(mut, d)
 		if err != nil {
 			t.Errorf("apply failed %s %s: %v", test.a, got, err)

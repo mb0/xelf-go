@@ -17,10 +17,12 @@ func (s *mutSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 	if err != nil {
 		return nil, err
 	}
-	// TODO make sure fst.Val is of fst.Res and mutable otherwise set the type
+	// NOTE: here we cannot simple call fst.Val.Mut() directly because it would
+	// copy the pointer for primitive mutables like *Int
 	mut, ok := fst.Val.(lit.Mut)
 	if !ok {
-		return nil, ast.ErrEval(fst.Src, "not a mutable value", nil)
+		mut = fst.Val.Mut()
+		fst.Val = mut
 	}
 	assign := c.Args[1]
 	if assign != nil {
