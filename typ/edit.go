@@ -60,10 +60,10 @@ func (e *Editor) edit(f EditFunc) (res Type, err error) {
 		}
 	}
 	switch b := res.Body.(type) {
-	case *ElBody:
-		sub, err = e.sub(b.El, f)
+	case *Type:
+		sub, err = e.sub(*b, f)
 		if err == nil {
-			b.El = sub
+			*b = sub
 		}
 	case *SelBody:
 		sub, err = e.sub(b.Sel, f)
@@ -104,10 +104,10 @@ func clone(r Type, stack [][2]Body) Type {
 		}
 	}
 	switch b := r.Body.(type) {
-	case *ElBody:
-		n := &ElBody{}
+	case *Type:
+		n := new(Type)
 		stack = append(stack, [2]Body{b, n})
-		n.El = clone(b.El, stack)
+		*n = clone(*b, stack)
 		r.Body = n
 	case *SelBody:
 		n := &SelBody{Path: b.Path}

@@ -104,8 +104,8 @@ func (e *LetEnv) Lookup(s *exp.Sym, k string, eval bool) (exp.Exp, error) {
 
 func resType(t typ.Type) typ.Type {
 	if t.Kind&knd.Exp == knd.Exp || t.Kind&knd.Exp != 0 {
-		if b, ok := t.Body.(*typ.ElBody); ok && b.El.Kind != knd.Void {
-			return b.El
+		if el, ok := t.Body.(*typ.Type); ok && el.Kind != knd.Void {
+			return *el
 		}
 		return typ.Any
 	}

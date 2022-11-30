@@ -78,7 +78,7 @@ func elType(k knd.Kind, el Type) Type {
 	if el == Void {
 		return Type{Kind: k}
 	}
-	return Type{Kind: k, Body: &ElBody{El: el}}
+	return Type{Kind: k, Body: &el}
 }
 
 func TypOf(t Type) Type  { return elType(knd.Typ, t) }
@@ -91,7 +91,7 @@ func DictOf(t Type) Type { return elType(knd.Dict, t) }
 func IdxrOf(t Type) Type { return elType(knd.Idxr, t) }
 func KeyrOf(t Type) Type { return elType(knd.Keyr, t) }
 
-func ElemTupl(t Type) Type       { return Type{Kind: knd.Tupl, Body: &ElBody{El: t}} }
+func ElemTupl(t Type) Type       { return Type{Kind: knd.Tupl, Body: &t} }
 func ParamTupl(ps ...Param) Type { return Type{Kind: knd.Tupl, Body: &ParamBody{Params: ps}} }
 
 func Func(name string, ps ...Param) Type {
@@ -102,8 +102,8 @@ func Form(name string, ps ...Param) Type {
 }
 
 func El(t Type) Type {
-	if b, ok := t.Body.(*ElBody); ok {
-		return b.El
+	if el, ok := t.Body.(*Type); ok {
+		return *el
 	}
 	return Void
 }
@@ -128,8 +128,8 @@ func ContEl(t Type) Type {
 
 func TuplEl(t Type) (Type, int) {
 	switch b := t.Body.(type) {
-	case *ElBody:
-		return b.El, 1
+	case *Type:
+		return *b, 1
 	case *ParamBody:
 		if n := len(b.Params); n > 0 {
 			return t, n
@@ -141,11 +141,11 @@ func TuplEl(t Type) (Type, int) {
 // Last returns the last element type if t is a list or dict type otherwise t is returned as is.
 func Last(t Type) Type {
 	for {
-		b, ok := t.Body.(*ElBody)
+		el, ok := t.Body.(*Type)
 		if !ok {
 			break
 		}
-		t = b.El
+		t = *el
 		if t == Void {
 			return Any
 		}

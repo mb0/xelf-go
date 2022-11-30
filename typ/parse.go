@@ -109,7 +109,8 @@ func ParseSym(raw string, src ast.Src, hist []Type) (Type, error) {
 		}
 		if tk&(knd.Exp|knd.Typ|knd.List|knd.Dict) != 0 {
 			if res.Kind != 0 {
-				tb = &ElBody{El: res}
+				tmp := res
+				tb = &tmp
 			}
 		}
 		if tr != "" && tk&knd.All == 0 {
@@ -125,10 +126,10 @@ func parseBody(a ast.Ast, args []ast.Ast, t Type, hist []Type) (_ Type, err erro
 		return t, nil
 	}
 	el := &t
-	eb, ok := el.Body.(*ElBody)
+	eb, ok := el.Body.(*Type)
 	for ok {
-		el = &eb.El
-		eb, ok = el.Body.(*ElBody)
+		el = eb
+		eb, ok = el.Body.(*Type)
 	}
 	switch el.Kind &^ (knd.Var | knd.Ref | knd.None) {
 	case knd.Bits, knd.Enum:
@@ -157,7 +158,7 @@ func parseBody(a ast.Ast, args []ast.Ast, t Type, hist []Type) (_ Type, err erro
 		if err != nil {
 			return Void, err
 		}
-		el.Body = &ElBody{El: b}
+		el.Body = &b
 		return t, nil
 	default:
 		return Void, ast.ErrInvalidParams(a)
@@ -167,7 +168,7 @@ func parseBody(a ast.Ast, args []ast.Ast, t Type, hist []Type) (_ Type, err erro
 		return Void, err
 	}
 	if el.Kind&knd.Tupl != 0 && len(ps) == 1 && ps[0].Name == "" {
-		el.Body = &ElBody{El: ps[0].Type}
+		el.Body = &ps[0].Type
 	} else {
 		el.Body = &ParamBody{Params: ps}
 	}

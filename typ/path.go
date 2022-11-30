@@ -39,8 +39,8 @@ func SelectKey(t Type, key string) (Type, error) {
 		return Void, fmt.Errorf("want keyr got %s", t)
 	}
 	switch b := t.Body.(type) {
-	case *ElBody:
-		return b.El, nil
+	case *Type:
+		return *b, nil
 	case *ParamBody:
 		if p := b.FindKeyIndex(cor.Keyed(key)); p >= 0 {
 			return b.Params[p].Type, nil
@@ -57,8 +57,8 @@ func SelectIdx(t Type, idx int) (Type, error) {
 		return Void, fmt.Errorf("want idxr got %s", t)
 	}
 	switch b := t.Body.(type) {
-	case *ElBody:
-		return b.El, nil
+	case *Type:
+		return *b, nil
 	case *ParamBody:
 		i, l := idx, len(b.Params)
 		if i < 0 {
@@ -78,8 +78,8 @@ func SelectList(t Type, p cor.Path) (r Type, err error) {
 	switch b := t.Body.(type) {
 	case nil:
 		r = Any
-	case *ElBody:
-		r = b.El
+	case *Type:
+		r = *b
 	case *ParamBody:
 		l := len(b.Params)
 		if t.Kind&knd.Spec != 0 {

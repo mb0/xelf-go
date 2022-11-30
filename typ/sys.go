@@ -193,19 +193,19 @@ func unify(sys *Sys, t, h Type) (Type, error) {
 		}
 	Switch:
 		switch ab := a.Body.(type) {
-		case *ElBody:
-			bb, ok := b.Body.(*ElBody)
+		case *Type:
+			bb, ok := b.Body.(*Type)
 			if ak&knd.Tupl != 0 {
 				if !ok {
 					return unibind(sys, a, b, r), nil
 				}
 			}
 			if ok {
-				el, err := sys.Unify(ab.El, bb.El)
+				el, err := sys.Unify(*ab, *bb)
 				if err != nil {
 					return Void, err
 				}
-				r.Body = &ElBody{El: el}
+				r.Body = &el
 			}
 			return unibind(sys, a, b, r), nil
 		case *ParamBody:
@@ -227,7 +227,7 @@ func unify(sys *Sys, t, h Type) (Type, error) {
 					(p.Type.Body == nil) != (op.Type.Body == nil) {
 					break Switch
 				}
-				if p.Type.Body != nil && !p.Type.Body.EqualHist(op.Type.Body, nil) {
+				if p.Type.Body != nil && !p.Type.Body.EqualBody(op.Type.Body, nil) {
 					break Switch
 				}
 				p.ID = 0
@@ -267,14 +267,14 @@ func equalBody(a, b Body) bool {
 	if a == nil {
 		return b == nil
 	}
-	return a.EqualHist(b, nil)
+	return a.EqualBody(b, nil)
 }
 
 func base(t Type) Type {
 	for t.Kind&knd.Exp == knd.Exp || t.Kind&knd.Exp != 0 && t.Kind&knd.Tupl == 0 {
-		b, ok := t.Body.(*ElBody)
-		if ok && b.El != Void {
-			t = b.El
+		el, ok := t.Body.(*Type)
+		if ok && *el != Void {
+			t = *el
 		} else {
 			t = Any
 		}
@@ -323,8 +323,8 @@ func (c *Sys) Free(t Type, res []Type) []Type {
 		}
 	}
 	switch b := t.Body.(type) {
-	case *ElBody:
-		res = c.Free(b.El, res)
+	case *Type:
+		res = c.Free(*b, res)
 	case *AltBody:
 		for _, a := range b.Alts {
 			res = c.Free(a, res)

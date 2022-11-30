@@ -19,12 +19,12 @@ func (t Type) AssignableTo(dst Type) bool {
 	switch db := dst.Body.(type) {
 	case nil:
 		return dst.Kind&sk == sk
-	case *ElBody:
+	case *Type:
 		if dst.Kind&sk == sk {
-			return elem(t).AssignableTo(db.El)
+			return elem(t).AssignableTo(*db)
 		}
 	case *SelBody:
-		return db.EqualHist(t.Body, nil)
+		return db.EqualBody(t.Body, nil)
 	case *AltBody:
 		if dst.Kind&sk == sk {
 			return true
@@ -90,12 +90,12 @@ func (t Type) ConvertibleTo(dst Type) bool {
 	switch db := dst.Body.(type) {
 	case nil:
 		return dst.Kind&sk != 0
-	case *ElBody:
+	case *Type:
 		if dst.Kind&sk != 0 {
-			return elem(t).ConvertibleTo(db.El)
+			return elem(t).ConvertibleTo(*db)
 		}
 	case *SelBody:
-		return db.EqualHist(t.Body, nil)
+		return db.EqualBody(t.Body, nil)
 	case *AltBody:
 		if dst.Kind&sk == sk {
 			return true

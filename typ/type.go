@@ -23,7 +23,7 @@ type Hist []BodyPair
 
 // Body contains additional type information.
 type Body interface {
-	EqualHist(Body, Hist) bool
+	EqualBody(Body, Hist) bool
 }
 
 // Equal returns whether type t and o are identical.
@@ -35,7 +35,7 @@ func (t Type) EqualHist(o Type, h Hist) bool {
 	if t.Body == nil {
 		return o.Body == nil
 	}
-	return t.Body.EqualHist(o.Body, h)
+	return t.Body.EqualBody(o.Body, h)
 }
 
 func (t *Type) UnmarshalJSON(b []byte) error {
@@ -139,10 +139,10 @@ func (t Type) print(b *bfr.P, sb *strings.Builder, stack []Body, enclose bool) e
 		return b.Byte('>')
 	}
 	switch tb := t.Body.(type) {
-	case *ElBody:
-		if tb.El != Void {
+	case *Type:
+		if *tb != Void {
 			sb.WriteByte('|')
-			return tb.El.print(b, sb, stack, enclose)
+			return (*tb).print(b, sb, stack, enclose)
 		}
 	case *ConstBody:
 		b.Byte('<')

@@ -30,10 +30,6 @@ func C(name string, v int64) Const {
 }
 
 type (
-	// ElBody contains an element type for expression and container types.
-	ElBody struct {
-		El Type
-	}
 
 	// SelBody contains a selection type and selection path into that type.
 	// Selection types are mainly used internally for partially resolved selections.
@@ -58,26 +54,33 @@ type (
 	}
 )
 
-func (b *ElBody) EqualHist(o Body, h Hist) bool {
-	ob, ok := o.(*ElBody)
+// A *Type itself can be used as element body for expression and container types.
+func (t *Type) EqualBody(b Body, h Hist) bool {
+	o, ok := b.(*Type)
 	if !ok {
 		return false
 	}
 	for _, p := range h {
-		if p.A == b && p.B == o {
+		if p.A == t && p.B == o {
 			return true
 		}
 	}
-	h = append(h, BodyPair{b, o})
-	return b.El.EqualHist(ob.El, h)
+	h = append(h, BodyPair{t, o})
+	if t.Kind != o.Kind || t.ID != o.ID || t.Ref != o.Ref {
+		return false
+	}
+	if t.Body == nil {
+		return o.Body == nil
+	}
+	return t.Body.EqualBody(o.Body, h)
 }
 
-func (b *SelBody) EqualHist(o Body, h Hist) bool {
+func (b *SelBody) EqualBody(o Body, h Hist) bool {
 	ob, ok := o.(*SelBody)
 	return ok && b.Path == ob.Path && b.Sel.EqualHist(ob.Sel, h)
 }
 
-func (b *AltBody) EqualHist(o Body, h Hist) bool {
+func (b *AltBody) EqualBody(o Body, h Hist) bool {
 	ob, ok := o.(*AltBody)
 	if b == nil {
 		return ok && ob == nil
@@ -94,7 +97,7 @@ func (b *AltBody) EqualHist(o Body, h Hist) bool {
 	return true
 }
 
-func (b *ParamBody) EqualHist(o Body, h Hist) bool {
+func (b *ParamBody) EqualBody(o Body, h Hist) bool {
 	ob, ok := o.(*ParamBody)
 	if !ok || len(b.Params) != len(ob.Params) {
 		return false
@@ -122,7 +125,7 @@ func (b *ParamBody) FindKeyIndex(key string) int {
 	return -1
 }
 
-func (b *ConstBody) EqualHist(o Body, h Hist) bool {
+func (b *ConstBody) EqualBody(o Body, h Hist) bool {
 	ob, ok := o.(*ConstBody)
 	if !ok || len(b.Consts) != len(ob.Consts) {
 		return false

@@ -28,7 +28,6 @@ Discussion
 We have the simple values `Null, Bool, Num, Int, Real, Char, Str, Raw, UUID, Time, Span, typ.Type,
 exp.Spec exp.SpecRef` that are mostly there for ergonomic reasons to allow simple values when
 working in go. All simple values except Null, Spec and Spec implement mut when used as pointer.
-
 All other wrapper and container values and all proxies already implement mut.
 
 We added SpecRef explicitly to edit the declaration of a spec value we could make it a mutable too.
@@ -115,6 +114,10 @@ of choice and use assign. In places where we used it to unwrap wrapper types, we
 interface to allow external wrapper implementations.
 
 We changed List, Dict and Map to store the full type to avoid allocations when checking value types.
+
+We use a type pointer as type body directly instead element bodies, this allows us to wrap element
+types with minimal additional allocation as long as the element type is addressable, this also
+keeps an element type and the wrapped element in sync if used carefully.
 
 We add `typ.Wrap` as value wrapper that allows generic type redefinition to compatible types. It
 also covers null handling for values that do not. It unifies and obsoletes OptMut and AnyMut.
