@@ -53,19 +53,19 @@ func TestProgResl(t *testing.T) {
 		want string
 		sig  string
 	}{
-		{`(if true 1 2)`, `<num@1>`,
+		{`(if true 1 2)`, `<call|num@1>`,
 			`<form@if <tupl cond:any then:exp|num@1> else:exp?|num@1 num@1>`},
-		{`(if true "one")`, `<char@1>`,
+		{`(if true "one")`, `<call|char@1>`,
 			`<form@if <tupl cond:any then:exp|char@1> else:exp?|char@1 char@1>`},
-		{`bool`, `<typ>`,
+		{`bool`, `<lit|typ>`,
 			`<bool>`},
-		{`add`, `<spec>`,
+		{`add`, `<lit|spec>`,
 			`<form@add num@ tupl?|num _>`},
-		{`(if true add sub)`, `<spec>`,
+		{`(if true add sub)`, `<call|spec>`,
 			`<form@if <tupl cond:any then:exp|spec> else:exp?|spec spec>`},
-		{`(make @test.point {})`, `<obj@test.point>`, ``},
-		{`(add (int 1) 2)`, `<int>`, `<form@add int tupl?|num int>`},
-		{`<@test.point>`, `<typ>`, `<obj@test.point>`},
+		{`(make @test.point {})`, `<call|obj@test.point>`, ``},
+		{`(add (int 1) 2)`, `<call|int>`, `<form@add int tupl?|num int>`},
+		{`<@test.point>`, `<lit|typ>`, `<obj@test.point>`},
 	}
 	tval, _ := typ.Parse("<obj@test.point x:int y:int>")
 	env := &lib.LetEnv{Par: extlib.Std, Lets: map[string]*exp.Lit{
@@ -83,7 +83,7 @@ func TestProgResl(t *testing.T) {
 			t.Errorf("resl %s failed: %v", test.raw, err)
 			continue
 		}
-		ts := got.Resl().String()
+		ts := got.Type().String()
 		if ts != test.want {
 			t.Errorf("resl %s want res %s got %s", test.raw, test.want, ts)
 		}

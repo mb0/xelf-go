@@ -5,6 +5,7 @@ import (
 
 	"xelf.org/xelf/ast"
 	"xelf.org/xelf/bfr"
+	"xelf.org/xelf/knd"
 )
 
 var (
@@ -53,7 +54,7 @@ type LitMut interface {
 	Parse(ast.Ast) error
 }
 
-func (Type) Type() Type      { return Typ }
+func (t Type) Type() Type    { return Type{Kind: knd.Typ, Body: &t} }
 func (Type) Nil() bool       { return false }
 func (t Type) Zero() bool    { return t == Void }
 func (t Type) Mut() LitMut   { return &t }

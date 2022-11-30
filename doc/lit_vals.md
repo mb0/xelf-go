@@ -117,7 +117,9 @@ We changed List, Dict and Map to store the full type to avoid allocations when c
 
 We use a type pointer as type body directly instead element bodies, this allows us to wrap element
 types with minimal additional allocation as long as the element type is addressable, this also
-keeps an element type and the wrapped element in sync if used carefully.
+keeps an element type and the wrapped element in sync if used carefully. We drop both Exp.Kind and
+Exp.Resl in favor of Exp.Type, that unifies both and now return `<call|int>` for example. We rename
+typ.ResEl to typ.Res to make the resulting code easier to read.
 
 We add `typ.Wrap` as value wrapper that allows generic type redefinition to compatible types. It
 also covers null handling for values that do not. It unifies and obsoletes OptMut and AnyMut.

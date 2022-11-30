@@ -74,11 +74,11 @@ func Obj(n string, ps ...Param) Type {
 	return Type{Kind: knd.Obj, Ref: n, Body: &ParamBody{Params: ps}}
 }
 
-func elType(k knd.Kind, el Type) Type {
-	if el == Void {
-		return Type{Kind: k}
+func elType(k knd.Kind, el Type) (t Type) {
+	if t.Kind = k; el != Void {
+		t.Body = &el
 	}
-	return Type{Kind: k, Body: &el}
+	return t
 }
 
 func TypOf(t Type) Type  { return elType(knd.Typ, t) }
@@ -107,8 +107,8 @@ func El(t Type) Type {
 	}
 	return Void
 }
-func ResEl(t Type) Type {
-	if t.Kind&(knd.Lit|knd.Exp) != 0 {
+func Res(t Type) Type {
+	if t.Kind&knd.Exp != 0 {
 		if r := El(t); r != Void {
 			return r
 		}

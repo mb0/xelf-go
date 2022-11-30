@@ -51,7 +51,7 @@ func (s *makeSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 	if err != nil {
 		return nil, err
 	}
-	t = typ.ResEl(t)
+	t = typ.Res(t)
 	els, err := p.Eval(c.Env, c.Args[1])
 	if err != nil {
 		return nil, err

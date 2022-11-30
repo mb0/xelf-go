@@ -114,7 +114,7 @@ func ParseAst(a ast.Ast) (Exp, error) {
 			if err != nil {
 				return nil, err
 			}
-			if el.Kind() != knd.Call || len(el.(*Call).Args) != 0 {
+			if e.Kind != knd.Call || len(el.(*Call).Args) != 0 {
 				res.Args = append(res.Args, el)
 			}
 		}

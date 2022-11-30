@@ -35,19 +35,19 @@ func LayoutForm(sig typ.Type, els []Exp) ([]Exp, error) {
 				n -= n % tn
 				fst := els[0].Source()
 				lst := els[n-1].Source()
-				arg = &Tupl{Type: p.Type, Els: els[:n], Src: ast.Src{
+				arg = &Tupl{Res: p.Type, Els: els[:n], Src: ast.Src{
 					Doc: fst.Doc, Pos: fst.Pos, End: lst.End,
 				}}
 			} else if pt.Kind == knd.Exp {
-				arg = &Tupl{Type: typ.ElemTupl(pt), Els: els}
+				arg = &Tupl{Res: typ.ElemTupl(pt), Els: els}
 				n = len(els)
 			} else {
 				n = consume(els, pt.Kind == knd.Tag)
-				arg = &Tupl{Type: typ.ElemTupl(pt), Els: els[:n]}
+				arg = &Tupl{Res: typ.ElemTupl(pt), Els: els[:n]}
 			}
 		} else if len(els) > 0 {
 			isTag := pt.Kind&knd.Exp == knd.Tag
-			if el := els[0]; isTag == (el != nil && el.Kind()&knd.Tag != 0) {
+			if el := els[0]; isTag == (el != nil && el.Type().Kind&knd.Tag != 0) {
 				n, arg = 1, el
 			}
 		}
@@ -134,7 +134,7 @@ func SigRes(sig typ.Type) *typ.Param {
 
 func consume(els []Exp, tags bool) int {
 	for i, el := range els {
-		if (el.Kind() == knd.Tag) != tags {
+		if (el.Type().Kind == knd.Tag) != tags {
 			return i
 		}
 	}

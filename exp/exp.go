@@ -12,8 +12,7 @@ import (
 
 // Exp is the common interface of all expressions with kind, type and source info.
 type Exp interface {
-	Kind() knd.Kind
-	Resl() typ.Type
+	Type() typ.Type
 	Source() ast.Src
 	String() string
 	Print(*bfr.P) error
@@ -28,8 +27,7 @@ type Lit struct {
 }
 
 func LitVal(v lit.Val) *Lit    { return &Lit{Res: v.Type(), Val: v} }
-func (a *Lit) Kind() knd.Kind  { return knd.Lit }
-func (a *Lit) Resl() typ.Type  { return a.Res }
+func (a *Lit) Type() typ.Type  { return typ.Type{Kind: knd.Lit, Body: &a.Res} }
 func (a *Lit) Source() ast.Src { return a.Src }
 func (a *Lit) String() string {
 	if a.Val == nil {
@@ -59,21 +57,20 @@ func (a *Lit) Value() lit.Val {
 
 // Sym is a symbol expression which caches the resolving environment and a relative name.
 type Sym struct {
-	Type typ.Type
-	Sym  string
-	Src  ast.Src
-	Env  Env
-	Rel  string
+	Res typ.Type
+	Sym string
+	Src ast.Src
+	Env Env
+	Rel string
 }
 
-func (s *Sym) Kind() knd.Kind       { return knd.Sym }
-func (s *Sym) Resl() typ.Type       { return s.Type }
+func (s *Sym) Type() typ.Type       { return typ.Type{Kind: knd.Sym, Body: &s.Res} }
 func (s *Sym) Source() ast.Src      { return s.Src }
 func (s *Sym) String() string       { return s.Sym }
 func (s *Sym) Print(p *bfr.P) error { return p.Fmt(s.Sym) }
-func (s *Sym) Clone() Exp           { return &Sym{s.Type, s.Sym, s.Src, nil, ""} }
+func (s *Sym) Clone() Exp           { return &Sym{s.Res, s.Sym, s.Src, nil, ""} }
 func (s *Sym) Update(t typ.Type, env Env, rel string) {
-	s.Type, s.Env, s.Rel = t, env, rel
+	s.Res, s.Env, s.Rel = t, env, rel
 }
 
 // Tag is a named quasi expression that is resolved by its parent call.
@@ -83,12 +80,12 @@ type Tag struct {
 	Src ast.Src
 }
 
-func (t *Tag) Kind() knd.Kind { return knd.Tag }
-func (t *Tag) Resl() typ.Type {
+func (t *Tag) Type() typ.Type {
 	if t.Exp == nil {
-		return typ.Void
+		return typ.Tag
 	}
-	return t.Exp.Resl()
+	r := typ.Res(t.Exp.Type())
+	return typ.Type{Kind: knd.Tag, Body: &r}
 }
 func (t *Tag) Source() ast.Src { return t.Src }
 func (t *Tag) String() string  { return bfr.String(t) }
@@ -104,13 +101,12 @@ func (t *Tag) Clone() Exp { return &Tag{t.Tag, t.Exp.Clone(), t.Src} }
 
 // Tupl is a quasi multi-expression that is resolved by its parent call or a program.
 type Tupl struct {
-	Type typ.Type
-	Els  []Exp
-	Src  ast.Src
+	Res typ.Type
+	Els []Exp
+	Src ast.Src
 }
 
-func (t *Tupl) Kind() knd.Kind  { return knd.Tupl }
-func (t *Tupl) Resl() typ.Type  { return t.Type }
+func (t *Tupl) Type() typ.Type  { return t.Res }
 func (t *Tupl) Source() ast.Src { return t.Src }
 func (t *Tupl) String() string  { return bfr.String(t) }
 func (t *Tupl) Print(p *bfr.P) error {
@@ -130,7 +126,7 @@ func (t *Tupl) Clone() Exp {
 	for i, e := range els {
 		els[i] = e.Clone()
 	}
-	return &Tupl{t.Type, els, t.Src}
+	return &Tupl{t.Res, els, t.Src}
 }
 
 // Call is an executable expression that uses a spec to evaluate to a literal.
@@ -143,13 +139,12 @@ type Call struct {
 	Src  ast.Src
 }
 
-func (c *Call) Kind() knd.Kind { return knd.Call }
-func (c *Call) Resl() (t typ.Type) {
+func (c *Call) Type() typ.Type {
 	res := SigRes(c.Sig)
 	if res == nil {
-		return typ.Void
+		return typ.Call
 	}
-	return res.Type
+	return typ.Type{Kind: knd.Call, Body: &res.Type}
 }
 func (c *Call) Source() ast.Src { return c.Src }
 func (c *Call) String() string  { return bfr.String(c) }

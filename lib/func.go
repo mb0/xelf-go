@@ -32,7 +32,7 @@ func (s *fnSpec) Resl(p *exp.Prog, env exp.Env, c *exp.Call, h typ.Type) (_ exp.
 		a := kl.Exp.(*exp.Lit)
 		ps = append(ps, typ.P(kl.Tag, a.Res))
 	}
-	ps = append(ps, typ.P("", x.Resl()))
+	ps = append(ps, typ.P("", typ.Res(x.Type())))
 
 	ft := typ.Func(fmt.Sprintf("fn%d", p.NextFnID()), ps...)
 	ft, err = p.Sys.Update(ft)

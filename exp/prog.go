@@ -126,7 +126,7 @@ func (p *Prog) Resl(env Env, e Exp, h typ.Type) (Exp, error) {
 	switch a := e.(type) {
 	case *Tag:
 		if a.Exp != nil {
-			x, err := p.Resl(env, a.Exp, typ.ResEl(h))
+			x, err := p.Resl(env, a.Exp, typ.Res(h))
 			if err != nil {
 				return nil, err
 			}
@@ -149,18 +149,18 @@ func (p *Prog) Resl(env Env, e Exp, h typ.Type) (Exp, error) {
 			return &Lit{Res: typ.Typ, Val: t, Src: a.Src}, nil
 		}
 		if a.Env == nil {
-			a.Update(a.Type, env, a.Sym)
+			a.Update(a.Res, env, a.Sym)
 		}
 		r, err := a.Env.Lookup(a, a.Rel, false)
 		if err != nil {
 			return nil, ast.ErrReslSym(a.Src, a.Sym, err)
 		}
 		if h != typ.Void {
-			ut, err := p.Sys.Unify(r.Resl(), h)
+			ut, err := p.Sys.Unify(typ.Res(r.Type()), h)
 			if err != nil {
 				return nil, ast.ErrUnify(a.Src, err.Error())
 			}
-			a.Type = ut
+			a.Res = ut
 		}
 		return r, nil
 	case *Lit:
@@ -194,7 +194,7 @@ func (p *Prog) Resl(env Env, e Exp, h typ.Type) (Exp, error) {
 		a.Res = rt
 		return a, nil
 	case *Tupl:
-		tt, tn := typ.TuplEl(a.Type)
+		tt, tn := typ.TuplEl(a.Res)
 		for i, arg := range a.Els {
 			ah := tt
 			if tn > 1 {
@@ -206,7 +206,7 @@ func (p *Prog) Resl(env Env, e Exp, h typ.Type) (Exp, error) {
 			}
 			a.Els[i] = el
 		}
-		_, err := p.Sys.Unify(a.Type, h)
+		_, err := p.Sys.Unify(a.Res, h)
 		if err != nil {
 			return nil, ast.ErrUnify(a.Src, err.Error())
 		}
@@ -220,7 +220,8 @@ func (p *Prog) Resl(env Env, e Exp, h typ.Type) (Exp, error) {
 			if err != nil {
 				return nil, err
 			}
-			if fst.Kind() == knd.Lit && fst.Resl().Kind&knd.Spec != 0 {
+			ft := fst.Type()
+			if ft.Kind == knd.Lit && ft.Body != nil && ft.Body.(*typ.Type).Kind&knd.Spec != 0 {
 				if l, ok := fst.(*Lit); ok {
 					if s, ok := l.Val.(Spec); ok {
 						a.Spec = s

@@ -86,7 +86,7 @@ func (s *NodeSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 			if len(a.Els) == 0 {
 				continue
 			}
-			et, _ := typ.TuplEl(a.Type)
+			et, _ := typ.TuplEl(a.Res)
 			ek := typ.Deopt(et).Kind
 			switch {
 			case ek == knd.All: // tupl -> idx rule

@@ -29,7 +29,7 @@ func (s *dynSpec) Resl(p *exp.Prog, env exp.Env, c *exp.Call, h typ.Type) (exp.E
 		src := fst.Source()
 		return nil, ast.ErrEval(src, fmt.Sprintf("dyn resl failed for %s", fst), err)
 	}
-	if fst.Kind()&(knd.Sym|knd.Call) != 0 {
+	if fst.Type().Kind&(knd.Sym|knd.Call) != 0 {
 		// TODO lets check the resolved type of fst
 		// we may know a sugar spec for lit res or impossible specs, if we expect a spec
 		// we need to evaluate the argument before we can determine the spec

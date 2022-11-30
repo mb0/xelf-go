@@ -2,7 +2,6 @@ package lib
 
 import (
 	"xelf.org/xelf/exp"
-	"xelf.org/xelf/knd"
 	"xelf.org/xelf/typ"
 )
 
@@ -20,7 +19,7 @@ func (s *dotSpec) Resl(p *exp.Prog, env exp.Env, c *exp.Call, h typ.Type) (_ exp
 	if err != nil {
 		return c, err
 	}
-	de.Dot.Res = resType(dot.Resl())
+	de.Dot.Res = typ.Res(dot.Type())
 	res, err := p.Resl(de, c.Args[1], h)
 	if err != nil {
 		return c, err
@@ -57,11 +56,12 @@ func (s *letSpec) Resl(p *exp.Prog, env exp.Env, c *exp.Call, h typ.Type) (_ exp
 		}
 		tag.Exp = ta
 		a := le.Lets[tag.Tag]
+		tar := typ.Res(ta.Type())
 		if a == nil {
-			a = &exp.Lit{Res: ta.Resl()}
+			a = &exp.Lit{Res: tar}
 			le.Lets[tag.Tag] = a
 		} else {
-			a.Res = ta.Resl()
+			a.Res = tar
 		}
 	}
 	res, err := p.Resl(le, c.Args[1], h)
@@ -100,14 +100,4 @@ func (e *LetEnv) Lookup(s *exp.Sym, k string, eval bool) (exp.Exp, error) {
 		return a, nil
 	}
 	return e.Par.Lookup(s, k, eval)
-}
-
-func resType(t typ.Type) typ.Type {
-	if t.Kind&knd.Exp == knd.Exp || t.Kind&knd.Exp != 0 {
-		if el, ok := t.Body.(*typ.Type); ok && el.Kind != knd.Void {
-			return *el
-		}
-		return typ.Any
-	}
-	return t
 }

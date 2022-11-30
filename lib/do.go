@@ -40,7 +40,7 @@ func (s *doSpec) Resl(p *exp.Prog, env exp.Env, c *exp.Call, h typ.Type) (exp.Ex
 	}
 	if lst != nil {
 		rp := exp.SigRes(c.Sig)
-		rp.Type = lst.Resl()
+		rp.Type = typ.Res(lst.Type())
 		var err error
 		c.Sig, err = p.Sys.Update(c.Sig)
 		if err != nil {
