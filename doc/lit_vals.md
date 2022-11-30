@@ -43,6 +43,11 @@ handle it as special case? Or do we only use a SpecRef and don't even implement 
 If we use SpecRef exclusively for spec values we can drop all the senseless spec value
 implementations everywhere.
 
+One problem with the mutable implementation for simple values is that every call to an value method
+dereferences the pointer. This was no problem so far, but with the addition of Mut and As we
+actually preserver the pointer. This behaviour is very surprising and should be fixed. Moving the
+api into mutable makes makes no sense for Mut and looses much of the convenience for As.
+
 We may want to drop the resolved type of exp.Lit so we have only the value type. This would resolve
 a lot of type confusion and would keep the type near to the backing value. We still need exp.Lit to
 provide source info and implement exp.Exp.
@@ -125,3 +130,8 @@ Together with 'typ.Edit' we can provide a `lit.EditTypes(Val, typ.EditFunc) (Val
 The new `As(Type)` method provides a general conversion mechanism to compatible types. The value
 type must be convertible to the new type, and any actual value conversion must succeed as well.
 The method can help with adding type checking to value mutations.
+
+We introduced dedicated mutable value types for primitive values. That means `Int` is a simple Val
+and `*IntMut` a Mut. `*Int` should not be used from now on. This works still great for simple values
+input and representation and works well with the new `Val.Mut` and `Val.As` api without surprising
+corner cases.

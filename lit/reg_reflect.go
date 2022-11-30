@@ -102,7 +102,7 @@ func (pr *PrxReg) reflectTypeRest(t reflect.Type, ptr bool, s *tstack) (res typ.
 		}
 		res = typ.Int
 	case reflect.Struct:
-		if isRef(t, ptrTime.Elem()) {
+		if isRef(t, ptrTimeMut.Elem()) {
 			res = typ.Time
 			break
 		}
@@ -123,11 +123,11 @@ func (pr *PrxReg) reflectTypeRest(t reflect.Type, ptr bool, s *tstack) (res typ.
 			return res, err
 		}
 	case reflect.Array:
-		if isRef(t, ptrUUID.Elem()) {
+		if isRef(t, ptrUUIDMut.Elem()) {
 			res = typ.UUID
 		}
 	case reflect.Map:
-		if !isRef(t.Key(), ptrStr.Elem()) {
+		if !isRef(t.Key(), ptrStrMut.Elem()) {
 			return typ.Void, fmt.Errorf("map key can only be a string type")
 		}
 		et, err := pr.reflectType(t.Elem(), s)
@@ -136,7 +136,7 @@ func (pr *PrxReg) reflectTypeRest(t reflect.Type, ptr bool, s *tstack) (res typ.
 		}
 		res = typ.DictOf(et)
 	case reflect.Slice:
-		if isRef(t, ptrRaw.Elem()) {
+		if isRef(t, ptrRawMut.Elem()) {
 			res = typ.Raw
 			break
 		}

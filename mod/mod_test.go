@@ -43,7 +43,7 @@ func TestSysMods(t *testing.T) {
 	setup := func(prog *exp.Prog, s *Src) (*File, error) {
 		f := &exp.File{URL: s.URL}
 		m := &exp.Mod{File: f, Name: "foo", Decl: lit.MakeObj(lit.Keyed{
-			{Key: "b", Val: new(lit.Int)},
+			{Key: "b", Val: new(lit.IntMut)},
 		})}
 		return f, f.AddRefs(exp.ModRef{Pub: true, Mod: m})
 	}

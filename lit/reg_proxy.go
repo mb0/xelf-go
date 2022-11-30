@@ -33,42 +33,42 @@ func (c *PrxReg) ProxyValue(ptr reflect.Value) (mut Mut, err error) {
 	}
 	switch et.Kind() {
 	case reflect.Bool:
-		if v, ok := toRef(ptrBool, ptr, org); ok {
-			return optPrx(v.Interface().(*Bool), org, opt, null)
+		if v, ok := toRef(ptrBoolMut, ptr, org); ok {
+			return optPrx(v.Interface().(*BoolMut), org, opt, null)
 		}
 	case reflect.Int64:
 		if et != typInt64 && et.Implements(ptrSecs.Elem()) {
-			if v, ok := toRef(ptrSpan, ptr, org); ok {
-				return optPrx(v.Interface().(*Span), org, opt, null)
+			if v, ok := toRef(ptrSpanMut, ptr, org); ok {
+				return optPrx(v.Interface().(*SpanMut), org, opt, null)
 			}
 		}
-		if v, ok := toRef(ptrInt, ptr, noval); ok {
-			return optPrx(v.Interface().(*Int), org, opt, null)
+		if v, ok := toRef(ptrIntMut, ptr, noval); ok {
+			return optPrx(v.Interface().(*IntMut), org, opt, null)
 		}
 		fallthrough
 	case reflect.Int, reflect.Int32, reflect.Int16, reflect.Uint64, reflect.Uint32, reflect.Uint16:
 		mut = &IntPrx{newProxy(c, typ.Int, org)}
 	case reflect.Float64:
-		if v, ok := toRef(ptrReal, ptr, noval); ok {
-			return optPrx(v.Interface().(*Real), org, opt, null)
+		if pt == ptrNumMut {
+			return optPrx(ptr.Interface().(*NumMut), org, opt, null)
 		}
-		if v, ok := toRef(ptrNum, ptr, noval); ok {
-			return optPrx(v.Interface().(*Num), org, opt, null)
+		if v, ok := toRef(ptrRealMut, ptr, noval); ok {
+			return optPrx(v.Interface().(*RealMut), org, opt, null)
 		}
 		fallthrough
 	case reflect.Float32:
 		mut = &RealPrx{newProxy(c, typ.Real, org)}
 	case reflect.String:
-		if v, ok := toRef(ptrStr, ptr, org); ok {
-			return optPrx(v.Interface().(*Str), org, opt, null)
+		if pt == ptrCharMut {
+			return optPrx(ptr.Interface().(*CharMut), org, opt, null)
 		}
-		if v, ok := toRef(ptrChar, ptr, org); ok {
-			return optPrx(v.Interface().(*Char), org, opt, null)
+		if v, ok := toRef(ptrStrMut, ptr, org); ok {
+			return optPrx(v.Interface().(*StrMut), org, opt, null)
 		}
 	case reflect.Slice:
 		if et.Elem().Kind() == reflect.Uint8 {
-			if v, ok := toRef(ptrRaw, ptr, org); ok {
-				return optPrx(v.Interface().(*Raw), org, opt, null)
+			if v, ok := toRef(ptrRawMut, ptr, org); ok {
+				return optPrx(v.Interface().(*RawMut), org, opt, null)
 			}
 		}
 		et, err := c.Reflect(et.Elem())
@@ -77,12 +77,12 @@ func (c *PrxReg) ProxyValue(ptr reflect.Value) (mut Mut, err error) {
 		}
 		mut = &ListPrx{newProxy(c, typ.ListOf(et), org)}
 	case reflect.Array:
-		if v, ok := toRef(ptrUUID, ptr, org); ok {
-			return optPrx(v.Interface().(*UUID), org, opt, null)
+		if v, ok := toRef(ptrUUIDMut, ptr, org); ok {
+			return optPrx(v.Interface().(*UUIDMut), org, opt, null)
 		}
 	case reflect.Struct:
-		if v, ok := toRef(ptrTime, ptr, org); ok {
-			return optPrx(v.Interface().(*Time), org, opt, null)
+		if v, ok := toRef(ptrTimeMut, ptr, org); ok {
+			return optPrx(v.Interface().(*TimeMut), org, opt, null)
 		}
 		if v, ok := toRef(ptrType, ptr, org); ok {
 			return optPrx(v.Interface().(*typ.Type), org, opt, null)

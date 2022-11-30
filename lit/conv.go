@@ -24,10 +24,10 @@ func ToBool(v Val) (b Bool, err error) {
 		return
 	}
 	switch v := v.(type) {
+	case *BoolMut:
+		b = Bool(*v)
 	case Bool:
 		b = v
-	case *Bool:
-		b = *v
 	default:
 		switch v := v.Value().(type) {
 		case Null:
@@ -45,11 +45,11 @@ func ToInt(v Val) (n Int, err error) {
 		return
 	}
 	switch v := v.(type) {
-	case *Num:
+	case *NumMut:
 		n = Int(*v)
-	case *Int:
-		n = *v
-	case *Real:
+	case *IntMut:
+		n = Int(*v)
+	case *RealMut:
 		n = Int(*v)
 	case Num:
 		n = Int(v)
@@ -76,12 +76,12 @@ func ToReal(v Val) (n Real, err error) {
 		return
 	}
 	switch v := v.(type) {
-	case *Num:
+	case *NumMut:
 		n = Real(*v)
-	case *Int:
+	case *IntMut:
 		n = Real(*v)
-	case *Real:
-		n = *v
+	case *RealMut:
+		n = Real(*v)
 	case Num:
 		n = Real(v)
 	case Int:
@@ -107,10 +107,10 @@ func ToStr(v Val) (s Str, err error) {
 		return
 	}
 	switch v := v.(type) {
-	case *Char:
+	case *CharMut:
 		s = Str(*v)
-	case *Str:
-		s = *v
+	case *StrMut:
+		s = Str(*v)
 	case Char:
 		s = Str(v)
 	case Str:
@@ -140,8 +140,8 @@ func ToRaw(v Val) (r Raw, err error) {
 		return
 	}
 	switch v := v.(type) {
-	case *Raw:
-		r = *v
+	case *RawMut:
+		r = Raw(*v)
 	case Raw:
 		r = v
 	default:

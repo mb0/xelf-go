@@ -105,21 +105,21 @@ func zero(t typ.Type) Mut {
 	case knd.Typ:
 		return new(typ.Type)
 	case knd.Bool:
-		return new(Bool)
+		return new(BoolMut)
 	case knd.Int:
-		return new(Int)
+		return new(IntMut)
 	case knd.Real:
-		return new(Real)
+		return new(RealMut)
 	case knd.Str:
-		return new(Str)
+		return new(StrMut)
 	case knd.Raw:
-		return new(Raw)
+		return new(RawMut)
 	case knd.UUID:
-		return new(UUID)
+		return new(UUIDMut)
 	case knd.Time:
-		return new(Time)
+		return new(TimeMut)
 	case knd.Span:
-		return new(Span)
+		return new(SpanMut)
 	case knd.List:
 		return &List{Typ: t}
 	case knd.Dict:
@@ -134,9 +134,9 @@ func zero(t typ.Type) Mut {
 	k := t.Kind
 	switch {
 	case k&knd.Num != 0 && k&^knd.Num == 0:
-		return new(Num)
+		return new(NumMut)
 	case k&knd.Char != 0 && k&^knd.Char == 0:
-		return new(Char)
+		return new(CharMut)
 	case k&knd.Keyr != 0 && k&^knd.Keyr == 0:
 		return new(Keyed)
 	case k&knd.Idxr != 0 && k&^knd.Idxr == 0:

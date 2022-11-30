@@ -17,13 +17,7 @@ func (s *mutSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 	if err != nil {
 		return nil, err
 	}
-	// NOTE: here we cannot simple call fst.Val.Mut() directly because it would
-	// copy the pointer for primitive mutables like *Int
-	mut, ok := fst.Val.(lit.Mut)
-	if !ok {
-		mut = fst.Val.Mut()
-		fst.Val = mut
-	}
+	mut := fst.Val.Mut()
 	assign := c.Args[1]
 	if assign != nil {
 		a, err := p.Eval(c.Env, assign)
@@ -45,6 +39,7 @@ func (s *mutSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 		}
 		delta = append(delta, lit.KeyVal{Key: tag.Tag, Val: ta.Val})
 	}
+	fst.Val = mut
 	return fst, lit.Apply(mut, delta)
 }
 

@@ -110,25 +110,25 @@ func ParseMut(a ast.Ast) (Mut, error) {
 		if err != nil {
 			return nil, ast.ErrInvalid(a, knd.Num, err)
 		}
-		return (*Num)(&n), nil
+		return (*NumMut)(&n), nil
 	case knd.Real:
 		n, err := strconv.ParseFloat(a.Raw, 64)
 		if err != nil {
 			return nil, ast.ErrInvalid(a, knd.Real, err)
 		}
-		return (*Real)(&n), nil
+		return (*RealMut)(&n), nil
 	case knd.Char:
 		txt, err := cor.Unquote(a.Raw)
 		if err != nil {
 			return nil, ast.ErrInvalid(a, knd.Char, err)
 		}
-		return (*Char)(&txt), nil
+		return (*CharMut)(&txt), nil
 	case knd.Sym:
 		switch a.Raw {
 		case "null":
 			return nil, nil
 		case "false", "true":
-			ok := Bool(len(a.Raw) == 4)
+			ok := BoolMut(len(a.Raw) == 4)
 			return &ok, nil
 		}
 	case knd.Idxr:
