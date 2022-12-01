@@ -21,11 +21,23 @@ func (d *Keyed) Zero() bool    { return d == nil || len(*d) == 0 }
 func (d *Keyed) Mut() Mut      { return d }
 func (d *Keyed) Value() Val    { return d }
 func (d *Keyed) As(t typ.Type) (Val, error) {
-	if t == typ.Keyr {
-		return d, nil
+	if typ.Keyr.AssignableTo(t) {
+		return &Dict{Typ: t, Keyed: *d}, nil
 	}
-	// TODO check typ
-	return &Dict{Typ: t, Keyed: *d}, nil
+	if ok := typ.Keyr.ConvertibleTo(t); ok {
+		neu := typ.ContEl(t)
+		for _, kv := range *d {
+			if !kv.Type().ConvertibleTo(neu) {
+				ok = false
+				break
+			}
+		}
+		if ok {
+			return &Dict{Typ: t, Keyed: *d}, nil
+		}
+	}
+	// TODO obj type
+	return nil, fmt.Errorf("cannot convert %T from %s to %s", d, d.Type(), t)
 }
 
 func (d *Keyed) UnmarshalJSON(b []byte) error { return unmarshal(b, d) }
@@ -207,9 +219,29 @@ func (d *Dict) Nil() bool  { return d == nil }
 func (d *Dict) Mut() Mut   { return d }
 func (d *Dict) Value() Val { return d }
 func (d *Dict) As(t typ.Type) (Val, error) {
-	// TODO check typ
-	d.Typ = t
-	return d, nil
+	if typ.Keyr.AssignableTo(t) {
+		d.Typ = t
+		return d, nil
+	}
+	if ok := d.Typ.ConvertibleTo(t); ok {
+		neu := typ.ContEl(t)
+		if ok {
+			d.Typ = t
+			return d, nil
+		}
+		for _, kv := range d.Keyed {
+			if !kv.Type().ConvertibleTo(neu) {
+				ok = false
+				break
+			}
+		}
+		if ok {
+			d.Typ = t
+			return d, nil
+		}
+	}
+	// TODO obj type
+	return nil, fmt.Errorf("cannot convert %T from %s to %s", d, d.Type(), t)
 }
 func (d *Dict) New() Mut         { return &Dict{d.Typ, nil} }
 func (d *Dict) Ptr() interface{} { return d }

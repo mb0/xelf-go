@@ -509,7 +509,17 @@ func wrapPrim(v Mut, t, o typ.Type) (Val, error) {
 	if o == t {
 		return v, nil
 	}
-	return Wrap(v, t), nil
+	if o.AssignableTo(t) {
+		return Wrap(v, t), nil
+	}
+	if o.ConvertibleTo(t) {
+		n := ZeroWrap(t)
+		if v.Zero() {
+			return n, nil
+		}
+		return n, n.Assign(v)
+	}
+	return nil, fmt.Errorf("cannot convert %T from %s to %s", v, v.Type(), t)
 }
 
 func isNull(a ast.Ast) bool { return a.Kind == knd.Sym && a.Raw == "null" }

@@ -43,9 +43,25 @@ func (s *Obj) Zero() bool {
 func (s *Obj) Mut() Mut   { return s }
 func (s *Obj) Value() Val { return s }
 func (s *Obj) As(t typ.Type) (Val, error) {
-	// TODO check typ
-	s.Typ = t
-	return s, nil
+	if s.Typ.AssignableTo(t) {
+		s.Typ = t
+		return s, nil
+	}
+	if s.Typ.ConvertibleTo(t) {
+		if k := t.Kind & knd.Keyr; k != 0 {
+			// TODO check typ
+			if k == knd.Obj {
+				s.Typ = t
+				return s, nil
+			}
+		}
+		if k := t.Kind & knd.Idxr; k != 0 {
+			if t == typ.Idxr {
+				return (*Vals)(&s.Vals), nil
+			}
+		}
+	}
+	return nil, fmt.Errorf("cannot convert %T from %s to %s", s, s.Type(), t)
 }
 func (s *Obj) MarshalJSON() ([]byte, error) { return bfr.JSON(s) }
 func (s *Obj) UnmarshalJSON(b []byte) error { return unmarshal(b, s) }

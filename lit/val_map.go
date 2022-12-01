@@ -1,6 +1,7 @@
 package lit
 
 import (
+	"fmt"
 	"sort"
 
 	"xelf.org/xelf/ast"
@@ -28,9 +29,26 @@ func (h *Map) Zero() bool { return len(h.M) == 0 }
 func (h *Map) Mut() Mut   { return h }
 func (h *Map) Value() Val { return h }
 func (h *Map) As(t typ.Type) (Val, error) {
-	// TODO check type
-	h.Typ = t
-	return h, nil
+	if h.Typ.AssignableTo(t) {
+		h.Typ = t
+		return h, nil
+	}
+	if ok := h.Typ.ConvertibleTo(t); ok {
+		neu := typ.ContEl(t)
+		for _, el := range h.M {
+			if !el.Type().ConvertibleTo(neu) {
+				ok = false
+				break
+			}
+		}
+		if ok {
+			// TODO convert els
+			h.Typ = t
+			return h, nil
+		}
+	}
+	// TODO obj type
+	return nil, fmt.Errorf("cannot convert %T from %s to %s", h, h.Type(), t)
 }
 
 func (h *Map) MarshalJSON() ([]byte, error) { return bfr.JSON(h) }

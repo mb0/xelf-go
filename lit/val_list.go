@@ -17,11 +17,25 @@ func (v *Vals) Zero() bool    { return v == nil || len(*v) == 0 }
 func (v *Vals) Mut() Mut      { return v }
 func (v *Vals) Value() Val    { return v }
 func (v *Vals) As(t typ.Type) (Val, error) {
-	if t == typ.Idxr {
-		return v, nil
+	if typ.Idxr.AssignableTo(t) {
+		return &List{Typ: t, Vals: *v}, nil
 	}
-	// TODO check type
-	return &List{Typ: t, Vals: *v}, nil
+	if t.Kind&knd.List != 0 {
+		neu, old := typ.ContEl(t), typ.Any
+		if ok := old.ConvertibleTo(neu); ok {
+			for _, el := range *v {
+				if !el.Type().ConvertibleTo(neu) {
+					ok = false
+					break
+				}
+			}
+			if ok {
+				return &List{Typ: t, Vals: *v}, nil
+			}
+		}
+	}
+	// TODO obj type
+	return nil, fmt.Errorf("cannot convert %T from %s to %s", v, v.Type(), t)
 }
 func (v *Vals) UnmarshalJSON(b []byte) error { return unmarshal(b, v) }
 func (v Vals) MarshalJSON() ([]byte, error)  { return bfr.JSON(v) }
@@ -152,9 +166,25 @@ func (l *List) Nil() bool  { return l == nil }
 func (l *List) Mut() Mut   { return l }
 func (l *List) Value() Val { return l }
 func (l *List) As(t typ.Type) (Val, error) {
-	// TODO check type
-	l.Typ = t
-	return l, nil
+	if l.Typ.AssignableTo(t) {
+		l.Typ = t
+		return l, nil
+	}
+	if ok := l.Typ.ConvertibleTo(t); ok {
+		neu := typ.ContEl(t)
+		for _, el := range l.Vals {
+			if !el.Type().ConvertibleTo(neu) {
+				ok = false
+				break
+			}
+		}
+		if ok {
+			l.Typ = t
+			return l, nil
+		}
+	}
+	// TODO obj type
+	return nil, fmt.Errorf("cannot convert %T from %s to %s", l, l.Type(), t)
 }
 func (l *List) New() Mut         { return &List{l.Typ, nil} }
 func (l *List) Ptr() interface{} { return l }
