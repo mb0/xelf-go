@@ -13,9 +13,9 @@ func TestDeclEval(t *testing.T) {
 		raw  string
 		want lit.Val
 	}{
-		{`(dot 1 .)`, lit.Num(1)},
-		{`(dot 1 (add 2 .))`, lit.Num(3)},
-		{`(dot {a:1 b:2} (add .a .b))`, lit.Num(3)},
+		{`(with 1 .)`, lit.Num(1)},
+		{`(with 1 (add 2 .))`, lit.Num(3)},
+		{`(with {a:1 b:2} (add .a .b))`, lit.Num(3)},
 		{`(let a:1 b:2 (add a b))`, lit.Num(3)},
 	}
 	for _, test := range tests {

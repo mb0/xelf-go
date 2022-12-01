@@ -5,11 +5,11 @@ import (
 	"xelf.org/xelf/typ"
 )
 
-var Dot = &dotSpec{impl("<form@dot any exp|@1 @1>")}
+var With = &withSpec{impl("<form@with any exp|@1 @1>")}
 
-type dotSpec struct{ exp.SpecBase }
+type withSpec struct{ exp.SpecBase }
 
-func (s *dotSpec) Resl(p *exp.Prog, env exp.Env, c *exp.Call, h typ.Type) (_ exp.Exp, err error) {
+func (s *withSpec) Resl(p *exp.Prog, env exp.Env, c *exp.Call, h typ.Type) (_ exp.Exp, err error) {
 	de, ok := c.Env.(*exp.DotEnv)
 	if !ok {
 		de = &exp.DotEnv{Par: env, Dot: &exp.Lit{}}
@@ -27,7 +27,7 @@ func (s *dotSpec) Resl(p *exp.Prog, env exp.Env, c *exp.Call, h typ.Type) (_ exp
 	c.Args[1] = res
 	return c, nil
 }
-func (s *dotSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
+func (s *withSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 	de := c.Env.(*exp.DotEnv)
 	dot, err := p.Eval(de.Par, c.Args[0])
 	if err != nil {

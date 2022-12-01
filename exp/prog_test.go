@@ -17,14 +17,14 @@ func TestProgEval(t *testing.T) {
 		want string
 	}{
 		{`(@test.point {})`, `{x:0 y:0}`},
-		{`(dot {a:[{b:2}]} .a.0.b)`, `2`},
-		{`(dot {a:[{b:2}, {b:3}]} .a/b)`, `[2 3]`},
-		{`(dot {a:'2021-08-19T15:00:00Z'} (month .a))`, `8`},
+		{`(with {a:[{b:2}]} .a.0.b)`, `2`},
+		{`(with {a:[{b:2}, {b:3}]} .a/b)`, `[2 3]`},
+		{`(with {a:'2021-08-19T15:00:00Z'} (month .a))`, `8`},
 		{`(dyn (month $now))`, `8`},
 		{`@`, `<@1>`},
 		{`<@>`, `<@1>`},
 		{`<@test.point>`, `<obj@test.point>`},
-		{`(dot make ([] (. int) (. str)))`, `[0 '']`},
+		{`(with make ([] (. int) (. str)))`, `[0 '']`},
 		{`(fold (list|typ int str) [] (fn r:list t:typ (_ (.1 null)))))`, `[0 '']`},
 	}
 	tval, _ := typ.Parse("<obj@test.point x:int y:int>")
