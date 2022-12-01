@@ -118,7 +118,7 @@ func (s *remSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &exp.Lit{Res: typ.Int, Val: f % r}, nil
+	return exp.LitSrc(f%r, c.Src), nil
 }
 
 var Abs = &absSpec{impl("<form@abs num@ _>")}
@@ -211,11 +211,9 @@ func toNum(sig typ.Type, r lit.Real) (*exp.Lit, error) {
 	t := exp.SigRes(sig).Type
 	switch t.Kind & knd.Num {
 	case knd.Num:
-		if r == lit.Real(int64(r)) {
-			v = lit.Num(r)
-		}
+		v = lit.Num(r)
 	case knd.Int:
 		v = lit.Int(r)
 	}
-	return &exp.Lit{Res: t, Val: v}, nil
+	return exp.LitVal(v), nil
 }

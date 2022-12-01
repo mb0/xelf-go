@@ -75,7 +75,7 @@ func (s *moduleSpec) Resl(p *exp.Prog, env exp.Env, c *exp.Call, _ typ.Type) (_ 
 }
 
 func (s *moduleSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
-	return &exp.Lit{Res: typ.None, Val: lit.Null{}, Src: c.Src}, nil
+	return exp.LitSrc(lit.Null{}, c.Src), nil
 }
 
 var Import = &importSpec{impl("<form@import mods:<tupl|exp|alt str tag|str> none>"), false}
@@ -142,7 +142,7 @@ func (s *importSpec) Resl(p *exp.Prog, env exp.Env, c *exp.Call, _ typ.Type) (_ 
 }
 
 func (s *importSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
-	return &exp.Lit{Res: typ.None, Val: lit.Null{}, Src: c.Src}, nil
+	return exp.LitSrc(lit.Null{}, c.Src), nil
 }
 
 func matchRef(m exp.ModRef, s string) bool {

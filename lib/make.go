@@ -32,7 +32,7 @@ func (s *makeSpec) Resl(p *exp.Prog, env exp.Env, c *exp.Call, h typ.Type) (exp.
 	args, aok := c.Args[1].(*exp.Tupl)
 	tags, tok := c.Args[2].(*exp.Tupl)
 	if (!aok || len(args.Els) == 0) && (!tok || len(tags.Els) == 0) {
-		return &exp.Lit{Res: t, Val: p.Reg.Zero(t), Src: c.Src}, nil
+		return exp.LitSrc(p.Reg.ZeroWrap(t), c.Src), nil
 	}
 	rp := exp.SigRes(c.Sig)
 	rp.Type = t
@@ -51,7 +51,7 @@ func (s *makeSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 	if err != nil {
 		return nil, err
 	}
-	t = typ.Res(t)
+	wrap := p.Reg.ZeroWrap(typ.Res(t))
 	els, err := p.Eval(c.Env, c.Args[1])
 	if err != nil {
 		return nil, err
@@ -60,8 +60,8 @@ func (s *makeSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 	pok = pok && len(plain.Vals) > 0
 	tags, tok := c.Args[2].(*exp.Tupl)
 	tok = tok && len(tags.Els) > 0
-	res := p.Reg.Zero(t)
 	if pok {
+		res := lit.Unwrap(wrap)
 		apdr, ok := res.(lit.Apdr)
 		if ok {
 			for _, v := range plain.Vals {
@@ -73,13 +73,14 @@ func (s *makeSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 		} else if len(plain.Vals) != 1 {
 			return nil, fmt.Errorf("make non-idxr type %s for vals", t)
 		} else {
-			err = res.Assign(plain.Vals[0])
+			err = wrap.Assign(plain.Vals[0])
 			if err != nil {
 				return nil, err
 			}
 		}
 	}
 	if tok {
+		res := lit.Unwrap(wrap)
 		keyr, ok := res.(lit.Keyr)
 		if !ok {
 			return nil, ast.ErrEval(c.Src, c.Sig.Ref, fmt.Errorf("make non-keyr type %s for tags", t))
@@ -101,5 +102,5 @@ func (s *makeSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 			}
 		}
 	}
-	return &exp.Lit{Res: t, Val: res, Src: c.Src}, nil
+	return exp.LitSrc(wrap, c.Src), nil
 }

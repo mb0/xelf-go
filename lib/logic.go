@@ -34,7 +34,7 @@ func (s *logicSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 			}
 		}
 	}
-	return &exp.Lit{Res: exp.SigRes(c.Sig).Type, Val: lit.Bool(r)}, nil
+	return exp.LitSrc(lit.Bool(r), c.Src), nil
 }
 
 var Err = &errSpec{impl("<form@err tupl?|exp @>")}

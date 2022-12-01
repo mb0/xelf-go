@@ -28,7 +28,7 @@ func (s *lenSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 			return nil, fmt.Errorf("unexpected argument %[1]T %[1]%s", v)
 		}
 	}
-	return &exp.Lit{Res: typ.Int, Val: lit.Int(n)}, nil
+	return exp.LitSrc(lit.Int(n), c.Src), nil
 }
 
 var Fold = &foldSpec{impl("<form@fold list|@1 @2 <func @2 @1 @2> @2>"), false}
@@ -63,7 +63,7 @@ func (s *foldSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 			if s.Right {
 				el = vs[len(vs)-1-i]
 			}
-			args := []exp.Exp{res, &exp.Lit{Res: el.Type(), Val: el}}
+			args := []exp.Exp{res, exp.LitVal(el)}
 			r, err := callFunc(p, c, fun, args, trd.Src)
 			if err != nil {
 				return nil, err
@@ -96,7 +96,7 @@ func (s *rangeSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 		if !ok {
 			return nil, fmt.Errorf("unexpected func %[1]T %[1]s", snd)
 		}
-		farg := &exp.Lit{Res: typ.Int, Src: fst.Src}
+		farg := exp.LitSrc(lit.Int(0), fst.Src)
 		fargs := []exp.Exp{farg}
 		for i := range res {
 			farg.Val = lit.Int(i)
@@ -106,14 +106,13 @@ func (s *rangeSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 			}
 		}
 		list = lit.NewList(exp.SigRes(f.Type()).Type, res...)
-		return &exp.Lit{Res: list.Type(), Val: list, Src: c.Src}, nil
 	} else {
 		for i := range res {
 			res[i] = lit.Int(i)
 		}
 		list = lit.NewList(typ.Int, res...)
 	}
-	return &exp.Lit{Res: list.Type(), Val: list, Src: c.Src}, nil
+	return exp.LitSrc(list, c.Src), nil
 }
 
 func callFunc(p *exp.Prog, c *exp.Call, s exp.Spec, org []exp.Exp, src ast.Src) (lit.Val, error) {

@@ -69,6 +69,13 @@ func (mr MutReg) Zero(t typ.Type) Mut {
 	}
 	return Zero(t)
 }
+func (mr MutReg) ZeroWrap(t typ.Type) Mut {
+	v := mr.Zero(t)
+	if v.Type() == t {
+		return v
+	}
+	return Wrap(v, t)
+}
 
 func (mr MutReg) Each(f func(string, Mut) error) error {
 	for ref, mut := range mr {

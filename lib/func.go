@@ -44,7 +44,7 @@ func (s *fnSpec) Resl(p *exp.Prog, env exp.Env, c *exp.Call, h typ.Type) (_ exp.
 	if fe.rec {
 		fe.recur = &recurSpec{exp.SpecBase{Decl: ft}, fe, fe.Def, x.Clone(), nil}
 	}
-	return &exp.Lit{Res: ft, Val: exp.NewSpecRef(spec)}, nil
+	return exp.LitSrc(exp.NewSpecRef(spec), c.Src), nil
 }
 
 func (s *fnSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
@@ -66,7 +66,7 @@ func explicitArgs(p *exp.Prog, fe *FuncEnv, es []exp.Exp) error {
 		pv, ok := pa.Val.(typ.Type)
 		if ok {
 			t := *tag
-			t.Exp = &exp.Lit{Res: pv, Src: tag.Src, Val: lit.Null{}}
+			t.Exp = exp.LitSrc(lit.AnyWrap(pv), tag.Src)
 			keys = append(keys, t)
 			continue
 		}
@@ -193,7 +193,7 @@ func (e *FuncEnv) Lookup(s *exp.Sym, k string, eval bool) (exp.Exp, error) {
 				kv.Exp = &l
 				r.def[i] = kv
 			}
-			return &exp.Lit{Res: r.Decl, Val: exp.NewSpecRef(&r)}, nil
+			return exp.LitVal(exp.NewSpecRef(&r)), nil
 		}
 	}
 	k, ok := dotkey(k)
@@ -212,8 +212,7 @@ func (e *FuncEnv) Lookup(s *exp.Sym, k string, eval bool) (exp.Exp, error) {
 				idx = i
 			}
 		}
-		p := exp.FindProg(e.Par)
-		t := p.Sys.Bind(typ.Var(-1, typ.Void))
+		t := exp.FindProg(e.Par).Sys.Bind(typ.Var(-1, typ.Void))
 		l = &exp.Lit{Res: t, Val: lit.Null{}}
 		if idx >= 0 {
 			if idx >= len(e.Def) {

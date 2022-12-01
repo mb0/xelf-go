@@ -13,7 +13,7 @@ func TestFuncEval(t *testing.T) {
 		want string
 	}{
 		{`((fn 1))`, `<num>`, `1`},
-		{`((fn (add _ 1)) 2)`, `<num@4>`, `3`},
+		{`((fn (add _ 1)) 2)`, `<num>`, `3`},
 		{`((fn (add (int _) 1)) 2)`, `<int>`, `3`},
 		{`(fn n:int (add .n 1))`, `<func@fn1 n:int int>`, `<func@fn1 n:int int>`},
 		{`((fn n:int (add .n 1)) 2)`, `<int>`, `3`},

@@ -42,72 +42,39 @@ func SelectPath(val Val, path cor.Path) (_ Val, err error) {
 }
 
 func SelectKey(val Val, key string) (Val, error) {
-	if val != nil && !val.Nil() {
-		if a, ok := val.(Keyr); ok {
-			return a.Key(key)
-		} else if a, ok := Unwrap(val).(Keyr); ok {
-			return a.Key(key)
-		}
+	v := Unwrap(val)
+	if a, ok := v.(Keyr); ok {
+		return a.Key(key)
 	}
-	if val == (Null{}) {
-		return val, nil
+	if v == (Null{}) {
+		return v, nil
 	}
-	return nil, fmt.Errorf("key segment %q expects keyr got %[2]T %[2]s", key, val)
+	return nil, fmt.Errorf("key segment %q expects keyr got %[2]T %[2]s", key, v)
 }
 
 func SelectIdx(val Val, idx int) (res Val, err error) {
-	if val != nil && !val.Nil() {
-		if a, ok := val.(Idxr); ok {
-			return a.Idx(idx)
-		} else if a, ok := Unwrap(val).(Idxr); ok {
-			return a.Idx(idx)
-		}
+	v := Unwrap(val)
+	if a, ok := v.(Idxr); ok {
+		return a.Idx(idx)
 	}
-	if val == (Null{}) {
-		return val, nil
+	if v == (Null{}) {
+		return v, nil
 	}
-	return nil, fmt.Errorf("idx segment %d expects idxr got %[2]T %[2]s", idx, val)
+	return nil, fmt.Errorf("idx segment %d expects idxr got %[2]T %[2]s", idx, v)
 }
 
-func SelectList(val Val, path cor.Path) (_ Val, err error) {
-	res := &List{Typ: typ.List}
-	switch a := val.(type) {
-	case *Vals:
-		res.Vals = make([]Val, 0, len(*a))
-		for _, v := range *a {
-			if err = collectIdxrVal(v, path, res); err != nil {
-				break
-			}
-		}
-	case *List:
-		res.Vals = make([]Val, 0, len(a.Vals))
-		for _, v := range a.Vals {
-			if err = collectIdxrVal(v, path, res); err != nil {
-				break
-			}
-		}
-	case *Obj:
-		for _, v := range a.Vals {
-			if err = collectIdxrVal(v, path, res); err != nil {
-				break
-			}
-		}
-	case *ListPrx:
-		err = collectIdxr(a, path, res)
-	case *ObjPrx:
-		err = collectIdxr(a, path, res)
+func SelectList(val Val, path cor.Path) (Val, error) {
+	v := Unwrap(val)
+	if a, ok := v.(Idxr); ok {
+		res := &List{Typ: typ.List, Vals: make([]Val, 0, a.Len())}
+		return res, a.IterIdx(func(_ int, v Val) (err error) {
+			return collectIdxrVal(v, path, res)
+		})
 	}
-	if err != nil {
-		return nil, err
+	if v == (Null{}) {
+		return v, nil
 	}
-	return res, nil
-}
-
-func collectIdxr(idxr Idxr, path cor.Path, into *List) error {
-	into.Vals = make([]Val, 0, idxr.Len())
-	return idxr.IterIdx(func(idx int, v Val) (err error) {
-		return collectIdxrVal(v, path, into)
-	})
+	return nil, fmt.Errorf("list select %s expects idxr got %[2]T %[2]s", path, v)
 }
 
 func collectIdxrVal(v Val, path cor.Path, into *List) (err error) {

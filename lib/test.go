@@ -5,7 +5,6 @@ import (
 
 	"xelf.org/xelf/exp"
 	"xelf.org/xelf/lit"
-	"xelf.org/xelf/typ"
 )
 
 type compSpec struct {
@@ -52,7 +51,7 @@ func (s *compSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 			break
 		}
 	}
-	return &exp.Lit{Res: typ.Bool, Val: lit.Bool(r)}, nil
+	return exp.LitSrc(lit.Bool(r), c.Src), nil
 }
 
 var (
@@ -101,5 +100,5 @@ func (s *inSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 	if s.neg {
 		r = !r
 	}
-	return &exp.Lit{Res: typ.Bool, Val: lit.Bool(r)}, nil
+	return exp.LitSrc(lit.Bool(r), c.Src), nil
 }

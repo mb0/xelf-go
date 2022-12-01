@@ -28,5 +28,5 @@ func SelectLookup(l *Lit, k string, eval bool) (*Lit, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Lit{Res: t, Val: lit.Null{}}, nil
+	return LitVal(lit.AnyWrap(t)), nil
 }

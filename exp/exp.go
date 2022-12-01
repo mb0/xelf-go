@@ -26,7 +26,11 @@ type Lit struct {
 	Src ast.Src
 }
 
-func LitVal(v lit.Val) *Lit    { return &Lit{Res: v.Type(), Val: v} }
+func LitVal(v lit.Val) *Lit { return &Lit{Res: v.Type(), Val: v} }
+func LitSrc(v lit.Val, s ast.Src) *Lit {
+	return &Lit{Res: v.Type(), Val: v, Src: s}
+}
+
 func (a *Lit) Type() typ.Type  { return typ.Type{Kind: knd.Lit, Body: &a.Res} }
 func (a *Lit) Source() ast.Src { return a.Src }
 func (a *Lit) String() string {

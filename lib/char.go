@@ -7,7 +7,6 @@ import (
 	"xelf.org/xelf/bfr"
 	"xelf.org/xelf/exp"
 	"xelf.org/xelf/lit"
-	"xelf.org/xelf/typ"
 )
 
 var Cat = &catSpec{impl("<form@cat tupl str>")}
@@ -23,7 +22,7 @@ func (s *catSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 	for _, v := range args[0].Val.(*lit.List).Vals {
 		b.WriteString(v.String())
 	}
-	return &exp.Lit{Res: typ.Str, Val: lit.Str(b.String())}, nil
+	return exp.LitSrc(lit.Str(b.String()), c.Src), nil
 }
 
 var Sep = &sepSpec{impl("<form@sep str tupl str>")}
@@ -46,7 +45,7 @@ func (s *sepSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 		}
 		b.WriteString(v.String())
 	}
-	return &exp.Lit{Res: typ.Str, Val: lit.Str(b.String())}, nil
+	return exp.LitSrc(lit.Str(b.String()), c.Src), nil
 }
 
 var Json = &rawSpec{impl("<form@json any raw>"), true}
@@ -73,5 +72,5 @@ func (s *rawSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 			return nil, err
 		}
 	}
-	return &exp.Lit{Res: typ.Raw, Val: lit.Raw(b.Bytes())}, nil
+	return exp.LitSrc(lit.Raw(b.Bytes()), c.Src), nil
 }

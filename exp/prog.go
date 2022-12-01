@@ -115,7 +115,7 @@ func (p *Prog) Lookup(s *Sym, k string, eval bool) (res Exp, err error) {
 			if err != nil {
 				return nil, err
 			}
-			return &Lit{Res: typ.Typ, Val: t, Src: s.Src}, nil
+			return LitSrc(t, s.Src), nil
 		}
 	}
 	return res, err
@@ -146,7 +146,7 @@ func (p *Prog) Resl(env Env, e Exp, h typ.Type) (Exp, error) {
 			if err != nil {
 				return nil, ast.ErrReslTyp(a.Src, a.Sym, err)
 			}
-			return &Lit{Res: typ.Typ, Val: t, Src: a.Src}, nil
+			return LitSrc(t, a.Src), nil
 		}
 		if a.Env == nil {
 			a.Update(a.Res, env, a.Sym)

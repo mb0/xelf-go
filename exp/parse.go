@@ -29,7 +29,7 @@ func Read(r io.Reader, name string) (Exp, error) {
 func ParseAll(as []ast.Ast) (Exp, error) {
 	switch len(as) {
 	case 0:
-		return &Lit{Res: typ.Void, Val: typ.Void}, nil
+		return LitVal(lit.Null{}), nil
 	case 1:
 		return ParseAst(as[0])
 	default:
@@ -48,25 +48,25 @@ func ParseAst(a ast.Ast) (Exp, error) {
 		if err != nil {
 			return nil, ast.ErrInvalid(a, knd.Num, err)
 		}
-		return &Lit{Res: typ.Num, Val: lit.Num(n), Src: a.Src}, nil
+		return LitSrc(lit.Num(n), a.Src), nil
 	case knd.Real:
 		n, err := strconv.ParseFloat(a.Raw, 64)
 		if err != nil {
 			return nil, ast.ErrInvalid(a, knd.Real, err)
 		}
-		return &Lit{Res: typ.Real, Val: lit.Real(n), Src: a.Src}, nil
+		return LitSrc(lit.Real(n), a.Src), nil
 	case knd.Char:
 		txt, err := cor.Unquote(a.Raw)
 		if err != nil {
 			return nil, ast.ErrInvalid(a, knd.Char, err)
 		}
-		return &Lit{Res: typ.Char, Val: lit.Char(txt), Src: a.Src}, nil
+		return LitSrc(lit.Char(txt), a.Src), nil
 	case knd.Sym:
 		switch a.Raw {
 		case "null":
-			return &Lit{Res: typ.None, Val: lit.Null{}, Src: a.Src}, nil
+			return LitSrc(lit.Null{}, a.Src), nil
 		case "false", "true":
-			return &Lit{Res: typ.Bool, Val: lit.Bool(len(a.Raw) == 4), Src: a.Src}, nil
+			return LitSrc(lit.Bool(len(a.Raw) == 4), a.Src), nil
 		}
 		return &Sym{Sym: a.Raw, Src: a.Src}, nil
 	case knd.Idxr:
@@ -74,13 +74,13 @@ func ParseAst(a ast.Ast) (Exp, error) {
 		if err := vals.Parse(a); err != nil {
 			return nil, err
 		}
-		return &Lit{Res: typ.Idxr, Val: vals, Src: a.Src}, nil
+		return LitSrc(vals, a.Src), nil
 	case knd.Keyr:
 		keyed := &lit.Keyed{}
 		if err := keyed.Parse(a); err != nil {
 			return nil, err
 		}
-		return &Lit{Res: typ.Keyr, Val: keyed, Src: a.Src}, nil
+		return LitSrc(keyed, a.Src), nil
 	case knd.Tag:
 		if len(a.Seq) == 0 {
 			return nil, ast.ErrInvalidTag(a.Tok)

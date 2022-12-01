@@ -29,7 +29,7 @@ func TestProgEval(t *testing.T) {
 	}
 	tval, _ := typ.Parse("<obj@test.point x:int y:int>")
 	env := &lib.LetEnv{Par: extlib.Std, Lets: map[string]*exp.Lit{
-		"test.point": {Res: typ.Typ, Val: tval},
+		"test.point": exp.LitVal(tval),
 	}}
 	arg := &lit.Dict{Keyed: []lit.KeyVal{
 		{Key: "now", Val: lit.Char("2021-08-19T15:00:00Z")},
@@ -57,7 +57,7 @@ func TestProgResl(t *testing.T) {
 			`<form@if <tupl cond:any then:exp|num@1> else:exp?|num@1 num@1>`},
 		{`(if true "one")`, `<call|char@1>`,
 			`<form@if <tupl cond:any then:exp|char@1> else:exp?|char@1 char@1>`},
-		{`bool`, `<lit|typ>`,
+		{`bool`, `<lit|typ|bool>`,
 			`<bool>`},
 		{`add`, `<lit|spec>`,
 			`<form@add num@ tupl?|num _>`},
@@ -69,7 +69,7 @@ func TestProgResl(t *testing.T) {
 	}
 	tval, _ := typ.Parse("<obj@test.point x:int y:int>")
 	env := &lib.LetEnv{Par: extlib.Std, Lets: map[string]*exp.Lit{
-		"test.point": {Res: typ.Typ, Val: tval},
+		"test.point": exp.LitVal(tval),
 	}}
 	for _, test := range tests {
 		e, err := exp.Read(strings.NewReader(test.raw), "test")

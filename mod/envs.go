@@ -99,7 +99,7 @@ func (le *LoaderEnv) Lookup(s *exp.Sym, k string, eval bool) (exp.Exp, error) {
 	default:
 		return le.Par.Lookup(s, k, eval)
 	}
-	return &exp.Lit{Res: spec.Type(), Val: spec, Src: s.Src}, nil
+	return exp.LitSrc(spec, s.Src), nil
 }
 
 // ModEnv encapsulates a module environment.

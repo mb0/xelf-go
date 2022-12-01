@@ -6,12 +6,18 @@ import (
 	"xelf.org/xelf/typ"
 )
 
-func AnyWrap(t typ.Type) *typ.Wrap {
-	return Wrap(&Any{}, t)
-}
-
 func Wrap(m Mut, t typ.Type) *typ.Wrap {
-	return &typ.Wrap{Typ: t, Val: m}
+	return &typ.Wrap{Typ: t, Val: m, OK: !m.Nil()}
+}
+func AnyWrap(t typ.Type) *typ.Wrap {
+	return &typ.Wrap{Typ: t, Val: &Any{}}
+}
+func ZeroWrap(t typ.Type) Mut {
+	v := Zero(t)
+	if v.Type() == t {
+		return v
+	}
+	return Wrap(v, t)
 }
 
 type Any struct{ Val }
@@ -36,7 +42,7 @@ func (w *Any) As(t typ.Type) (Val, error) {
 	if w.Val != nil {
 		return w.Val.As(t)
 	}
-	return &typ.Wrap{Typ: t, Val: w}, nil
+	return Wrap(w, t), nil
 }
 
 func (w *Any) Print(p *bfr.P) error         { return w.Unwrap().Print(p) }
