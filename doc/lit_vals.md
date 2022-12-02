@@ -45,7 +45,7 @@ implementations everywhere.
 One problem with the mutable implementation for simple values is that every call to an value method
 dereferences the pointer. This was no problem so far, but with the addition of Mut and As we
 actually preserver the pointer. This behaviour is very surprising and should be fixed. Moving the
-api into mutable makes makes no sense for Mut and looses much of the convenience for As.
+api into mutable makes makes no sense for Mut and loses much of the convenience for As.
 
 We may want to drop the resolved type of exp.Lit so we have only the value type. This would resolve
 a lot of type confusion and would keep the type near to the backing value. We still need exp.Lit to
@@ -127,7 +127,7 @@ We introduce `typ.AstVal` to defer value parsing and `lit.Any` as a simplified r
 AnyMut. Both provide orthogonal features that stand on their own, but they also provide different
 strategies to work around the fact, that the wrapper has no access to literal parsers and
 value implementations directly. Finally we add a WrapNull hook to the typ package that the lit
-package assigns to on init, that provides an any value that can gives access to literal parsers.
+package assigns to on init, that returns a wrapper around any that has access to literal parsers.
 
 We add `Val.As(typ.Type) (Val, error)` and `lit.Edit(Val, EditFunc) (Val, error)` to the value api.
 Together with 'typ.Edit' we can provide a `lit.EditTypes(Val, typ.EditFunc) (Val, error)` function.
@@ -140,3 +140,6 @@ We introduced dedicated mutable value types for primitive values. That means `In
 and `*IntMut` a Mut. `*Int` should not be used from now on. This works still great for simple values
 input and representation and works well with the new `Val.Mut` and `Val.As` api without surprising
 corner cases.
+
+We removed the Lit.Res field and use the value type exclusively. If we have differing types we
+should use Val.As that wraps the value with a new type.

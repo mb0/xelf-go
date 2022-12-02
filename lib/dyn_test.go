@@ -14,11 +14,13 @@ func TestDynEval(t *testing.T) {
 	}{
 		{`(1 2 3)`, `6`, "<num>"},
 		{`(real 1)`, `1`, "<real>"},
+		{`(real)`, `0`, "<real>"},
 		{`(raw 'test')`, `test`, "<raw>"},
 		{`('a' 'b' 'c')`, `abc`, "<str>"},
 		{`('a' (json ['b']) (xelf 'c'))`, "a[\"b\"]'c'", "<str>"},
 		{`(let addone:(fn n:int (add .n 1)) (addone 2))`, `3`, "<int>"},
 		{`(let addone:(fn (_ 1)) (addone 2))`, `3`, "<num>"},
+		{`(if false add sub)`, `<form@sub num@2 tupl|num num@2>`, "<form@sub num@2 tupl|num num@2>"},
 		{`((if false add sub) 1 2)`, `-1`, "<num>"},
 	}
 	for _, test := range tests {

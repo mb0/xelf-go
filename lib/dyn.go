@@ -14,7 +14,7 @@ var Dyn = &dynSpec{impl("<form@dyn tupl|exp @>")}
 
 type dynSpec struct{ exp.SpecBase }
 
-func (s *dynSpec) Resl(p *exp.Prog, env exp.Env, c *exp.Call, h typ.Type) (exp.Exp, error) {
+func (s *dynSpec) Resl(p *exp.Prog, env exp.Env, c *exp.Call, h typ.Type) (_ exp.Exp, err error) {
 	if c.Env == nil {
 		c.Env = env
 	}
@@ -23,11 +23,10 @@ func (s *dynSpec) Resl(p *exp.Prog, env exp.Env, c *exp.Call, h typ.Type) (exp.E
 		return nil, ast.ErrEval(c.Src, "empty call is unexpected at this point", nil)
 	}
 	// TODO use exp type with hint as result arg
-	fst, err := p.Resl(env, d.Els[0], typ.Void)
+	fst := d.Els[0]
+	fst, err = p.Resl(env, fst, typ.Void)
 	if err != nil {
-		fst := d.Els[0]
-		src := fst.Source()
-		return nil, ast.ErrEval(src, fmt.Sprintf("dyn resl failed for %s", fst), err)
+		return nil, ast.ErrEval(fst.Source(), fmt.Sprintf("dyn resl failed for %s", fst), err)
 	}
 	if fst.Type().Kind&(knd.Sym|knd.Call) != 0 {
 		// TODO lets check the resolved type of fst
@@ -51,7 +50,7 @@ func (s *dynSpec) Resl(p *exp.Prog, env exp.Env, c *exp.Call, h typ.Type) (exp.E
 		src.End = src.Pos
 		src.End.Byte += int32(len(tag.Tag))
 		nargs := append(make([]exp.Exp, 0, len(args)+1),
-			&exp.Lit{Res: typ.Sym, Val: lit.Str(tag.Tag), Src: src},
+			exp.LitSrc(lit.Wrap(lit.Str(tag.Tag).Mut(), typ.Sym), src),
 			tag.Exp,
 		)
 		args = append(nargs, args[1:]...)
@@ -72,14 +71,14 @@ func (s *dynSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 	if len(d.Els) == 0 {
 		return nil, ast.ErrEval(c.Src, "empty call is unexpected at this point", nil)
 	}
-	// TODO use exp type with hint as result arg
-	a, err := p.Eval(c.Env, d.Els[0])
+	fst := d.Els[0]
+	a, err := p.Eval(c.Env, fst)
 	if err != nil {
 		return nil, ast.ErrEval(a.Source(), fmt.Sprintf("dyn eval failed for %s", a), err)
 	}
 	spec, args := litSpec(a, d.Els)
 	if spec == nil {
-		return nil, fmt.Errorf("no spec for %[1]T %[1]s %s", a, a.Res)
+		return nil, fmt.Errorf("no spec for %[1]T %[1]s %s", a, a.Type())
 	}
 	sig, _ := p.Sys.Inst(exp.LookupType(c.Env), spec.Type())
 	args, err = exp.LayoutSpec(sig, args)
@@ -107,12 +106,12 @@ func litSpec(a *exp.Lit, args []exp.Exp) (spec exp.Spec, _ []exp.Exp) {
 	switch {
 	case k == knd.All, k == knd.Data:
 	case k&knd.Spec != 0:
-		spec, args = a.Val.(exp.Spec), args[1:]
+		spec, args = a.Value().(exp.Spec), args[1:]
 	case k == knd.Typ:
 		spec = Make
 	case k&knd.Num != 0:
 		spec = Add
-	case k&knd.Str != 0:
+	case k&knd.Char != 0:
 		spec = Cat
 	case k&knd.List != 0:
 		spec = Append

@@ -123,7 +123,7 @@ func (s *Func) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &exp.Lit{Res: exp.SigRes(c.Sig).Type, Val: prx, Src: c.Src}, nil
+	return exp.LitSrc(lit.Wrap(prx, exp.SigRes(c.Sig).Type), c.Src), nil
 }
 
 var refErr = reflect.TypeOf((*error)(nil)).Elem()

@@ -69,9 +69,13 @@ func (s *SpecBase) Resl(p *Prog, env Env, c *Call, h typ.Type) (Exp, error) {
 	return c, err
 }
 
-func UnwrapSpec(s Spec) Spec {
-	for r, _ := s.(*SpecRef); r != nil; r, _ = s.(*SpecRef) {
-		s = r.Spec
+func UnwrapSpec(v interface{}) (s *SpecRef) {
+	for s, _ = v.(*SpecRef); s != nil; {
+		if r, _ := s.Spec.(*SpecRef); r == nil {
+			return s
+		} else {
+			s = r
+		}
 	}
 	return s
 }
@@ -91,11 +95,11 @@ func (s *SpecRef) Type() typ.Type { return s.Decl }
 func (s *SpecRef) Mut() lit.Mut   { return s }
 func (s *SpecRef) Value() lit.Val { return s }
 func (s *SpecRef) As(t typ.Type) (lit.Val, error) {
-	if s.Decl == t {
+	if s.Spec.Type().AssignableTo(t) {
+		s.Decl = t
 		return s, nil
 	}
-	// TODO check that t is compatible
-	return &SpecRef{Spec: s.Spec, Decl: t}, nil
+	return nil, fmt.Errorf("cannot convert %T from %s to %s", s, s.Type(), t)
 }
 
 func (s *SpecRef) String() string               { return s.Decl.String() }
@@ -108,25 +112,17 @@ func (s *SpecRef) Parse(a ast.Ast) (err error) {
 	return ast.ErrInvalid(a, knd.Spec, fmt.Errorf("cannot parse into spec values"))
 }
 func (s *SpecRef) Assign(val lit.Val) error {
-	switch v := val.(type) {
-	case nil:
-		s.Spec = nil
+	switch v := lit.Unwrap(val).(type) {
 	case lit.Null:
 		s.Spec = nil
+		return nil
 	case *SpecRef:
-		// TODO check type compatibility
-		s.Spec = v.Spec
-	case Spec:
-		s.Spec = v
-	default:
-		if v, ok := val.(Spec); ok {
-			// TODO check type compatibility
-			s.Spec = v
-		} else {
-			return fmt.Errorf("cannot assign %s to spec value", v.Type())
+		if v.Decl.AssignableTo(s.Decl) {
+			s.Spec = v.Spec
+			return nil
 		}
 	}
-	return nil
+	return fmt.Errorf("cannot assign %s to spec value", val.Type())
 }
 func (s *SpecRef) Resl(p *Prog, env Env, c *Call, hint typ.Type) (Exp, error) {
 	if !s.Nil() {

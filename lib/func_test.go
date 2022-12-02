@@ -21,7 +21,7 @@ func TestFuncEval(t *testing.T) {
 		{`((fn n:int (if (le _ 2) (int 1) (add (recur (sub _ 1)) (recur (sub _ 2))))) 12)`,
 			`<int>`, `144`},
 		{`(fold (range 12 (fn (sub 12 _))) [1 1]
-			(fn a:list|int n:int (if (le .n 2) .a (list (add .a.0 .a.1) .a.0)))
+			(fn a:list|int n:int (if (le .n 2) .a (list|int (add .a.0 .a.1) .a.0)))
 		)`, `<list|int>`, `[144 89]`},
 	}
 	for _, test := range tests {
@@ -30,7 +30,7 @@ func TestFuncEval(t *testing.T) {
 			t.Errorf("eval %s failed: %v", test.raw, err)
 			continue
 		}
-		gott := res.Res.String()
+		gott := res.Val.Type().String()
 		if gott != test.typ {
 			t.Errorf("eval %s want typ %s got %s", test.raw, test.typ, gott)
 		}

@@ -2,6 +2,7 @@ package lib
 
 import (
 	"xelf.org/xelf/exp"
+	"xelf.org/xelf/lit"
 	"xelf.org/xelf/typ"
 )
 
@@ -19,7 +20,7 @@ func (s *withSpec) Resl(p *exp.Prog, env exp.Env, c *exp.Call, h typ.Type) (_ ex
 	if err != nil {
 		return c, err
 	}
-	de.Dot.Res = typ.Res(dot.Type())
+	*de.Dot = *dot.(*exp.Lit)
 	res, err := p.Resl(de, c.Args[1], h)
 	if err != nil {
 		return c, err
@@ -58,10 +59,10 @@ func (s *letSpec) Resl(p *exp.Prog, env exp.Env, c *exp.Call, h typ.Type) (_ exp
 		a := le.Lets[tag.Tag]
 		tar := typ.Res(ta.Type())
 		if a == nil {
-			a = &exp.Lit{Res: tar}
+			a = exp.LitVal(lit.AnyWrap(tar))
 			le.Lets[tag.Tag] = a
 		} else {
-			a.Res = tar
+			// TODO is this real?
 		}
 	}
 	res, err := p.Resl(le, c.Args[1], h)
@@ -94,7 +95,7 @@ type LetEnv struct {
 func (e *LetEnv) Parent() exp.Env { return e.Par }
 func (e *LetEnv) Lookup(s *exp.Sym, k string, eval bool) (exp.Exp, error) {
 	if a := e.Lets[k]; a != nil {
-		if s.Update(a.Res, e, k); !eval {
+		if s.Update(typ.Res(a.Type()), e, k); !eval {
 			return s, nil
 		}
 		return a, nil

@@ -43,11 +43,12 @@ func (s *moduleSpec) Resl(p *exp.Prog, env exp.Env, c *exp.Call, _ typ.Type) (_ 
 			return nil, err
 		}
 		val := l.Val
+		vt := val.Type()
 		var decl string
 		if tag != nil {
 			tag.Exp = l
 			decl = tag.Tag
-		} else if l.Res.Kind&knd.Typ != 0 {
+		} else if vt.Kind&knd.Typ != 0 {
 			t, err := typ.ToType(val)
 			if err != nil || t.Ref == "" {
 				return nil, fmt.Errorf("expected named type got %s", val)
@@ -55,14 +56,14 @@ func (s *moduleSpec) Resl(p *exp.Prog, env exp.Env, c *exp.Call, _ typ.Type) (_ 
 			decl = t.Ref
 			t.Ref = me.Mod.Name + "." + decl
 			val = t
-		} else if l.Res.Kind&knd.Spec != 0 {
+		} else if vt.Kind&knd.Spec != 0 {
 			t := val.Type()
 			if t.Ref == "" {
 				return nil, fmt.Errorf("expected named spec got %s", val)
 			}
 			decl = t.Ref
 			t.Ref = me.Mod.Name + "." + decl
-			val = &exp.SpecRef{Spec: val.(exp.Spec), Decl: t}
+			val = &exp.SpecRef{Spec: val.Value().(exp.Spec), Decl: t}
 		} else {
 			return nil, fmt.Errorf("unexpected module declaration %s", val)
 		}

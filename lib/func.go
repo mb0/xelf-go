@@ -30,7 +30,7 @@ func (s *fnSpec) Resl(p *exp.Prog, env exp.Env, c *exp.Call, h typ.Type) (_ exp.
 	ps := make([]typ.Param, 0, len(fe.Def)+1)
 	for _, kl := range fe.Def {
 		a := kl.Exp.(*exp.Lit)
-		ps = append(ps, typ.P(kl.Tag, a.Res))
+		ps = append(ps, typ.P(kl.Tag, a.Val.Type()))
 	}
 	ps = append(ps, typ.P("", typ.Res(x.Type())))
 
@@ -213,7 +213,7 @@ func (e *FuncEnv) Lookup(s *exp.Sym, k string, eval bool) (exp.Exp, error) {
 			}
 		}
 		t := exp.FindProg(e.Par).Sys.Bind(typ.Var(-1, typ.Void))
-		l = &exp.Lit{Res: t, Val: lit.Null{}}
+		l = exp.LitVal(lit.AnyWrap(t))
 		if idx >= 0 {
 			if idx >= len(e.Def) {
 				for len(e.Def) <= idx {
@@ -225,7 +225,7 @@ func (e *FuncEnv) Lookup(s *exp.Sym, k string, eval bool) (exp.Exp, error) {
 			e.Def = append(e.Def, exp.Tag{Tag: kk, Exp: l})
 		}
 	}
-	if s.Update(l.Res, e, k); !eval {
+	if s.Update(typ.Res(l.Type()), e, k); !eval {
 		return s, nil
 	}
 	return l, nil

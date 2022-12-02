@@ -38,7 +38,7 @@ func TestCondEval(t *testing.T) {
 			t.Errorf("eval %s failed: %v", test.raw, err)
 			continue
 		}
-		if !reflect.DeepEqual(got.Val.Value(), test.want.Value()) {
+		if !reflect.DeepEqual(got.Value(), test.want.Value()) {
 			t.Errorf("eval %s want %[2]T %[2]s got %[3]T %[3]s", test.raw, test.want, got.Val)
 		}
 	}

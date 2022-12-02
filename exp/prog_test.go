@@ -57,6 +57,7 @@ func TestProgResl(t *testing.T) {
 			`<form@if <tupl cond:any then:exp|num@1> else:exp?|num@1 num@1>`},
 		{`(if true "one")`, `<call|char@1>`,
 			`<form@if <tupl cond:any then:exp|char@1> else:exp?|char@1 char@1>`},
+		{`<@>`, `<lit|typ|@1>`, `<@1>`},
 		{`bool`, `<lit|typ|bool>`,
 			`<bool>`},
 		{`add`, `<lit|spec>`,
@@ -65,7 +66,7 @@ func TestProgResl(t *testing.T) {
 			`<form@if <tupl cond:any then:exp|spec> else:exp?|spec spec>`},
 		{`(make @test.point {})`, `<call|obj@test.point>`, ``},
 		{`(add (int 1) 2)`, `<call|int>`, `<form@add int tupl?|num int>`},
-		{`<@test.point>`, `<lit|typ>`, `<obj@test.point>`},
+		{`<@test.point>`, `<lit|typ|obj@test.point>`, `<obj@test.point>`},
 	}
 	tval, _ := typ.Parse("<obj@test.point x:int y:int>")
 	env := &lib.LetEnv{Par: extlib.Std, Lets: map[string]*exp.Lit{

@@ -3,6 +3,7 @@ package exp
 import (
 	"fmt"
 
+	"xelf.org/xelf/lit"
 	"xelf.org/xelf/typ"
 )
 
@@ -26,7 +27,7 @@ func (e Builtins) Parent() Env { return nil }
 
 func (e Builtins) Lookup(s *Sym, k string, eval bool) (Exp, error) {
 	if sp := e[k]; sp != nil {
-		return &Lit{Res: typ.Spec, Val: NewSpecRef(sp), Src: s.Src}, nil
+		return LitSrc(lit.Wrap(NewSpecRef(sp), typ.Spec), s.Src), nil
 	}
 	return nil, ErrSymNotFound
 }
@@ -48,7 +49,7 @@ func (e *DotEnv) Lookup(s *Sym, k string, eval bool) (Exp, error) {
 	if err != nil {
 		return nil, err
 	}
-	if s.Update(l.Res, e, k); !eval {
+	if s.Update(typ.Res(l.Type()), e, k); !eval {
 		return s, nil
 	}
 	return l, nil

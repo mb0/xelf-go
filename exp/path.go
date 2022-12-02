@@ -1,9 +1,10 @@
 package exp
 
 import (
+	"fmt"
+
 	"xelf.org/xelf/cor"
 	"xelf.org/xelf/lit"
-	"xelf.org/xelf/typ"
 )
 
 // Select lookup reads path and returns the selected literal from l or an error.
@@ -24,9 +25,5 @@ func SelectLookup(l *Lit, k string, eval bool) (*Lit, error) {
 			return nil, err
 		}
 	}
-	t, err := typ.SelectPath(l.Res, p)
-	if err != nil {
-		return nil, err
-	}
-	return LitVal(lit.AnyWrap(t)), nil
+	return nil, fmt.Errorf("select lookup no value found for %s %s", k, l.Type())
 }

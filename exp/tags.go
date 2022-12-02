@@ -5,7 +5,6 @@ import (
 
 	"xelf.org/xelf/cor"
 	"xelf.org/xelf/lit"
-	"xelf.org/xelf/typ"
 )
 
 type Tags []Tag
@@ -59,9 +58,5 @@ func (l *Lit) SelectPath(path cor.Path) (*Lit, error) {
 	if err != nil {
 		return nil, err
 	}
-	t, err := typ.SelectPath(l.Res, path)
-	if err != nil {
-		return nil, err
-	}
-	return &Lit{Res: t, Val: v}, nil
+	return LitVal(v.Mut()), nil
 }

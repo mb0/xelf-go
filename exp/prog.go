@@ -51,7 +51,7 @@ func NewProg(env Env, args ...interface{}) *Prog {
 		}
 	}
 	if dyn, _ := LookupKey(env, "dyn"); dyn != nil {
-		p.dyn, _ = dyn.Val.(Spec)
+		p.dyn, _ = dyn.Value().(Spec)
 	}
 	return p
 }
@@ -96,14 +96,14 @@ func (p *Prog) Lookup(s *Sym, k string, eval bool) (res Exp, err error) {
 		if err != nil {
 			return l, err
 		}
-		if s.Update(l.Res, p, k); !eval {
+		if s.Update(l.Val.Type(), p, k); !eval {
 			return s, nil
 		}
 		return l, nil
 	default:
 		if qual, rest := SplitQualifier(k); qual != "" {
 			if l, err := LookupMod(p, qual, rest); err == nil {
-				s.Update(l.Res, p, k)
+				s.Update(l.Val.Type(), p, k)
 				return l, nil
 			}
 		}
@@ -135,7 +135,7 @@ func (p *Prog) Resl(env Env, e Exp, h typ.Type) (Exp, error) {
 		return a, nil
 	case *Sym:
 		if h.Kind == knd.Sym {
-			return &Lit{Res: typ.Sym, Val: lit.Str(a.Sym), Src: a.Src}, nil
+			return LitSrc(lit.Wrap(lit.Str(a.Sym).Mut(), typ.Sym), a.Src), nil
 		}
 		if a.Sym[0] == '@' {
 			t, err := typ.ParseSym(a.Sym, a.Src, nil)
@@ -164,34 +164,32 @@ func (p *Prog) Resl(env Env, e Exp, h typ.Type) (Exp, error) {
 		}
 		return r, nil
 	case *Lit:
-		if a.Res == typ.Spec {
-			t := a.Val.Type()
-			nt, err := p.Sys.Inst(LookupType(env), t)
+		t := typ.Res(a.Type())
+		if t == typ.Spec {
+			sp := UnwrapSpec(lit.Unwrap(a.Val))
+			nt, err := p.Sys.Inst(LookupType(env), sp.Decl)
 			if err != nil {
 				return nil, ast.ErrReslTyp(a.Src, t, err)
 			}
-			a.Res = nt
+			sp.Decl = nt
 			return a, nil
 		}
-		if a.Res == typ.VarTyp {
-			t, ok := a.Val.(typ.Type)
-			if !ok {
-				return nil, ast.ErrReslTyp(a.Src, a.Val,
-					fmt.Errorf("unexpected type value %T", a.Val),
-				)
-			}
-			r, err := p.Sys.Inst(LookupType(env), t)
+		if t == typ.VarTyp {
+			r, err := p.Sys.Inst(LookupType(env), a.Value().(typ.Type))
 			if err != nil {
 				return nil, ast.ErrReslTyp(a.Src, t, err)
 			}
-			a.Res = typ.Typ
 			a.Val = r
+			_, err = p.Sys.Unify(r, h)
+			if err != nil {
+				return nil, ast.ErrUnify(a.Src, err.Error())
+			}
+			return a, nil
 		}
-		rt, err := p.Sys.Unify(a.Res, h)
+		_, err := p.Sys.Unify(t, h)
 		if err != nil {
 			return nil, ast.ErrUnify(a.Src, err.Error())
 		}
-		a.Res = rt
 		return a, nil
 	case *Tupl:
 		tt, tn := typ.TuplEl(a.Res)
@@ -223,7 +221,7 @@ func (p *Prog) Resl(env Env, e Exp, h typ.Type) (Exp, error) {
 			ft := fst.Type()
 			if ft.Kind == knd.Lit && ft.Body != nil && ft.Body.(*typ.Type).Kind&knd.Spec != 0 {
 				if l, ok := fst.(*Lit); ok {
-					if s, ok := l.Val.(Spec); ok {
+					if s, ok := l.Value().(Spec); ok {
 						a.Spec = s
 						a.Args = a.Args[1:]
 					}
@@ -279,22 +277,23 @@ func (p *Prog) Eval(env Env, e Exp) (_ *Lit, err error) {
 		}
 		return &Lit{Val: &lit.List{Vals: vals}}, nil
 	case *Lit:
-		if a.Res == typ.Spec {
-			t := a.Val.Type()
-			nt, err := p.Sys.Inst(LookupType(env), t)
+		t := typ.Res(a.Type())
+		if t == typ.Spec {
+			s := UnwrapSpec(a.Value())
+			nt, err := p.Sys.Inst(LookupType(env), s.Decl)
 			if err != nil {
 				return nil, ast.ErrReslTyp(a.Src, t, err)
 			}
-			a.Res = nt
+			s.Decl = nt
+			a.Val = s
 			return a, nil
 		}
-		if a.Res == typ.Typ {
-			if t, ok := a.Val.(typ.Type); ok {
-				a.Val, err = p.Sys.Update(t)
-				if err != nil {
-					return nil, ast.ErrEval(a.Src, t.String(), err)
-				}
+		if t.Kind&knd.All == knd.Typ {
+			t, err = p.Sys.Update(t)
+			if err != nil {
+				return nil, ast.ErrEval(a.Src, t.String(), err)
 			}
+			a.Val = typ.El(t)
 		}
 		return a, nil
 	}
