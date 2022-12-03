@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"xelf.org/xelf/exp"
+	"xelf.org/xelf/lit"
 	"xelf.org/xelf/typ"
 )
 
@@ -49,10 +50,9 @@ func (s *doSpec) Resl(p *exp.Prog, env exp.Env, c *exp.Call, h typ.Type) (exp.Ex
 	}
 	return c, nil
 }
-func (s *doSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
+func (s *doSpec) Eval(p *exp.Prog, c *exp.Call) (lst lit.Val, _ error) {
 	// we must evaluate all expressions in order for side effects
 	d := c.Args[0].(*exp.Tupl)
-	var lst *exp.Lit
 	for _, e := range d.Els {
 		res, err := p.Eval(c.Env, e)
 		if err != nil {

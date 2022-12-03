@@ -15,9 +15,11 @@ type Env interface {
 	// Parent returns the parent environment or nil.
 	Parent() Env
 
-	// Lookup resolves a part of a symbol and returns the result or an error.
-	// If eval is true we expect a *exp.Lit result or an error.
-	Lookup(s *Sym, k string, eval bool) (Exp, error)
+	// Lookup resolves a part of a symbol and returns the result, an error or nothing.
+	// We always update the symbol and return resolved values.
+	// If eval is false the symbol resolves, but the value does not, we return nothing.
+	// If the value is not resolved and eval is true we return an error.
+	Lookup(s *Sym, k string, eval bool) (lit.Val, error)
 }
 
 // Builtins is a root environment to resolve symbols to builtin specs and at last as types.
@@ -25,9 +27,10 @@ type Builtins map[string]Spec
 
 func (e Builtins) Parent() Env { return nil }
 
-func (e Builtins) Lookup(s *Sym, k string, eval bool) (Exp, error) {
+func (e Builtins) Lookup(s *Sym, k string, eval bool) (lit.Val, error) {
 	if sp := e[k]; sp != nil {
-		return LitSrc(lit.Wrap(NewSpecRef(sp), typ.Spec), s.Src), nil
+		s.Update(typ.Spec, e, k)
+		return lit.Wrap(NewSpecRef(sp), typ.Spec), nil
 	}
 	return nil, ErrSymNotFound
 }
@@ -35,24 +38,22 @@ func (e Builtins) Lookup(s *Sym, k string, eval bool) (Exp, error) {
 // DotEnv is a child scope that supports relative paths into a literal.
 type DotEnv struct {
 	Par Env
-	Dot *Lit
+	Dot lit.Val
 }
 
 func (e *DotEnv) Parent() Env { return e.Par }
 
-func (e *DotEnv) Lookup(s *Sym, k string, eval bool) (Exp, error) {
+func (e *DotEnv) Lookup(s *Sym, k string, eval bool) (lit.Val, error) {
 	k, ok := DotKey(k)
 	if !ok {
 		return e.Par.Lookup(s, k, eval)
 	}
-	l, err := SelectLookup(e.Dot, k, eval)
+	v, err := SelectLookup(e.Dot, k, eval)
 	if err != nil {
 		return nil, err
 	}
-	if s.Update(typ.Res(l.Type()), e, k); !eval {
-		return s, nil
-	}
-	return l, nil
+	s.Update(typ.Res(v.Type()), e, k)
+	return v, nil
 }
 
 // DotKey returns whether k is a dot key or otherwise returns k with a leading dot removed.
@@ -68,25 +69,21 @@ func DotKey(k string) (string, bool) {
 
 func LookupType(env Env) typ.Lookup {
 	return func(k string) (_ typ.Type, err error) {
-		l, err := LookupKey(env, k)
+		// TODO we need to pass in the sym to determine the resolving env
+		v, err := LookupKey(env, k)
 		if err != nil {
 			return typ.Void, err
 		}
-		if t, ok := l.Val.(typ.Type); ok {
-			return t, nil
+		t, ok := v.(typ.Type)
+		if !ok {
+			t = typ.Res(v.Type())
 		}
-		return l.Res, nil
+		// TODO check if env is prog or is a root root env otherwise clear names
+		// TODO check, restrict and edit type names if from mod env
+		return t, nil
 	}
 }
 
-func LookupKey(env Env, k string) (*Lit, error) {
-	x, err := env.Lookup(&Sym{Sym: k, Env: env, Rel: k}, k, true)
-	if err != nil {
-		return nil, err
-	}
-	l, _ := x.(*Lit)
-	if l == nil {
-		return nil, ErrSymNotFound
-	}
-	return l, nil
+func LookupKey(env Env, k string) (lit.Val, error) {
+	return env.Lookup(&Sym{Sym: k, Env: env, Rel: k}, k, true)
 }

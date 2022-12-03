@@ -86,20 +86,17 @@ func (le *LoaderEnv) LoadFile(prog *exp.Prog, loc *Loc) (f *File, err error) {
 
 func (le *LoaderEnv) Parent() exp.Env { return le.Par }
 
-func (le *LoaderEnv) Lookup(s *exp.Sym, k string, eval bool) (exp.Exp, error) {
-	var spec lit.Val
+func (le *LoaderEnv) Lookup(s *exp.Sym, k string, eval bool) (lit.Val, error) {
 	// we return the mod and use spec only here so we can expect a loader env in those specs
 	switch k {
 	case "module":
-		spec = exp.NewSpecRef(Module)
+		return exp.NewSpecRef(Module), nil
 	case "import":
-		spec = exp.NewSpecRef(Import)
+		return exp.NewSpecRef(Import), nil
 	case "export":
-		spec = exp.NewSpecRef(Export)
-	default:
-		return le.Par.Lookup(s, k, eval)
+		return exp.NewSpecRef(Export), nil
 	}
-	return exp.LitSrc(spec, s.Src), nil
+	return le.Par.Lookup(s, k, eval)
 }
 
 // ModEnv encapsulates a module environment.
@@ -160,7 +157,7 @@ func (e *ModEnv) Publish() error {
 	return nil
 }
 
-func (e *ModEnv) Lookup(s *exp.Sym, k string, eval bool) (exp.Exp, error) {
+func (e *ModEnv) Lookup(s *exp.Sym, k string, eval bool) (lit.Val, error) {
 	if m := e.Mod; m != nil {
 		key := k
 		if n := len(m.Name); n > 0 && len(k) > n+1 && k[n] == '.' && m.Name == k[:n] {
@@ -168,7 +165,7 @@ func (e *ModEnv) Lookup(s *exp.Sym, k string, eval bool) (exp.Exp, error) {
 		}
 		v, err := lit.Select(m.Decl, key)
 		if err == nil {
-			return exp.LitVal(v), nil
+			return v, nil
 		}
 		if key != k {
 			return nil, exp.ErrSymNotFound

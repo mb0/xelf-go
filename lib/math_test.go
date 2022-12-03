@@ -40,17 +40,17 @@ func TestMathEval(t *testing.T) {
 		{`(max 1 2 3)`, knd.Num, lit.Num(3)},
 	}
 	for _, test := range tests {
-		l, err := exp.NewProg(Core).RunStr(test.raw, nil)
+		v, err := exp.NewProg(Core).RunStr(test.raw, nil)
 		if err != nil {
 			t.Errorf("eval %s failed: %v", test.raw, err)
 			continue
 		}
-		got := l.Val.Type()
+		got := v.Type()
 		if got.Kind&^knd.Var != test.kind {
 			t.Errorf("eval %s want kind %s got %s", test.raw, knd.Name(test.kind), knd.Name(got.Kind))
 		}
-		if !reflect.DeepEqual(l.Val, test.want) {
-			t.Errorf("eval %s want %[2]T %[2]s got %[3]T %[3]s", test.raw, test.want, l.Val)
+		if !reflect.DeepEqual(v, test.want) {
+			t.Errorf("eval %s want %[2]T %[2]s got %[3]T %[3]s", test.raw, test.want, v)
 		}
 	}
 }

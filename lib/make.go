@@ -42,12 +42,12 @@ func (s *makeSpec) Resl(p *exp.Prog, env exp.Env, c *exp.Call, h typ.Type) (exp.
 	}
 	return s.SpecBase.Resl(p, env, c, h)
 }
-func (s *makeSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
+func (s *makeSpec) Eval(p *exp.Prog, c *exp.Call) (lit.Val, error) {
 	fst, err := p.Eval(c.Env, c.Args[0])
 	if err != nil {
 		return nil, err
 	}
-	t, err := typ.ToType(fst.Val)
+	t, err := typ.ToType(fst)
 	if err != nil {
 		return nil, err
 	}
@@ -56,7 +56,7 @@ func (s *makeSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 	if err != nil {
 		return nil, err
 	}
-	plain, pok := els.Val.(*lit.List)
+	plain, pok := els.(*lit.List)
 	pok = pok && len(plain.Vals) > 0
 	tags, tok := c.Args[2].(*exp.Tupl)
 	tok = tok && len(tags.Els) > 0
@@ -94,7 +94,7 @@ func (s *makeSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 				if err != nil {
 					return nil, err
 				}
-				tv = ta.Val
+				tv = ta
 			}
 			err = keyr.SetKey(tag.Tag, tv)
 			if err != nil {
@@ -102,5 +102,5 @@ func (s *makeSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 			}
 		}
 	}
-	return exp.LitSrc(wrap, c.Src), nil
+	return wrap, nil
 }

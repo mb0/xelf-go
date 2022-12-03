@@ -74,7 +74,7 @@ func NewFunc(reg lit.Reg, name string, val interface{}, names ...string) (*Func,
 	return s, nil
 }
 
-func (s *Func) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
+func (s *Func) Eval(p *exp.Prog, c *exp.Call) (lit.Val, error) {
 	args, err := p.EvalArgs(c)
 	if err != nil {
 		return nil, err
@@ -83,13 +83,13 @@ func (s *Func) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 	rvs := make([]reflect.Value, len(s.rts))
 	for i, rt := range s.rts {
 		arg := args[i]
-		if arg == nil || arg.Val == nil || arg.Val.Zero() {
+		if arg == nil || arg.Zero() {
 			ptr := reflect.New(rt)
 			rvs[i] = ptr.Elem()
 			// reflect already provides a zero value
 			continue
 		}
-		val, err := lit.Conv(p.Reg, rt, arg.Val)
+		val, err := lit.Conv(p.Reg, rt, arg)
 		if err != nil {
 			return nil, err
 		}
@@ -123,7 +123,7 @@ func (s *Func) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 	if err != nil {
 		return nil, err
 	}
-	return exp.LitSrc(lit.Wrap(prx, exp.SigRes(c.Sig).Type), c.Src), nil
+	return lit.Wrap(prx, exp.SigRes(c.Sig).Type), nil
 }
 
 var refErr = reflect.TypeOf((*error)(nil)).Elem()

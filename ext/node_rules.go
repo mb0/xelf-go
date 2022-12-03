@@ -80,8 +80,8 @@ func ListPrepper(p *exp.Prog, env exp.Env, _ Node, _ string, arg exp.Exp) (lit.V
 			if err != nil {
 				return nil, err
 			}
-			if !aa.Val.Zero() {
-				res.Vals = append(res.Vals, aa.Val)
+			if !aa.Zero() {
+				res.Vals = append(res.Vals, aa)
 			}
 		}
 	default:
@@ -89,7 +89,7 @@ func ListPrepper(p *exp.Prog, env exp.Env, _ Node, _ string, arg exp.Exp) (lit.V
 		if err != nil {
 			return nil, err
 		}
-		res.Vals = lit.Vals{aa.Val}
+		res.Vals = lit.Vals{aa}
 	}
 	return res, nil
 }
@@ -114,11 +114,7 @@ func DynPrepper(p *exp.Prog, env exp.Env, _ Node, _ string, arg exp.Exp) (_ lit.
 			return nil, err
 		}
 	}
-	a, err := p.Eval(env, arg)
-	if err != nil {
-		return nil, err
-	}
-	return a.Val, nil
+	return p.Eval(env, arg)
 }
 
 // BitsPrepper returns a key prepper that tries to resolve a bits constant.

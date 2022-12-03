@@ -143,3 +143,6 @@ corner cases.
 
 We removed the Lit.Res field and use the value type exclusively. If we have differing types we
 should use Val.As that wraps the value with a new type.
+
+We removed the use of Lit from the eval and env api, reducing lots of wrapper bloat at call sites,
+and making the code more palatable overall.

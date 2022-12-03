@@ -30,7 +30,7 @@ func TestFuncEval(t *testing.T) {
 			t.Errorf("eval %s failed: %v", test.raw, err)
 			continue
 		}
-		gott := res.Val.Type().String()
+		gott := res.Type().String()
 		if gott != test.typ {
 			t.Errorf("eval %s want typ %s got %s", test.raw, test.typ, gott)
 		}

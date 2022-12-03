@@ -30,7 +30,7 @@ func TestDynEval(t *testing.T) {
 			continue
 		}
 		str := got.String()
-		tstr := got.Val.Type().String()
+		tstr := got.Type().String()
 		if str != test.want || tstr != test.typ {
 			t.Errorf("eval %s want %s %s got %s %s",
 				test.raw, test.want, test.typ, str, tstr)

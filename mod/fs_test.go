@@ -73,7 +73,7 @@ func TestFSMods(t *testing.T) {
 		if !reflect.DeepEqual(local, test.local) {
 			t.Errorf("%s got file mods %d %s want %s", test.name, len(local), local, test.local)
 		}
-		got, _ := res.Val.MarshalJSON()
+		got, _ := res.MarshalJSON()
 		if string(got) != test.want {
 			t.Errorf("%s got result %s want %s", test.name, got, test.want)
 		}

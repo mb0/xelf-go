@@ -22,7 +22,7 @@ type Prog struct {
 	Root Env
 	Sys  *typ.Sys
 	Reg  lit.Regs
-	Arg  *Lit
+	Arg  lit.Val
 
 	File File
 	// Files collects all external files loaded by the program
@@ -57,7 +57,7 @@ func NewProg(env Env, args ...interface{}) *Prog {
 }
 
 // Run resolves and evaluates the input expression and returns the result or an error.
-func (p *Prog) Run(x Exp, arg *Lit) (res *Lit, err error) {
+func (p *Prog) Run(x Exp, arg lit.Val) (_ lit.Val, err error) {
 	p.Arg = arg
 	x, err = p.Resl(p, x, typ.Void)
 	if err != nil {
@@ -67,7 +67,7 @@ func (p *Prog) Run(x Exp, arg *Lit) (res *Lit, err error) {
 }
 
 // RunStr resolves and evaluates the input string and returns the result or an error.
-func (p *Prog) RunStr(str string, arg *Lit) (res *Lit, err error) {
+func (p *Prog) RunStr(str string, arg lit.Val) (lit.Val, error) {
 	x, err := Parse(str)
 	if err != nil {
 		return nil, err
@@ -86,25 +86,22 @@ func FindProg(env Env) *Prog {
 
 func (p *Prog) Parent() Env { return p.Root }
 
-func (p *Prog) Lookup(s *Sym, k string, eval bool) (res Exp, err error) {
+func (p *Prog) Lookup(s *Sym, k string, eval bool) (res lit.Val, err error) {
 	switch k[0] {
 	case '$':
-		if p.Arg == nil {
-			break
+		if p.Arg != nil {
+			v, err := SelectLookup(p.Arg, cor.Keyed(k[1:]), eval)
+			if err != nil {
+				return nil, err
+			}
+			s.Update(v.Type(), p, k)
+			return v, err
 		}
-		l, err := SelectLookup(p.Arg, cor.Keyed(k[1:]), eval)
-		if err != nil {
-			return l, err
-		}
-		if s.Update(l.Val.Type(), p, k); !eval {
-			return s, nil
-		}
-		return l, nil
 	default:
 		if qual, rest := SplitQualifier(k); qual != "" {
 			if l, err := LookupMod(p, qual, rest); err == nil {
 				s.Update(l.Val.Type(), p, k)
-				return l, nil
+				return l.Val, nil
 			}
 		}
 	}
@@ -115,7 +112,7 @@ func (p *Prog) Lookup(s *Sym, k string, eval bool) (res Exp, err error) {
 			if err != nil {
 				return nil, err
 			}
-			return LitSrc(t, s.Src), nil
+			return t, nil
 		}
 	}
 	return res, err
@@ -156,13 +153,16 @@ func (p *Prog) Resl(env Env, e Exp, h typ.Type) (Exp, error) {
 			return nil, ast.ErrReslSym(a.Src, a.Sym, err)
 		}
 		if h != typ.Void {
-			ut, err := p.Sys.Unify(typ.Res(r.Type()), h)
+			ut, err := p.Sys.Unify(a.Res, h)
 			if err != nil {
 				return nil, ast.ErrUnify(a.Src, err.Error())
 			}
 			a.Res = ut
 		}
-		return r, nil
+		if r != nil {
+			return LitSrc(r, a.Src), nil
+		}
+		return a, nil
 	case *Lit:
 		t := typ.Res(a.Type())
 		if t == typ.Spec {
@@ -248,18 +248,15 @@ func (p *Prog) Resl(env Env, e Exp, h typ.Type) (Exp, error) {
 	return nil, ast.ErrUnexpectedExp(e.Source(), e)
 }
 
-// Eval evaluates a resolved expression and returns a literal or an error.
-func (p *Prog) Eval(env Env, e Exp) (_ *Lit, err error) {
+// Eval evaluates a resolved expression and returns a value or an error.
+func (p *Prog) Eval(env Env, e Exp) (_ lit.Val, err error) {
 	switch a := e.(type) {
 	case *Sym:
 		res, err := env.Lookup(a, a.Sym, true)
 		if err != nil {
 			return nil, ast.ErrEval(a.Src, a.Sym, err)
 		}
-		if l, ok := res.(*Lit); ok {
-			return l, nil
-		}
-		return nil, fmt.Errorf("runtime env %T eval did return %T result", env, res)
+		return res, nil
 	case *Call:
 		res, err := a.Spec.Eval(p, a)
 		if err != nil {
@@ -273,9 +270,9 @@ func (p *Prog) Eval(env Env, e Exp) (_ *Lit, err error) {
 			if err != nil {
 				return nil, err
 			}
-			vals[i] = at.Val
+			vals[i] = at
 		}
-		return &Lit{Val: &lit.List{Vals: vals}}, nil
+		return &lit.List{Typ: typ.List, Vals: vals}, nil
 	case *Lit:
 		t := typ.Res(a.Type())
 		if t == typ.Spec {
@@ -285,25 +282,24 @@ func (p *Prog) Eval(env Env, e Exp) (_ *Lit, err error) {
 				return nil, ast.ErrReslTyp(a.Src, t, err)
 			}
 			s.Decl = nt
-			a.Val = s
-			return a, nil
+			return s, nil
 		}
 		if t.Kind&knd.All == knd.Typ {
 			t, err = p.Sys.Update(t)
 			if err != nil {
 				return nil, ast.ErrEval(a.Src, t.String(), err)
 			}
-			a.Val = typ.El(t)
+			return typ.El(t), nil
 		}
-		return a, nil
+		return a.Val, nil
 	}
 	return nil, ast.ErrUnexpectedExp(e.Source(), e)
 }
 
 // EvalArgs evaluates resolved call arguments and returns the result or an error.
 // This is a convenience method for the most basic needs of many spec implementations.
-func (p *Prog) EvalArgs(c *Call) ([]*Lit, error) {
-	res := make([]*Lit, len(c.Args))
+func (p *Prog) EvalArgs(c *Call) (lit.Vals, error) {
+	res := make(lit.Vals, len(c.Args))
 	for i, arg := range c.Args {
 		if arg == nil {
 			continue

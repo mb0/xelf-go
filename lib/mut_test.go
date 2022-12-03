@@ -27,7 +27,7 @@ func TestMutEval(t *testing.T) {
 			continue
 		}
 		if gstr := got.String(); gstr != test.want {
-			t.Errorf("eval %s\n\twant %s\n\tgot  %s %#v", test.raw, test.want, gstr, got.Val)
+			t.Errorf("eval %s\n\twant %s\n\tgot  %s %#v", test.raw, test.want, gstr, got)
 		}
 	}
 }

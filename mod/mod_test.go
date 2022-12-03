@@ -75,7 +75,7 @@ func TestSysMods(t *testing.T) {
 			local = append(local, m.File.URL+"#"+m.Name)
 		}
 		sort.Strings(local)
-		got, _ := res.Val.MarshalJSON()
+		got, _ := res.MarshalJSON()
 		if string(got) != test.want {
 			t.Errorf("%s got result %s want %s", test.name, got, test.want)
 		}

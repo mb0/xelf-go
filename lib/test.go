@@ -23,14 +23,14 @@ var (
 	Le    = &compSpec{impl("<form@le <alt num str span time> tupl|_ bool>"), 1, true}
 )
 
-func (s *compSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
+func (s *compSpec) Eval(p *exp.Prog, c *exp.Call) (lit.Val, error) {
 	args, err := p.EvalArgs(c)
 	if err != nil {
 		return nil, err
 	}
 	r := true
-	cur := args[0].Val
-	for _, v := range args[1].Val.(*lit.List).Vals {
+	cur := args[0]
+	for _, v := range args[1].(*lit.List).Vals {
 		if s.want == 0 {
 			ok := lit.Equal(cur, v)
 			if s.neg == ok {
@@ -51,7 +51,7 @@ func (s *compSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 			break
 		}
 	}
-	return exp.LitSrc(lit.Bool(r), c.Src), nil
+	return lit.Bool(r), nil
 }
 
 var (
@@ -64,21 +64,21 @@ type inSpec struct {
 	neg bool
 }
 
-func (s *inSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
+func (s *inSpec) Eval(p *exp.Prog, c *exp.Call) (lit.Val, error) {
 	args, err := p.EvalArgs(c)
 	if err != nil {
 		return nil, err
 	}
-	fst := args[0].Val
+	fst := args[0]
 	var r bool
 	var vals *lit.Vals
-	switch v := args[1].Val.(type) {
+	switch v := args[1].(type) {
 	case *lit.Vals:
 		vals = v
 	case *lit.List:
 		vals = &v.Vals
 	default:
-		return nil, fmt.Errorf("unexpected idxr %T", args[1].Val)
+		return nil, fmt.Errorf("unexpected idxr %T", args[1])
 	}
 	for _, val := range *vals {
 		var vv *lit.Vals
@@ -100,5 +100,5 @@ func (s *inSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 	if s.neg {
 		r = !r
 	}
-	return exp.LitSrc(lit.Bool(r), c.Src), nil
+	return lit.Bool(r), nil
 }

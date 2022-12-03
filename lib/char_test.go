@@ -24,9 +24,9 @@ func TestCharEval(t *testing.T) {
 			t.Errorf("eval %s failed: %v", test.raw, err)
 			continue
 		}
-		if !reflect.DeepEqual(got.Val, test.want) {
+		if !reflect.DeepEqual(got, test.want) {
 			t.Errorf("eval %s want %[2]T %[2]s got %[3]T %[3]s",
-				test.raw, test.want, got.Val)
+				test.raw, test.want, got)
 		}
 	}
 }

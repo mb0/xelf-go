@@ -18,8 +18,8 @@ type Spec interface {
 	// The first call to Resl should setup the environment for call c.
 	Resl(p *Prog, env Env, c *Call, hint typ.Type) (Exp, error)
 
-	// Eval evaluates a resolved call and returns a literal or an error.
-	Eval(p *Prog, c *Call) (*Lit, error)
+	// Eval evaluates a resolved call and returns a value or an error.
+	Eval(p *Prog, c *Call) (lit.Val, error)
 }
 
 // SpecBase is partial base definition for spec implementations.
@@ -130,7 +130,7 @@ func (s *SpecRef) Resl(p *Prog, env Env, c *Call, hint typ.Type) (Exp, error) {
 	}
 	return c, ast.ErrReslSpec(c.Src, c.Sig.Ref, fmt.Errorf("spec undefined"))
 }
-func (s *SpecRef) Eval(p *Prog, c *Call) (*Lit, error) {
+func (s *SpecRef) Eval(p *Prog, c *Call) (lit.Val, error) {
 	if !s.Nil() {
 		return s.Spec.Eval(p, c)
 	}

@@ -28,9 +28,8 @@ func (s *fnSpec) Resl(p *exp.Prog, env exp.Env, c *exp.Call, h typ.Type) (_ exp.
 	}
 
 	ps := make([]typ.Param, 0, len(fe.Def)+1)
-	for _, kl := range fe.Def {
-		a := kl.Exp.(*exp.Lit)
-		ps = append(ps, typ.P(kl.Tag, a.Val.Type()))
+	for _, kv := range fe.Def {
+		ps = append(ps, typ.P(kv.Key, kv.Val.Type()))
 	}
 	ps = append(ps, typ.P("", typ.Res(x.Type())))
 
@@ -47,7 +46,7 @@ func (s *fnSpec) Resl(p *exp.Prog, env exp.Env, c *exp.Call, h typ.Type) (_ exp.
 	return exp.LitSrc(exp.NewSpecRef(spec), c.Src), nil
 }
 
-func (s *fnSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
+func (s *fnSpec) Eval(p *exp.Prog, c *exp.Call) (lit.Val, error) {
 	return nil, fmt.Errorf("unexpected fn eval %s", c)
 }
 
@@ -56,18 +55,16 @@ func makeFunc(fe *FuncEnv, ft typ.Type, x exp.Exp) *funcSpec {
 }
 
 func explicitArgs(p *exp.Prog, fe *FuncEnv, es []exp.Exp) error {
-	keys := make(exp.Tags, 0, len(es))
+	keys := make(lit.Keyed, 0, len(es))
 	for _, el := range es {
 		tag := el.(*exp.Tag)
 		pa, err := p.Eval(fe.Par, tag.Exp)
 		if err != nil {
 			return err
 		}
-		pv, ok := pa.Val.(typ.Type)
+		pv, ok := pa.(typ.Type)
 		if ok {
-			t := *tag
-			t.Exp = exp.LitSrc(lit.AnyWrap(pv), tag.Src)
-			keys = append(keys, t)
+			keys = append(keys, lit.KeyVal{Key: tag.Tag, Val: lit.AnyWrap(pv)})
 			continue
 		}
 		return fmt.Errorf("expect type got %[1]T %[1]s", pa)
@@ -97,29 +94,29 @@ func (s *funcSpec) Resl(p *exp.Prog, env exp.Env, c *exp.Call, h typ.Type) (exp.
 	return c, err
 }
 
-func (s *funcSpec) Eval(p *exp.Prog, c *exp.Call) (l *exp.Lit, err error) {
+func (s *funcSpec) Eval(p *exp.Prog, c *exp.Call) (v lit.Val, err error) {
 	for i, arg := range c.Args {
 		// set arg vals in env
-		kl := s.env.Def[i].Exp.(*exp.Lit)
+		kv := &s.env.Def[i]
 		switch a := arg.(type) {
 		case *exp.Tupl:
 			switch len(a.Els) {
 			case 0:
 			case 1:
-				l, err = p.Eval(c.Env, a.Els[0])
+				v, err = p.Eval(c.Env, a.Els[0])
 				if err != nil {
 					return nil, err
 				}
-				kl.Val = l.Val
+				kv.Val = v
 			default:
 				return nil, fmt.Errorf("unexpected tupl")
 			}
 		default:
-			l, err = p.Eval(c.Env, arg)
+			v, err = p.Eval(c.Env, arg)
 			if err != nil {
 				return nil, err
 			}
-			kl.Val = l.Val
+			kv.Val = v
 		}
 	}
 	return p.Eval(s.env, s.act)
@@ -128,7 +125,7 @@ func (s *funcSpec) Eval(p *exp.Prog, c *exp.Call) (l *exp.Lit, err error) {
 type recurSpec struct {
 	exp.SpecBase
 	par  exp.Env
-	def  exp.Tags
+	def  lit.Keyed
 	act  exp.Exp
 	spec *funcSpec
 }
@@ -155,7 +152,7 @@ func (s *recurSpec) Resl(p *exp.Prog, env exp.Env, c *exp.Call, h typ.Type) (_ e
 	return c, nil
 }
 
-func (s *recurSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
+func (s *recurSpec) Eval(p *exp.Prog, c *exp.Call) (lit.Val, error) {
 	// we need to resolve second recursions, checking whether we are in the first
 	// is more costly than re-resolving the first element.
 	x, err := s.spec.Resl(p, c.Env, c, typ.Void)
@@ -167,7 +164,7 @@ func (s *recurSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 
 type FuncEnv struct {
 	Par   exp.Env
-	Def   exp.Tags
+	Def   lit.Keyed
 	expl  bool
 	mock  bool
 	rec   bool
@@ -175,35 +172,33 @@ type FuncEnv struct {
 }
 
 func (e *FuncEnv) Parent() exp.Env { return e.Par }
-func (e *FuncEnv) Lookup(s *exp.Sym, k string, eval bool) (exp.Exp, error) {
+func (e *FuncEnv) Lookup(s *exp.Sym, k string, eval bool) (lit.Val, error) {
 	if k == "recur" {
 		if e.mock {
 			e.rec = true
-			return s, nil
+			return nil, nil
 		}
 		if e.recur != nil {
 			// we want to copy the argument def when we recur
 			// as not to reuse values from previous calls
 			r := *e.recur
 			r.act = e.recur.act.Clone()
-			r.def = make(exp.Tags, len(e.Def))
+			r.def = make(lit.Keyed, len(e.Def))
 			for i, kv := range e.Def {
-				l := *(kv.Exp.(*exp.Lit))
-				l.Val = lit.Null{}
-				kv.Exp = &l
+				kv.Val = lit.AnyWrap(kv.Type())
 				r.def[i] = kv
 			}
-			return exp.LitVal(exp.NewSpecRef(&r)), nil
+			return exp.NewSpecRef(&r), nil
 		}
 	}
 	k, ok := dotkey(k)
 	if !ok {
 		return e.Par.Lookup(s, k, eval)
 	}
-	l, err := e.Def.Select(k)
-	if err != nil {
+	v, err := lit.Select(&e.Def, k)
+	if v == nil || err != nil {
 		if eval || !e.mock || e.expl {
-			return s, err
+			return nil, err
 		}
 		idx, kk := -1, k[1:]
 		if b := kk[0]; b >= '0' && b <= '9' {
@@ -213,22 +208,22 @@ func (e *FuncEnv) Lookup(s *exp.Sym, k string, eval bool) (exp.Exp, error) {
 			}
 		}
 		t := exp.FindProg(e.Par).Sys.Bind(typ.Var(-1, typ.Void))
-		l = exp.LitVal(lit.AnyWrap(t))
+		v = lit.AnyWrap(t)
 		if idx >= 0 {
 			if idx >= len(e.Def) {
 				for len(e.Def) <= idx {
-					e.Def = append(e.Def, exp.Tag{})
+					e.Def = append(e.Def, lit.KeyVal{})
 				}
 			}
-			e.Def[idx].Exp = l
+			e.Def[idx].Val = v
 		} else {
-			e.Def = append(e.Def, exp.Tag{Tag: kk, Exp: l})
+			e.Def = append(e.Def, lit.KeyVal{Key: kk, Val: v})
 		}
 	}
-	if s.Update(typ.Res(l.Type()), e, k); !eval {
-		return s, nil
+	if s.Update(v.Type(), e, k); !eval {
+		return nil, nil
 	}
-	return l, nil
+	return v, nil
 }
 func dotkey(k string) (string, bool) {
 	if k == "_" {

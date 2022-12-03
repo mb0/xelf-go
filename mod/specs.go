@@ -38,15 +38,14 @@ func (s *moduleSpec) Resl(p *exp.Prog, env exp.Env, c *exp.Call, _ typ.Type) (_ 
 		if err != nil {
 			return nil, err
 		}
-		l, err := p.Eval(c.Env, el)
+		val, err := p.Eval(c.Env, el)
 		if err != nil {
 			return nil, err
 		}
-		val := l.Val
 		vt := val.Type()
 		var decl string
 		if tag != nil {
-			tag.Exp = l
+			tag.Exp = exp.LitVal(val)
 			decl = tag.Tag
 		} else if vt.Kind&knd.Typ != 0 {
 			t, err := typ.ToType(val)
@@ -75,8 +74,8 @@ func (s *moduleSpec) Resl(p *exp.Prog, env exp.Env, c *exp.Call, _ typ.Type) (_ 
 	return c, me.Publish()
 }
 
-func (s *moduleSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
-	return exp.LitSrc(lit.Null{}, c.Src), nil
+func (s *moduleSpec) Eval(p *exp.Prog, c *exp.Call) (lit.Val, error) {
+	return lit.Null{}, nil
 }
 
 var Import = &importSpec{impl("<form@import mods:<tupl|exp|alt str tag|str> none>"), false}
@@ -142,8 +141,8 @@ func (s *importSpec) Resl(p *exp.Prog, env exp.Env, c *exp.Call, _ typ.Type) (_ 
 	return c, nil
 }
 
-func (s *importSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
-	return exp.LitSrc(lit.Null{}, c.Src), nil
+func (s *importSpec) Eval(p *exp.Prog, c *exp.Call) (lit.Val, error) {
+	return lit.Null{}, nil
 }
 
 func matchRef(m exp.ModRef, s string) bool {

@@ -38,13 +38,13 @@ func (s *dynSpec) Resl(p *exp.Prog, env exp.Env, c *exp.Call, h typ.Type) (_ exp
 	args := d.Els
 	switch a := fst.(type) {
 	case *exp.Lit:
-		spec, args = litSpec(a, args)
+		spec, args = litSpec(a.Val, args)
 	case *exp.Tag:
 		got, err := exp.LookupKey(env, ":")
 		if err != nil {
 			break
 		}
-		spec = got.Val.(exp.Spec)
+		spec = got.(exp.Spec)
 		tag := fst.(*exp.Tag)
 		src := tag.Src
 		src.End = src.Pos
@@ -66,7 +66,7 @@ func (s *dynSpec) Resl(p *exp.Prog, env exp.Env, c *exp.Call, h typ.Type) (_ exp
 	cc := &exp.Call{Sig: sig, Spec: spec, Args: args, Src: d.Src}
 	return spec.Resl(p, env, cc, h)
 }
-func (s *dynSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
+func (s *dynSpec) Eval(p *exp.Prog, c *exp.Call) (lit.Val, error) {
 	d := c.Args[0].(*exp.Tupl)
 	if len(d.Els) == 0 {
 		return nil, ast.ErrEval(c.Src, "empty call is unexpected at this point", nil)
@@ -74,7 +74,7 @@ func (s *dynSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 	fst := d.Els[0]
 	a, err := p.Eval(c.Env, fst)
 	if err != nil {
-		return nil, ast.ErrEval(a.Source(), fmt.Sprintf("dyn eval failed for %s", a), err)
+		return nil, ast.ErrEval(fst.Source(), fmt.Sprintf("dyn eval failed for %s", a), err)
 	}
 	spec, args := litSpec(a, d.Els)
 	if spec == nil {
@@ -88,25 +88,25 @@ func (s *dynSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 	cc := &exp.Call{Sig: sig, Spec: spec, Args: args, Src: d.Src}
 	ce, err := spec.Resl(p, c.Env, cc, typ.Void)
 	if err != nil {
-		return nil, ast.ErrEval(a.Source(), fmt.Sprintf("dyn resl call failed for %s", a), err)
+		return nil, ast.ErrEval(fst.Source(), fmt.Sprintf("dyn resl call failed for %s", a), err)
 	}
 	switch l := ce.(type) {
 	case *exp.Lit:
-		return l, nil
+		return l.Val, nil
 	case *exp.Call:
 		return l.Spec.Eval(p, l)
 	}
 	err = fmt.Errorf("unexpected result %T", ce)
-	return nil, ast.ErrEval(a.Source(), fmt.Sprintf("dyn resl call failed for %s", a), err)
+	return nil, ast.ErrEval(fst.Source(), fmt.Sprintf("dyn resl call failed for %s", a), err)
 }
 
-func litSpec(a *exp.Lit, args []exp.Exp) (spec exp.Spec, _ []exp.Exp) {
-	t := a.Val.Type()
+func litSpec(a lit.Val, args []exp.Exp) (spec exp.Spec, _ []exp.Exp) {
+	t := a.Type()
 	k := t.Kind & knd.All
 	switch {
 	case k == knd.All, k == knd.Data:
 	case k&knd.Spec != 0:
-		spec, args = a.Value().(exp.Spec), args[1:]
+		return a.Value().(exp.Spec), args[1:]
 	case k == knd.Typ:
 		spec = Make
 	case k&knd.Num != 0:

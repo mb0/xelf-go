@@ -9,14 +9,14 @@ var If = &ifSpec{impl("<form@if <tupl cond:any then:exp|@1> else:exp?|@1 @1>")}
 
 type ifSpec struct{ exp.SpecBase }
 
-func (s *ifSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
+func (s *ifSpec) Eval(p *exp.Prog, c *exp.Call) (lit.Val, error) {
 	els := c.Args[0].(*exp.Tupl).Els
 	for i := 0; i < len(els); i += 2 {
 		res, err := p.Eval(c.Env, els[i])
 		if err != nil {
 			return nil, err
 		}
-		if !res.Val.Zero() {
+		if !res.Zero() {
 			return p.Eval(c.Env, els[i+1])
 		}
 	}
@@ -25,14 +25,14 @@ func (s *ifSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 		return p.Eval(c.Env, c.Args[1])
 	}
 	rt := exp.SigRes(c.Sig).Type
-	return exp.LitSrc(lit.ZeroWrap(rt), c.Src), nil
+	return lit.ZeroWrap(rt), nil
 }
 
 var Swt = &swtSpec{impl("<form@swt @1 <tupl case:@1 then:exp|@2> else:exp?|@2 @2>")}
 
 type swtSpec struct{ exp.SpecBase }
 
-func (s *swtSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
+func (s *swtSpec) Eval(p *exp.Prog, c *exp.Call) (lit.Val, error) {
 	arg, err := p.Eval(c.Env, c.Args[0])
 	if err != nil {
 		return nil, err
@@ -44,7 +44,7 @@ func (s *swtSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 		if err != nil {
 			return nil, err
 		}
-		if ok := lit.Equal(arg.Val, res.Val); ok {
+		if ok := lit.Equal(arg, res); ok {
 			return p.Eval(c.Env, els[i+1])
 		}
 	}
@@ -53,25 +53,25 @@ func (s *swtSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 		return p.Eval(c.Env, c.Args[2])
 	}
 	rt := exp.SigRes(c.Sig).Type
-	return exp.LitSrc(lit.ZeroWrap(rt), c.Src), nil
+	return lit.ZeroWrap(rt), nil
 }
 
 var Df = &dfSpec{impl("<form@df tupl|@1 @1!>")}
 
 type dfSpec struct{ exp.SpecBase }
 
-func (s *dfSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
+func (s *dfSpec) Eval(p *exp.Prog, c *exp.Call) (lit.Val, error) {
 	// cases
 	for _, cas := range c.Args[0].(*exp.Tupl).Els {
 		res, err := p.Eval(c.Env, cas)
 		if err != nil {
 			return nil, err
 		}
-		if !res.Val.Zero() {
+		if !res.Zero() {
 			return res, nil
 		}
 	}
 	// else
 	t := exp.SigRes(c.Sig).Type
-	return exp.LitSrc(lit.ZeroWrap(t), c.Src), nil
+	return lit.ZeroWrap(t), nil
 }

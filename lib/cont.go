@@ -3,7 +3,6 @@ package lib
 import (
 	"fmt"
 
-	"xelf.org/xelf/ast"
 	"xelf.org/xelf/exp"
 	"xelf.org/xelf/lit"
 	"xelf.org/xelf/typ"
@@ -13,13 +12,13 @@ var Len = &lenSpec{impl("<form@len <alt? list keyr str raw> int>")}
 
 type lenSpec struct{ exp.SpecBase }
 
-func (s *lenSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
+func (s *lenSpec) Eval(p *exp.Prog, c *exp.Call) (lit.Val, error) {
 	args, err := p.EvalArgs(c)
 	if err != nil {
 		return nil, err
 	}
 	var n int
-	v := args[0].Val
+	v := args[0]
 	if v != nil && !v.Nil() {
 		lenr, ok := v.(lit.Lenr)
 		if ok {
@@ -28,7 +27,7 @@ func (s *lenSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 			return nil, fmt.Errorf("unexpected argument %[1]T %[1]%s", v)
 		}
 	}
-	return exp.LitSrc(lit.Int(n), c.Src), nil
+	return lit.Int(n), nil
 }
 
 var Fold = &foldSpec{impl("<form@fold list|@1 @2 <func @2 @1 @2> @2>"), false}
@@ -39,19 +38,19 @@ type foldSpec struct {
 	Right bool
 }
 
-func (s *foldSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
+func (s *foldSpec) Eval(p *exp.Prog, c *exp.Call) (lit.Val, error) {
 	args, err := p.EvalArgs(c)
 	if err != nil {
 		return nil, err
 	}
 	trd := args[2]
-	fun, ok := trd.Val.(exp.Spec)
+	fun, ok := trd.(exp.Spec)
 	if !ok {
 		return nil, fmt.Errorf("unexpected func %[1]T %[1]s", trd)
 	}
 	res := args[1]
 	var vals *lit.Vals
-	switch v := args[0].Val.(type) {
+	switch v := args[0].(type) {
 	case *lit.Vals:
 		vals = v
 	case *lit.List:
@@ -63,12 +62,12 @@ func (s *foldSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 			if s.Right {
 				el = vs[len(vs)-1-i]
 			}
-			args := []exp.Exp{res, exp.LitVal(el)}
-			r, err := callFunc(p, c, fun, args, trd.Src)
+			args := []exp.Exp{exp.LitVal(res), exp.LitVal(el)}
+			r, err := callFunc(p, c, fun, args)
 			if err != nil {
 				return nil, err
 			}
-			res.Val = r
+			res = r
 		}
 		return res, nil
 	}
@@ -79,28 +78,28 @@ var Range = &rangeSpec{impl("<form@range n:int f?:<func int @1> list|@1>")}
 
 type rangeSpec struct{ exp.SpecBase }
 
-func (s *rangeSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
+func (s *rangeSpec) Eval(p *exp.Prog, c *exp.Call) (lit.Val, error) {
 	args, err := p.EvalArgs(c)
 	if err != nil {
 		return nil, err
 	}
 	fst := args[0]
-	n, err := lit.ToInt(fst.Val)
+	n, err := lit.ToInt(fst)
 	if err != nil {
 		return nil, err
 	}
 	var list *lit.List
 	res := make([]lit.Val, n)
 	if snd := args[1]; snd != nil {
-		f, ok := snd.Val.(exp.Spec)
+		f, ok := snd.(exp.Spec)
 		if !ok {
 			return nil, fmt.Errorf("unexpected func %[1]T %[1]s", snd)
 		}
-		farg := exp.LitSrc(lit.Int(0), fst.Src)
+		farg := exp.LitVal(lit.Int(0))
 		fargs := []exp.Exp{farg}
 		for i := range res {
 			farg.Val = lit.Int(i)
-			res[i], err = callFunc(p, c, f, fargs, snd.Src)
+			res[i], err = callFunc(p, c, f, fargs)
 			if err != nil {
 				return nil, err
 			}
@@ -112,10 +111,10 @@ func (s *rangeSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 		}
 		list = lit.NewList(typ.Int, res...)
 	}
-	return exp.LitSrc(list, c.Src), nil
+	return list, nil
 }
 
-func callFunc(p *exp.Prog, c *exp.Call, s exp.Spec, org []exp.Exp, src ast.Src) (lit.Val, error) {
+func callFunc(p *exp.Prog, c *exp.Call, s exp.Spec, org []exp.Exp) (lit.Val, error) {
 	sig := s.Type()
 	args, err := exp.LayoutSpec(sig, org)
 	if err != nil {
@@ -126,9 +125,5 @@ func callFunc(p *exp.Prog, c *exp.Call, s exp.Spec, org []exp.Exp, src ast.Src) 
 	if err != nil {
 		return nil, err
 	}
-	res, err := s.Eval(p, cc)
-	if err != nil {
-		return nil, err
-	}
-	return res.Val, nil
+	return s.Eval(p, cc)
 }

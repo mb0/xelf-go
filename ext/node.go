@@ -72,7 +72,7 @@ func NewNodeSpec(decl typ.Type, node Node, rs Rules) *NodeSpec {
 	return &NodeSpec{exp.SpecBase{Decl: decl}, rs, node}
 }
 
-func (s *NodeSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
+func (s *NodeSpec) Eval(p *exp.Prog, c *exp.Call) (lit.Val, error) {
 	l, err := lit.Clone(s.Node)
 	if err != nil {
 		return nil, err
@@ -142,7 +142,7 @@ func (s *NodeSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 			continue
 		}
 	}
-	return exp.LitVal(n), nil
+	return n, nil
 }
 
 func (rs Rules) Eval(p *exp.Prog, env exp.Env, n Node, key string, e exp.Exp) (lit.Val, error) {

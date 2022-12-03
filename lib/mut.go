@@ -12,19 +12,19 @@ var Mut = &mutSpec{impl("<form@mut any data? tupl?|tag _>")}
 
 type mutSpec struct{ exp.SpecBase }
 
-func (s *mutSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
+func (s *mutSpec) Eval(p *exp.Prog, c *exp.Call) (lit.Val, error) {
 	fst, err := p.Eval(c.Env, c.Args[0])
 	if err != nil {
 		return nil, err
 	}
-	mut := fst.Val.Mut()
+	mut := fst.Mut()
 	assign := c.Args[1]
 	if assign != nil {
 		a, err := p.Eval(c.Env, assign)
 		if err != nil {
 			return nil, err
 		}
-		err = mut.Assign(a.Val)
+		err = mut.Assign(a)
 		if err != nil {
 			return nil, err
 		}
@@ -37,24 +37,23 @@ func (s *mutSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 		if err != nil {
 			return nil, err
 		}
-		delta = append(delta, lit.KeyVal{Key: tag.Tag, Val: ta.Val})
+		delta = append(delta, lit.KeyVal{Key: tag.Tag, Val: ta})
 	}
-	fst.Val = mut
-	return fst, lit.Apply(mut, delta)
+	return mut, lit.Apply(mut, delta)
 }
 
 var Append = &appendSpec{impl("<form@append list tupl? _>")}
 
 type appendSpec struct{ exp.SpecBase }
 
-func (s *appendSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
+func (s *appendSpec) Eval(p *exp.Prog, c *exp.Call) (lit.Val, error) {
 	fst, err := p.Eval(c.Env, c.Args[0])
 	if err != nil {
 		return nil, err
 	}
-	mut, ok := fst.Val.(lit.Apdr)
+	mut, ok := fst.(lit.Apdr)
 	if !ok {
-		return nil, ast.ErrEval(fst.Src, "not a appendable value", nil)
+		return nil, ast.ErrEval(c.Src, "not a appendable value", nil)
 	}
 	vals, _ := c.Args[1].(*exp.Tupl)
 	for _, el := range vals.Els {
@@ -62,9 +61,9 @@ func (s *appendSpec) Eval(p *exp.Prog, c *exp.Call) (*exp.Lit, error) {
 		if err != nil {
 			return nil, err
 		}
-		err = mut.Append(v.Val)
+		err = mut.Append(v)
 		if err != nil {
-			return nil, ast.ErrEval(v.Src, "append failed", err)
+			return nil, ast.ErrEval(el.Source(), "append failed", err)
 		}
 	}
 	return fst, nil
