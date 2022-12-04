@@ -54,6 +54,10 @@ This also makes sense for a simple `<dict|none>` sets, where we only have the ke
 	{characterNames.$:['$' 'dollar']} if we actually want to use the dollar as a key
 	{mySet.$:['long key']} and delete with {.mySet.$-:['long key']}
 
+This feature is probably best covered with intrusive path segment variables, that are implemented
+for all path selections. We likely also want to support it somehow in the language. Maybe by adding
+a dedicated spec that takes a path symbol and a tuple of variables.
+
 We need syntax for appending, inserting or deleting elements from lists. We already use my diff
 package which uses a very simple change representation using either retain, delete or insert. These
 three operations can be represented as positive and negative number for retain and delete and a list
@@ -91,6 +95,11 @@ list of elements but runes and bytes respectively. Together combined with the al
 bells an whistles we get:
 
 	{$/+:['names' ['!!!']]} to append three exclaimation marks to each element in list names
+
+We want to add a flag to disable str and raw ops. And maybe only use it for longer strings. We might
+want to add precautions to bound the diff allocations for very large values. There is also a problem
+when we apply deltas to unresolved char typed values, we do not know from the delta whether it
+represents raw or str ops.
 
 We can use the star marker for a **nested delta**, to reduce path lookups and improving readability.
 The plus marker makes no sense for deltas, we might allow both or raise an error for plus.
@@ -144,5 +153,7 @@ and provide ways to handle corner cases.
  * We prefer append for container types and add an explicit merge spec, to updates dicts and
    concatenate lists specifically. Again, both append mutations can be easily written as delta tag.
 
-
-
+We want to add a sel spec `(sel path.with/$.var 'my key val')` to use path variables. This requires
+some changes how we pass paths through the environment. Currently we pass in the symbol string
+itself, that we can then change for parent environments. So we need to way to pass along the path
+variables or parse the path once, fill vars if available, and lookup on the path.

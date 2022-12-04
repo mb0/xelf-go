@@ -6,13 +6,17 @@ import (
 	"strings"
 )
 
+const magic = '?' // '.'&'?'=='.', '/'&'?'=='/', 'n'&'?'=='.', 'o'&'?'=='/', '.'|'@'=='n', :) !
+
 // Seg is one segment of a path. It consists of a dot or slash, followed by a key or index.
 type Seg struct {
 	Key string
 	Idx int
-	Sel bool
+	Sel byte
 }
 
+func (s Seg) Sep() byte   { return (s.Sel & '?') /* magic */ }
+func (s Seg) Empty() bool { return (s.Sel & '@') != 0 /* magic */ }
 func (s Seg) String() string {
 	if s.Key != "" {
 		return s.Key
@@ -29,17 +33,15 @@ type Path []Seg
 func (p Path) String() string {
 	var b strings.Builder
 	for _, s := range p {
-		if s.Sel {
-			b.WriteByte('/')
-		} else {
-			b.WriteByte('.')
+		if sep := s.Sep(); sep != 0 {
+			b.WriteByte(sep)
 		}
 		b.WriteString(s.String())
 	}
 	return b.String()
 }
 
-// ParsePath reads and returns the dot separated segments for the path or an error.
+// ParsePath reads and returns the segments for path or an error.
 func ParsePath(path string) (res Path, err error) {
 	for len(path) > 0 {
 		res, path, err = addSeg(res, path)
@@ -50,17 +52,61 @@ func ParsePath(path string) (res Path, err error) {
 	return res, nil
 }
 
+// FillPath reads and returns the segments for the path filled with vars or an error.
+func FillPath(path string, vars ...string) (res Path, err error) {
+	for len(path) > 0 {
+		res, path, err = addSeg(res, path)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, res.FillVars(vars)
+}
+
 func addSeg(p Path, s string) (_ Path, rest string, err error) {
 	var res Seg
-	var idx, upper, other bool
 	if r := s[0]; r == '.' || r == '/' {
 		s = s[1:]
-		res.Sel = r == '/'
+		res.Sel = r
 	} else if len(p) > 0 {
 		return p, s, fmt.Errorf("missing path sep")
 	}
+	rest = res.parse(s, false)
+	p = append(p, res)
+	return p, rest, nil
+}
+
+func (p Path) HasVars() bool {
+	for _, s := range p {
+		if s.Key == "$" {
+			return true
+		}
+	}
+	return false
+}
+
+func (p Path) FillVars(vars []string) error {
+	for i := range p {
+		s := &p[i]
+		if s.Key != "$" {
+			continue
+		}
+		if len(vars) == 0 {
+			return fmt.Errorf("not enough path variables")
+		}
+		s.parse(vars[0], true)
+		vars = vars[1:]
+	}
+	if len(vars) > 0 {
+		return fmt.Errorf("superflous path segment variables %s", vars)
+	}
+	return nil
+}
+
+func (res *Seg) parse(s string, ignoreSep bool) (rest string) {
+	var idx, upper, other bool
 	for i, r := range s {
-		if r == '.' || r == '/' {
+		if !ignoreSep && (r == '.' || r == '/') {
 			s, rest = s[:i], s[i:]
 			break
 		} else if r >= 'A' && r <= 'Z' {
@@ -77,12 +123,11 @@ func addSeg(p Path, s string) (_ Path, rest string, err error) {
 		}
 		res.Key = s
 	} else if idx && len(s) < 10 {
+		res.Key = ""
 		res.Idx, _ = strconv.Atoi(s)
-	} else {
-		res.Key = s
+	} else { // empty
+		res.Key = ""
+		res.Sel += '@' // magic
 	}
-	if s != "" || res.Sel {
-		p = append(p, res)
-	}
-	return p, rest, nil
+	return rest
 }

@@ -19,7 +19,7 @@ func Select(t Type, path string) (Type, error) {
 // SelectPath returns the selected type from t or an error.
 func SelectPath(t Type, path cor.Path) (r Type, err error) {
 	for i, s := range path {
-		if s.Sel {
+		if s.Sel == '/' {
 			r, err = SelectList(t, path[i:])
 		} else if s.Key != "" {
 			r, err = SelectKey(t, s.Key)

@@ -27,7 +27,7 @@ func SelectPath(val Val, path cor.Path) (_ Val, err error) {
 			}
 			return typ.SelectPath(t, path[i:])
 		}
-		if s.Sel {
+		if s.Sel == '/' {
 			val, err = SelectList(val, path[i:])
 		} else if s.Key != "" {
 			val, err = SelectKey(val, s.Key)
