@@ -30,7 +30,8 @@ func (s Seg) String() string {
 // starting with a slash signify a selection from a idxr literal.
 type Path []Seg
 
-func (p Path) String() string {
+func (p Path) String() string { return p.Suffix("") }
+func (p Path) Suffix(suf string) string {
 	var b strings.Builder
 	for _, s := range p {
 		if sep := s.Sep(); sep != 0 {
@@ -38,6 +39,7 @@ func (p Path) String() string {
 		}
 		b.WriteString(s.String())
 	}
+	b.WriteString(suf)
 	return b.String()
 }
 

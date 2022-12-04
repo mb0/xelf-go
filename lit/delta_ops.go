@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/mb0/diff"
+	"xelf.org/xelf/cor"
 )
 
 type (
@@ -64,7 +65,7 @@ func opsToVals(ops Ops) *Vals {
 }
 
 // diffStr diffs a and b and appends any str ops to d and returns the result or an error.
-func diffStr(a, b Str, pre string, d Delta) (Delta, error) {
+func diffStr(a, b Str, pre cor.Path, d Delta) (Delta, error) {
 	ars := []rune(a)
 	if chgs := diff.Runes(ars, []rune(b)); len(chgs) != 0 {
 		ops := make(StrOps, 0, len(chgs)*2)
@@ -81,7 +82,7 @@ func diffStr(a, b Str, pre string, d Delta) (Delta, error) {
 }
 
 // diffRaw diffs a and b and appends any raw ops to d and returns the result or an error.
-func diffRaw(a, b Raw, pre string, d Delta) (Delta, error) {
+func diffRaw(a, b Raw, pre cor.Path, d Delta) (Delta, error) {
 	if chgs := diff.Bytes(a, b); len(chgs) != 0 {
 		ops := make(RawOps, 0, len(chgs)*2)
 		t := diffToOps(chgs, len(a), func(n, s, l int) {
@@ -97,7 +98,7 @@ func diffRaw(a, b Raw, pre string, d Delta) (Delta, error) {
 }
 
 // diffIdxr diffs a and b and appends any list ops to d and returns the result or an error.
-func diffIdxr(a, b Idxr, pre string, d Delta) (Delta, error) {
+func diffIdxr(a, b Idxr, pre cor.Path, d Delta) (Delta, error) {
 	if chgs := diff.Diff(a.Len(), b.Len(), &idxrDiff{a, b}); len(chgs) != 0 {
 		ops := make(ListOps, 0, len(chgs)*2)
 		t := diffToOps(chgs, a.Len(), func(n, s, l int) {
@@ -136,8 +137,8 @@ func diffIdxr(a, b Idxr, pre string, d Delta) (Delta, error) {
 	return d, nil
 }
 
-func diffSub(a, b Val, pre string, idx int, d Delta) (Delta, error) {
-	return diffVals(a, b, fmt.Sprintf("%s%d.", pre, idx), d)
+func diffSub(a, b Val, pre cor.Path, idx int, d Delta) (Delta, error) {
+	return diffVals(a, b, addIdxSeg(pre, idx), d)
 }
 
 // diffCounts contains accumulated total count of elements and operations for each op kind.
@@ -150,11 +151,11 @@ type diffCounts struct {
 func (t *diffCounts) changed() bool  { return t.del > 0 || t.ins > 0 }
 func (t *diffCounts) replaced() bool { return t.ret == 0 }
 
-func (t *diffCounts) diffRes(ops Ops, b Val, pre string, d Delta, hook idxHook) (Delta, error) {
+func (t *diffCounts) diffRes(ops Ops, b Val, pre cor.Path, d Delta, hook idxHook) (Delta, error) {
 	if !t.changed() {
 		return d, nil
 	} else if t.replaced() {
-		d = append(d, KeyVal{stripTailDot(pre), b})
+		d = append(d, KeyVal{pre.String(), b})
 		return d, nil
 	}
 	// we have at least two ops and known at least one of them to be ret and one del or ins
@@ -167,7 +168,7 @@ func (t *diffCounts) diffRes(ops Ops, b Val, pre string, d Delta, hook idxHook) 
 	// two ops u,v where u is ret and v is ins
 	if oLen == 2 && o0N > 0 && o1N == 0 {
 		// lets return the special append op
-		d = append(d, KeyVal{stripTailDot(pre) + "+", o1V})
+		d = append(d, KeyVal{pre.Suffix("+"), o1V})
 		return d, nil
 	}
 	// we also want to detect replacing a single element and use idx path notation. that does
@@ -180,7 +181,7 @@ func (t *diffCounts) diffRes(ops Ops, b Val, pre string, d Delta, hook idxHook) 
 		}
 	}
 	// lets return the ops as list
-	d = append(d, KeyVal{stripTailDot(pre) + "*", opsToVals(ops)})
+	d = append(d, KeyVal{pre.Suffix("*"), opsToVals(ops)})
 	return d, nil
 }
 

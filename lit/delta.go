@@ -1,5 +1,9 @@
 package lit
 
+import (
+	"xelf.org/xelf/cor"
+)
+
 // Delta is a list of path edits that describe a transformation from one value to another.
 // Each element has an edit key and value. The key describes the edit path and the kind of edit.
 // Special chars are path separators and dollar './$' in the whole path '+*-' in the suffix.
@@ -14,8 +18,8 @@ func (d Delta) String() string { return Keyed(d).String() }
 // Diff returns the delta between values a and b or an error. The delta applied to a results in b.
 // The simplest and correct answer is always to return b. We however do make some effort to find a
 // simpler set of changes, but do not guarantee to return the shortest edit path.
-func Diff(a, b Val) (Delta, error) { return diffVals(a, b, ".", nil) }
-func diffVals(a, b Val, pre string, d Delta) (Delta, error) {
+func Diff(a, b Val) (Delta, error) { return diffVals(a, b, cor.Path{{Sel: 'n'}}, nil) }
+func diffVals(a, b Val, pre cor.Path, d Delta) (Delta, error) {
 	a, b = a.Value(), b.Value()
 	switch aa := a.(type) {
 	case Keyr:
@@ -39,11 +43,11 @@ func diffVals(a, b Val, pre string, d Delta) (Delta, error) {
 			return d, nil
 		}
 	}
-	d = append(d, KeyVal{stripTailDot(pre), b})
+	d = append(d, KeyVal{pre.String(), b})
 	return d, nil
 }
 
-func diffKeyr(a, b Keyr, pre string, d Delta) (Delta, error) {
+func diffKeyr(a, b Keyr, pre cor.Path, d Delta) (Delta, error) {
 	// we may want different behaviour for dicts and obj
 	// dict keys can be deleted, obj keys only be set to zero
 	// dict may be unordered while obj fields are ordered
@@ -64,11 +68,8 @@ func diffKeyr(a, b Keyr, pre string, d Delta) (Delta, error) {
 				if err != nil {
 					return nil, err
 				}
-				path := k
-				if pre != "." {
-					path = pre + k
-				}
-				d = append(d, KeyVal{path, v})
+				p := addKeySeg(pre, k).String()
+				d = append(d, KeyVal{p, v})
 				// mark as handled
 				km[k] = false
 			} // duplicate key in b
@@ -84,19 +85,9 @@ func diffKeyr(a, b Keyr, pre string, d Delta) (Delta, error) {
 			return nil, err
 		}
 		// call delta on the values
-		path := pre + k
-		nvals, err := diffVals(av, bv, path+".", nil)
+		nvals, err := diffVals(av, bv, addKeySeg(pre, k), nil)
 		if err != nil {
 			return nil, err
-		}
-		if pre == "." {
-			// check for simple path and turn them into plain keys
-			for i, kv := range nvals {
-				if kv.Key == path {
-					kv.Key = k
-					nvals[i] = kv
-				}
-			}
 		}
 		// append edits and mark as handled
 		d = append(d, nvals...)
@@ -104,15 +95,22 @@ func diffKeyr(a, b Keyr, pre string, d Delta) (Delta, error) {
 	}
 	for k, v := range km {
 		if v { // deleted key
-			d = append(d, KeyVal{pre + k + "-", Null{}})
+			p := addKeySeg(pre, k).Suffix("-")
+			d = append(d, KeyVal{p, Null{}})
 		}
 	}
 	return d, nil
 }
 
-func stripTailDot(s string) string {
-	if len(s) > 1 && s[len(s)-1] == '.' {
-		return s[:len(s)-1]
+func emptyDot(p cor.Path) bool {
+	return len(p) == 0 || len(p) == 1 && p[0].Empty()
+}
+
+func addKeySeg(p cor.Path, k string) cor.Path { return addSeg(p, cor.Seg{Key: k}) }
+func addIdxSeg(p cor.Path, idx int) cor.Path  { return addSeg(p, cor.Seg{Sel: '.', Idx: idx}) }
+func addSeg(p cor.Path, s cor.Seg) cor.Path {
+	if emptyDot(p) {
+		return cor.Path{s}
 	}
-	return s
+	return append(p, s)
 }
