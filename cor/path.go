@@ -18,7 +18,7 @@ type Seg struct {
 func (s Seg) Sep() byte   { return (s.Sel & '?') /* magic */ }
 func (s Seg) Empty() bool { return (s.Sel & '@') != 0 /* magic */ }
 func (s Seg) String() string {
-	if s.Key != "" {
+	if s.Key != "" || s.Empty() {
 		return s.Key
 	}
 	return strconv.Itoa(s.Idx)
@@ -75,7 +75,12 @@ func addSeg(p Path, s string) (_ Path, rest string, err error) {
 	p = append(p, res)
 	return p, rest, nil
 }
-
+func (p Path) Plain() string {
+	if len(p) == 1 && p[0].Sep() == 0 {
+		return p[0].Key
+	}
+	return ""
+}
 func (p Path) HasVars() bool {
 	for _, s := range p {
 		if s.Key == "$" {

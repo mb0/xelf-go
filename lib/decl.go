@@ -1,6 +1,7 @@
 package lib
 
 import (
+	"xelf.org/xelf/cor"
 	"xelf.org/xelf/exp"
 	"xelf.org/xelf/lit"
 	"xelf.org/xelf/typ"
@@ -89,14 +90,14 @@ type LetEnv struct {
 }
 
 func (e *LetEnv) Parent() exp.Env { return e.Par }
-func (e *LetEnv) Lookup(s *exp.Sym, k string, eval bool) (lit.Val, error) {
-	v, err := exp.SelectLookup(&e.Dot, k, eval)
+func (e *LetEnv) Lookup(s *exp.Sym, p cor.Path, eval bool) (lit.Val, error) {
+	v, err := exp.SelectLookup(&e.Dot, p, eval)
 	if err == nil && v != nil {
-		s.Update(v.Type(), e, k)
+		s.Update(v.Type(), e, p)
 		if !eval && v.Nil() {
 			return nil, nil
 		}
 		return v, nil
 	}
-	return e.Par.Lookup(s, k, eval)
+	return e.Par.Lookup(s, p, eval)
 }

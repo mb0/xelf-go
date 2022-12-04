@@ -5,6 +5,7 @@ import (
 
 	"xelf.org/xelf/ast"
 	"xelf.org/xelf/bfr"
+	"xelf.org/xelf/cor"
 	"xelf.org/xelf/knd"
 	"xelf.org/xelf/lit"
 	"xelf.org/xelf/typ"
@@ -63,20 +64,20 @@ func (a *Lit) Value() lit.Val {
 
 // Sym is a symbol expression which caches the resolving environment and a relative name.
 type Sym struct {
-	Res typ.Type
-	Sym string
-	Src ast.Src
-	Env Env
-	Rel string
+	Res  typ.Type
+	Sym  string
+	Src  ast.Src
+	Env  Env
+	Path cor.Path
 }
 
 func (s *Sym) Type() typ.Type       { return typ.Type{Kind: knd.Sym, Body: &s.Res} }
 func (s *Sym) Source() ast.Src      { return s.Src }
 func (s *Sym) String() string       { return s.Sym }
 func (s *Sym) Print(p *bfr.P) error { return p.Fmt(s.Sym) }
-func (s *Sym) Clone() Exp           { return &Sym{s.Res, s.Sym, s.Src, nil, ""} }
-func (s *Sym) Update(t typ.Type, env Env, rel string) {
-	s.Res, s.Env, s.Rel = t, env, rel
+func (s *Sym) Clone() Exp           { return &Sym{s.Res, s.Sym, s.Src, nil, nil} }
+func (s *Sym) Update(t typ.Type, env Env, p cor.Path) {
+	s.Res, s.Env, s.Path = t, env, p
 }
 
 // Tag is a named quasi expression that is resolved by its parent call.

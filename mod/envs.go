@@ -2,6 +2,8 @@ package mod
 
 import (
 	"fmt"
+	"log"
+	"strings"
 
 	"xelf.org/xelf/cor"
 	"xelf.org/xelf/exp"
@@ -86,9 +88,9 @@ func (le *LoaderEnv) LoadFile(prog *exp.Prog, loc *Loc) (f *File, err error) {
 
 func (le *LoaderEnv) Parent() exp.Env { return le.Par }
 
-func (le *LoaderEnv) Lookup(s *exp.Sym, k string, eval bool) (lit.Val, error) {
+func (le *LoaderEnv) Lookup(s *exp.Sym, p cor.Path, eval bool) (lit.Val, error) {
 	// we return the mod and use spec only here so we can expect a loader env in those specs
-	switch k {
+	switch p.Plain() {
 	case "module":
 		return exp.NewSpecRef(Module), nil
 	case "import":
@@ -96,7 +98,7 @@ func (le *LoaderEnv) Lookup(s *exp.Sym, k string, eval bool) (lit.Val, error) {
 	case "export":
 		return exp.NewSpecRef(Export), nil
 	}
-	return le.Par.Lookup(s, k, eval)
+	return le.Par.Lookup(s, p, eval)
 }
 
 // ModEnv encapsulates a module environment.
@@ -157,19 +159,22 @@ func (e *ModEnv) Publish() error {
 	return nil
 }
 
-func (e *ModEnv) Lookup(s *exp.Sym, k string, eval bool) (lit.Val, error) {
+func (e *ModEnv) Lookup(s *exp.Sym, path cor.Path, eval bool) (lit.Val, error) {
 	if m := e.Mod; m != nil {
-		key := k
-		if n := len(m.Name); n > 0 && len(k) > n+1 && k[n] == '.' && m.Name == k[:n] {
-			key = k[n+1:]
+		p := path
+		if len(p) > 1 && p[0].Key == m.Name && strings.HasPrefix(s.Sym, m.Name) {
+			p = p[1:]
 		}
-		v, err := lit.Select(m.Decl, key)
+		v, err := lit.SelectPath(m.Decl, p)
+		if p[0].Key == "person" {
+			log.Printf("mod env lookup %s in %s\n\tgot: %v %v", path, m.Decl, v, err)
+		}
 		if err == nil && v != nil {
 			return v, nil
 		}
-		if key != k {
+		if len(p) != len(path) {
 			return nil, exp.ErrSymNotFound
 		}
 	}
-	return e.Par.Lookup(s, k, eval)
+	return e.Par.Lookup(s, path, eval)
 }

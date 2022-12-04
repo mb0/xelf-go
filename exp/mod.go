@@ -68,12 +68,12 @@ func (ms ModRefs) Find(k string) *ModRef {
 	return nil
 }
 
-func LookupMod(p *Prog, qual, rest string) (lit.Val, error) {
+func LookupMod(p *Prog, qual string, rest cor.Path) (lit.Val, error) {
 	m := p.File.Refs.Find(qual)
 	if m == nil {
 		return nil, ErrSymNotFound
 	}
-	val, err := lit.Select(m.Decl, rest)
+	val, err := lit.SelectPath(m.Decl, rest)
 	if err != nil {
 		return nil, err
 	}

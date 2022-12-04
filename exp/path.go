@@ -8,13 +8,9 @@ import (
 
 // SelectLookup reads path and returns the selected literal from l or an error.
 // If eval is false we attempt to at least resolve the intended type if no value was found.
-func SelectLookup(v lit.Val, k string, eval bool) (lit.Val, error) {
+func SelectLookup(v lit.Val, p cor.Path, eval bool) (lit.Val, error) {
 	if v == nil {
 		return nil, ErrSymNotFound
-	}
-	p, err := cor.ParsePath(k)
-	if err != nil {
-		return nil, err
 	}
 	val, err := lit.SelectPath(v, p)
 	if err != nil {

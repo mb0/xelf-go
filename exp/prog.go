@@ -3,6 +3,7 @@ package exp
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"xelf.org/xelf/ast"
 	"xelf.org/xelf/cor"
@@ -86,43 +87,48 @@ func FindProg(env Env) *Prog {
 
 func (p *Prog) Parent() Env { return p.Root }
 
-func (p *Prog) Lookup(s *Sym, k string, eval bool) (res lit.Val, err error) {
-	switch k[0] {
-	case '$':
-		if p.Arg != nil {
-			v, err := SelectLookup(p.Arg, cor.Keyed(k[1:]), eval)
-			if err == nil && v != nil {
-				s.Update(v.Type(), p, k)
-				if !eval && v.Nil() {
-					return nil, nil
+func (p *Prog) Lookup(s *Sym, pp cor.Path, eval bool) (res lit.Val, err error) {
+	if len(pp) == 0 {
+		return nil, fmt.Errorf("empty path")
+	}
+	if fst := &pp[0]; fst.Sep() == 0 {
+		if fst.Key != "" && fst.Key[0] == '$' {
+			if p.Arg != nil {
+				org := fst.Key
+				fst.Key = org[1:]
+				v, err := SelectLookup(p.Arg, pp, eval)
+				if err == nil && v != nil {
+					fst.Key = org
+					s.Update(v.Type(), p, pp)
+					if !eval && v.Nil() {
+						return nil, nil
+					}
+					return v, nil
 				}
-				return v, nil
+				return nil, ErrSymNotFound
 			}
-			return nil, ErrSymNotFound
-		}
-	default:
-		if qual, rest := SplitQualifier(k); qual != "" {
-			if v, err := LookupMod(p, qual, rest); err == nil {
-				s.Update(v.Type(), p, k)
+		} else if len(pp) > 1 && cor.IsKey(fst.Key) && strings.HasPrefix(s.Sym, fst.Key) {
+			if v, err := LookupMod(p, fst.Key, pp[1:]); err == nil {
+				s.Update(v.Type(), p, pp)
 				return v, nil
 			}
 		}
 	}
-	res, err = p.Root.Lookup(s, k, eval)
+	res, err = p.Root.Lookup(s, pp, eval)
 	if err == ErrSymNotFound {
-		if t, err := typ.ParseSym(k, s.Src, nil); err == nil {
+		if t, err := typ.ParseSym(s.Sym, s.Src, nil); err == nil {
 			t, err = p.Sys.Inst(LookupType(s.Env), t)
 			if err != nil {
 				return nil, err
 			}
-			s.Update(t.Type(), p, k)
+			s.Update(t.Type(), p, pp)
 			return t, nil
 		}
 		return nil, err
 	} else if err != nil || res == nil {
 		return nil, err
 	}
-	s.Update(res.Type(), p, k)
+	s.Update(res.Type(), p, pp)
 	return res, nil
 }
 
@@ -154,9 +160,13 @@ func (p *Prog) Resl(env Env, e Exp, h typ.Type) (Exp, error) {
 			return LitSrc(t, a.Src), nil
 		}
 		if a.Env == nil {
-			a.Update(a.Res, env, a.Sym)
+			path, err := cor.ParsePath(a.Sym)
+			if err != nil {
+				return nil, ast.ErrReslSym(a.Src, a.Sym, err)
+			}
+			a.Update(a.Res, env, path)
 		}
-		r, err := a.Env.Lookup(a, a.Rel, false)
+		r, err := a.Env.Lookup(a, a.Path, false)
 		if err != nil {
 			return nil, ast.ErrReslSym(a.Src, a.Sym, err)
 		}
@@ -258,7 +268,14 @@ func (p *Prog) Resl(env Env, e Exp, h typ.Type) (Exp, error) {
 func (p *Prog) Eval(env Env, e Exp) (_ lit.Val, err error) {
 	switch a := e.(type) {
 	case *Sym:
-		res, err := env.Lookup(a, a.Sym, true)
+		if a.Env == nil {
+			e, err = p.Resl(env, a, typ.Void)
+			if err != nil {
+				return nil, err
+			}
+			return p.Eval(env, e)
+		}
+		res, err := a.Env.Lookup(a, a.Path, true)
 		if err != nil {
 			return nil, ast.ErrEval(a.Src, a.Sym, err)
 		}

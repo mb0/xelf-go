@@ -157,3 +157,8 @@ We want to add a sel spec `(sel path.with/$.var 'my key val')` to use path varia
 some changes how we pass paths through the environment. Currently we pass in the symbol string
 itself, that we can then change for parent environments. So we need to way to pass along the path
 variables or parse the path once, fill vars if available, and lookup on the path.
+
+Implementation
+--------------
+
+We change the env lookup signature to use paths and allow path segments to by empty (with magic).

@@ -3,6 +3,7 @@ package exp
 import (
 	"fmt"
 
+	"xelf.org/xelf/cor"
 	"xelf.org/xelf/lit"
 	"xelf.org/xelf/typ"
 )
@@ -15,11 +16,11 @@ type Env interface {
 	// Parent returns the parent environment or nil.
 	Parent() Env
 
-	// Lookup resolves a part of a symbol and returns the result, an error or nothing.
+	// Lookup resolves a symbol path and returns the result, an error or nothing.
 	// We always update the symbol and return resolved values.
 	// If eval is false the symbol resolves, but the value does not, we return nothing.
 	// If the value is not resolved and eval is true we return an error.
-	Lookup(s *Sym, k string, eval bool) (lit.Val, error)
+	Lookup(s *Sym, path cor.Path, eval bool) (lit.Val, error)
 }
 
 // Builtins is a root environment to resolve symbols to builtin specs and at last as types.
@@ -27,9 +28,9 @@ type Builtins map[string]Spec
 
 func (e Builtins) Parent() Env { return nil }
 
-func (e Builtins) Lookup(s *Sym, k string, eval bool) (lit.Val, error) {
-	if sp := e[k]; sp != nil {
-		s.Update(typ.Spec, e, k)
+func (e Builtins) Lookup(s *Sym, p cor.Path, eval bool) (lit.Val, error) {
+	if sp := e[p[0].Key]; sp != nil {
+		s.Update(typ.Spec, e, p)
 		return lit.Wrap(NewSpecRef(sp), typ.Spec), nil
 	}
 	return nil, ErrSymNotFound
@@ -43,30 +44,31 @@ type DotEnv struct {
 
 func (e *DotEnv) Parent() Env { return e.Par }
 
-func (e *DotEnv) Lookup(s *Sym, k string, eval bool) (lit.Val, error) {
-	k, ok := DotKey(k)
+func (e *DotEnv) Lookup(s *Sym, p cor.Path, eval bool) (lit.Val, error) {
+	p, ok := DotPath(p)
 	if !ok {
-		return e.Par.Lookup(s, k, eval)
+		return e.Par.Lookup(s, p, eval)
 	}
-	v, err := SelectLookup(e.Dot, k, eval)
+	v, err := SelectLookup(e.Dot, p, eval)
 	if err != nil || v == nil {
 		return nil, ErrSymNotFound
 	}
-	if s.Update(typ.Res(v.Type()), e, k); !eval && v.Nil() {
+	if s.Update(typ.Res(v.Type()), e, p); !eval && v.Nil() {
 		return nil, nil
 	}
 	return v, nil
 }
 
-// DotKey returns whether k is a dot key or otherwise returns k with a leading dot removed.
-func DotKey(k string) (string, bool) {
-	if k[0] != '.' {
-		return k, false
+// DotPath returns whether p is a dot path or returns p with a leading dot segment removed.
+func DotPath(p cor.Path) (cor.Path, bool) {
+	fst := p[0]
+	if fst.Sep() != '.' {
+		return p, false
 	}
-	if len(k) > 1 && k[1] == '.' {
-		return k[1:], false
+	if fst.Empty() && len(p) > 1 {
+		return p[1:], false
 	}
-	return k, true
+	return p, true
 }
 
 func LookupType(env Env) typ.Lookup {
@@ -87,5 +89,9 @@ func LookupType(env Env) typ.Lookup {
 }
 
 func LookupKey(env Env, k string) (lit.Val, error) {
-	return env.Lookup(&Sym{Sym: k, Env: env, Rel: k}, k, true)
+	p, err := cor.ParsePath(k)
+	if err != nil {
+		return nil, err
+	}
+	return env.Lookup(&Sym{Sym: k, Env: env, Path: p}, p, true)
 }

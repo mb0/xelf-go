@@ -31,7 +31,7 @@ func SelectPath(val Val, path cor.Path) (_ Val, err error) {
 			val, err = SelectList(val, path[i:])
 		} else if s.Key != "" {
 			val, err = SelectKey(val, s.Key)
-		} else {
+		} else if !s.Empty() {
 			val, err = SelectIdx(val, s.Idx)
 		}
 		if err != nil {
@@ -105,8 +105,12 @@ func AssignPath(mut Mut, path cor.Path, val Val) (err error) {
 		var next Val
 		if s.Key != "" {
 			next, err = SelectKey(root, s.Key)
-		} else {
+		} else if !s.Empty() {
 			next, err = SelectIdx(root, s.Idx)
+		} else if len(path) == 1 {
+			break
+		} else {
+			return fmt.Errorf("unexpected empty assign path")
 		}
 		if err != nil {
 			return err
@@ -132,8 +136,13 @@ func CreatePath(mut Mut, path cor.Path, val Val) (err error) {
 		var next Val
 		if s.Key != "" {
 			next, err = SelectKey(cur, s.Key)
-		} else {
+		} else if !s.Empty() {
 			next, err = SelectIdx(cur, s.Idx)
+		} else if len(path) == 1 {
+			npath = path[i+1:]
+			break
+		} else {
+			return fmt.Errorf("unexpected empty assign path")
 		}
 		if err != nil {
 			break

@@ -2,8 +2,8 @@ package lib
 
 import (
 	"fmt"
-	"strconv"
 
+	"xelf.org/xelf/cor"
 	"xelf.org/xelf/exp"
 	"xelf.org/xelf/lit"
 	"xelf.org/xelf/typ"
@@ -54,10 +54,14 @@ func makeFunc(fe *FuncEnv, ft typ.Type, x exp.Exp) *funcSpec {
 	return &funcSpec{SpecBase: exp.SpecBase{Decl: ft}, env: fe, act: x}
 }
 
-func explicitArgs(p *exp.Prog, fe *FuncEnv, es []exp.Exp) error {
+func explicitArgs(p *exp.Prog, fe *FuncEnv, es []exp.Exp) (err error) {
 	keys := make(lit.Keyed, 0, len(es))
 	for _, el := range es {
 		tag := el.(*exp.Tag)
+		tag.Exp, err = p.Resl(fe.Par, tag.Exp, typ.Typ)
+		if err != nil {
+			return err
+		}
 		pa, err := p.Eval(fe.Par, tag.Exp)
 		if err != nil {
 			return err
@@ -172,8 +176,8 @@ type FuncEnv struct {
 }
 
 func (e *FuncEnv) Parent() exp.Env { return e.Par }
-func (e *FuncEnv) Lookup(s *exp.Sym, k string, eval bool) (lit.Val, error) {
-	if k == "recur" {
+func (e *FuncEnv) Lookup(s *exp.Sym, p cor.Path, eval bool) (lit.Val, error) {
+	if fst := p[0]; fst.Sep() == 0 && fst.Key == "recur" {
 		if e.mock {
 			e.rec = true
 			return nil, nil
@@ -191,21 +195,18 @@ func (e *FuncEnv) Lookup(s *exp.Sym, k string, eval bool) (lit.Val, error) {
 			return exp.NewSpecRef(&r), nil
 		}
 	}
-	k, ok := dotkey(k)
+	p, ok := dotkey(p)
 	if !ok {
-		return e.Par.Lookup(s, k, eval)
+		return e.Par.Lookup(s, p, eval)
 	}
-	v, err := lit.Select(&e.Def, k)
+	v, err := lit.SelectPath(&e.Def, p)
 	if v == nil || err != nil {
 		if eval || !e.mock || e.expl {
 			return nil, err
 		}
-		idx, kk := -1, k[1:]
-		if b := kk[0]; b >= '0' && b <= '9' {
-			i, err := strconv.Atoi(kk)
-			if err == nil {
-				idx = i
-			}
+		fst, idx := p[0], -1
+		if fst.Key == "" && !fst.Empty() {
+			idx = fst.Idx
 		}
 		t := exp.FindProg(e.Par).Sys.Bind(typ.Var(-1, typ.Void))
 		v = lit.AnyWrap(t)
@@ -217,17 +218,17 @@ func (e *FuncEnv) Lookup(s *exp.Sym, k string, eval bool) (lit.Val, error) {
 			}
 			e.Def[idx].Val = v
 		} else {
-			e.Def = append(e.Def, lit.KeyVal{Key: kk, Val: v})
+			e.Def = append(e.Def, lit.KeyVal{Key: fst.Key, Val: v})
 		}
 	}
-	if s.Update(v.Type(), e, k); !eval {
+	if s.Update(v.Type(), e, p); !eval {
 		return nil, nil
 	}
 	return v, nil
 }
-func dotkey(k string) (string, bool) {
-	if k == "_" {
-		k = ".0"
+func dotkey(p cor.Path) (cor.Path, bool) {
+	if f := &p[0]; f.Sep() == 0 && f.Key == "_" {
+		*f = cor.Seg{Sel: '.'}
 	}
-	return exp.DotKey(k)
+	return exp.DotPath(p)
 }

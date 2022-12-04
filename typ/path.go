@@ -23,8 +23,12 @@ func SelectPath(t Type, path cor.Path) (r Type, err error) {
 			r, err = SelectList(t, path[i:])
 		} else if s.Key != "" {
 			r, err = SelectKey(t, s.Key)
-		} else {
+		} else if !s.Empty() {
 			r, err = SelectIdx(t, s.Idx)
+		} else if len(path) == 1 {
+			break
+		} else {
+			err = fmt.Errorf("invalid type selection path %s", path)
 		}
 		if err != nil {
 			return Void, err
