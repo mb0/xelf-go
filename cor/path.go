@@ -17,11 +17,12 @@ type Seg struct {
 
 func (s Seg) Sep() byte   { return (s.Sel & '?') /* magic */ }
 func (s Seg) Empty() bool { return (s.Sel & '@') != 0 /* magic */ }
+func (s Seg) IsIdx() bool { return s.Idx != 0 || !s.Empty() && s.Key == "" }
 func (s Seg) String() string {
-	if s.Key != "" || s.Empty() {
-		return s.Key
+	if s.IsIdx() {
+		return strconv.Itoa(s.Idx) + s.Key
 	}
-	return strconv.Itoa(s.Idx)
+	return s.Key
 }
 
 // Path consists of non-empty segments separated by dots '.' or slashes '/'.
@@ -82,6 +83,12 @@ func (p Path) Plain() string {
 		return p[0].Key
 	}
 	return ""
+}
+func (p Path) Fst() Seg {
+	if len(p) > 0 {
+		return p[0]
+	}
+	return Seg{Sel: 'n'}
 }
 func (p Path) HasVars() bool {
 	for _, s := range p {

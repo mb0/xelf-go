@@ -27,12 +27,12 @@ func SelectPath(val Val, path cor.Path) (_ Val, err error) {
 			}
 			return typ.SelectPath(t, path[i:])
 		}
-		if s.Sel == '/' {
+		if s.Sep() == '/' {
 			val, err = SelectList(val, path[i:])
+		} else if s.IsIdx() {
+			val, err = SelectIdx(val, s.Idx)
 		} else if s.Key != "" {
 			val, err = SelectKey(val, s.Key)
-		} else if !s.Empty() {
-			val, err = SelectIdx(val, s.Idx)
 		}
 		if err != nil {
 			return nil, err
@@ -78,10 +78,11 @@ func SelectList(val Val, path cor.Path) (Val, error) {
 }
 
 func collectIdxrVal(v Val, path cor.Path, into *List) (err error) {
-	if s := path[0]; s.Key != "" {
-		v, err = SelectKey(v, s.Key)
-	} else {
+
+	if s := path.Fst(); s.IsIdx() {
 		v, err = SelectIdx(v, s.Idx)
+	} else if s.Key != "" {
+		v, err = SelectKey(v, s.Key)
 	}
 	if err == nil && len(path) > 1 {
 		v, err = SelectPath(v, path[1:])
@@ -103,10 +104,10 @@ func AssignPath(mut Mut, path cor.Path, val Val) (err error) {
 	var root Val = mut
 	for _, s := range path {
 		var next Val
-		if s.Key != "" {
-			next, err = SelectKey(root, s.Key)
-		} else if !s.Empty() {
+		if s.IsIdx() {
 			next, err = SelectIdx(root, s.Idx)
+		} else if s.Key != "" {
+			next, err = SelectKey(root, s.Key)
 		} else if len(path) == 1 {
 			break
 		} else {
@@ -134,10 +135,10 @@ func CreatePath(mut Mut, path cor.Path, val Val) (err error) {
 	cur := mut
 	for i, s := range path {
 		var next Val
-		if s.Key != "" {
-			next, err = SelectKey(cur, s.Key)
-		} else if !s.Empty() {
+		if s.IsIdx() {
 			next, err = SelectIdx(cur, s.Idx)
+		} else if s.Key != "" {
+			next, err = SelectKey(cur, s.Key)
 		} else if len(path) == 1 {
 			npath = path[i+1:]
 			break

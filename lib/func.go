@@ -177,7 +177,7 @@ type FuncEnv struct {
 
 func (e *FuncEnv) Parent() exp.Env { return e.Par }
 func (e *FuncEnv) Lookup(s *exp.Sym, p cor.Path, eval bool) (lit.Val, error) {
-	if fst := p[0]; fst.Sep() == 0 && fst.Key == "recur" {
+	if p.Plain() == "recur" {
 		if e.mock {
 			e.rec = true
 			return nil, nil
@@ -204,8 +204,8 @@ func (e *FuncEnv) Lookup(s *exp.Sym, p cor.Path, eval bool) (lit.Val, error) {
 		if eval || !e.mock || e.expl {
 			return nil, err
 		}
-		fst, idx := p[0], -1
-		if fst.Key == "" && !fst.Empty() {
+		fst, idx := p.Fst(), -1
+		if fst.IsIdx() {
 			idx = fst.Idx
 		}
 		t := exp.FindProg(e.Par).Sys.Bind(typ.Var(-1, typ.Void))

@@ -19,12 +19,12 @@ func Select(t Type, path string) (Type, error) {
 // SelectPath returns the selected type from t or an error.
 func SelectPath(t Type, path cor.Path) (r Type, err error) {
 	for i, s := range path {
-		if s.Sel == '/' {
+		if s.Sep() == '/' {
 			r, err = SelectList(t, path[i:])
+		} else if s.IsIdx() {
+			r, err = SelectIdx(t, s.Idx)
 		} else if s.Key != "" {
 			r, err = SelectKey(t, s.Key)
-		} else if !s.Empty() {
-			r, err = SelectIdx(t, s.Idx)
 		} else if len(path) == 1 {
 			break
 		} else {
@@ -96,10 +96,10 @@ func SelectList(t Type, p cor.Path) (r Type, err error) {
 	if r == Any {
 		return List, nil
 	}
-	if s := p[0]; s.Key != "" {
-		r, err = SelectKey(r, s.Key)
-	} else {
+	if s := p.Fst(); s.IsIdx() {
 		r, err = SelectIdx(r, s.Idx)
+	} else if s.Key != "" {
+		r, err = SelectKey(r, s.Key)
 	}
 	if err == nil && len(p) > 1 {
 		r, err = SelectPath(r, p[1:])

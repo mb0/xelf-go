@@ -2,7 +2,6 @@ package mod
 
 import (
 	"fmt"
-	"log"
 	"strings"
 
 	"xelf.org/xelf/cor"
@@ -166,9 +165,6 @@ func (e *ModEnv) Lookup(s *exp.Sym, path cor.Path, eval bool) (lit.Val, error) {
 			p = p[1:]
 		}
 		v, err := lit.SelectPath(m.Decl, p)
-		if p[0].Key == "person" {
-			log.Printf("mod env lookup %s in %s\n\tgot: %v %v", path, m.Decl, v, err)
-		}
 		if err == nil && v != nil {
 			return v, nil
 		}

@@ -29,7 +29,7 @@ type Builtins map[string]Spec
 func (e Builtins) Parent() Env { return nil }
 
 func (e Builtins) Lookup(s *Sym, p cor.Path, eval bool) (lit.Val, error) {
-	if sp := e[p[0].Key]; sp != nil {
+	if sp := e[p.Plain()]; sp != nil {
 		s.Update(typ.Spec, e, p)
 		return lit.Wrap(NewSpecRef(sp), typ.Spec), nil
 	}
@@ -61,7 +61,7 @@ func (e *DotEnv) Lookup(s *Sym, p cor.Path, eval bool) (lit.Val, error) {
 
 // DotPath returns whether p is a dot path or returns p with a leading dot segment removed.
 func DotPath(p cor.Path) (cor.Path, bool) {
-	fst := p[0]
+	fst := p.Fst()
 	if fst.Sep() != '.' {
 		return p, false
 	}
