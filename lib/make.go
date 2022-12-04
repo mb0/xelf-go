@@ -62,7 +62,7 @@ func (s *makeSpec) Eval(p *exp.Prog, c *exp.Call) (lit.Val, error) {
 	tok = tok && len(tags.Els) > 0
 	if pok {
 		res := lit.Unwrap(wrap)
-		apdr, ok := res.(lit.Apdr)
+		apdr, ok := res.(lit.Appender)
 		if ok {
 			for _, v := range plain.Vals {
 				err = apdr.Append(v)

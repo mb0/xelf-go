@@ -102,8 +102,8 @@ func (v *Vals) Assign(p Val) error {
 	}
 	return nil
 }
-func (v *Vals) Append(p Val) error {
-	*v = append(*v, p)
+func (v *Vals) Append(n ...Val) error {
+	*v = append(*v, n...)
 	return nil
 }
 func (v Vals) Len() int { return len(v) }

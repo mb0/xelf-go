@@ -40,10 +40,10 @@ type Idxr interface {
 	IterIdx(iter func(int, Val) error) error
 }
 
-// Apdr is the interface for indexer values supporting append.
-type Apdr interface {
+// Appender is the interface for indexer values supporting append.
+type Appender interface {
 	Idxr
-	Append(v Val) error
+	Append(...Val) error
 }
 
 // Lenr is the common interface of value that have a length.

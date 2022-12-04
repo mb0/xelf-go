@@ -51,7 +51,7 @@ func (s *appendSpec) Eval(p *exp.Prog, c *exp.Call) (lit.Val, error) {
 	if err != nil {
 		return nil, err
 	}
-	mut, ok := fst.(lit.Apdr)
+	mut, ok := fst.(lit.Appender)
 	if !ok {
 		return nil, ast.ErrEval(c.Src, "not a appendable value", nil)
 	}

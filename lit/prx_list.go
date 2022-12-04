@@ -76,13 +76,17 @@ func (x *ListPrx) Assign(v Val) (err error) {
 	e.Set(n)
 	return
 }
-func (x *ListPrx) Append(v Val) error {
+func (x *ListPrx) Append(vs ...Val) (err error) {
 	e := x.elem()
-	val, err := Conv(x.Reg, e.Type().Elem(), v)
-	if err != nil {
-		return err
+	et := e.Type().Elem()
+	res := make([]reflect.Value, len(vs))
+	for i, v := range vs {
+		res[i], err = Conv(x.Reg, et, v)
+		if err != nil {
+			return err
+		}
 	}
-	e.Set(reflect.Append(e, val))
+	e.Set(reflect.Append(e, res...))
 	return nil
 }
 func (x *ListPrx) String() string               { return bfr.String(x) }
