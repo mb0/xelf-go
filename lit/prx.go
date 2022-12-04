@@ -27,7 +27,9 @@ func newProxy(reg *PrxReg, t typ.Type, ptr reflect.Value) proxy {
 }
 func (x *proxy) Nil() bool {
 	switch x.val.Type().Elem().Kind() {
-	case reflect.Interface, reflect.Ptr, reflect.Map, reflect.Slice:
+	case reflect.Slice:
+		return !x.val.Elem().IsValid()
+	case reflect.Interface, reflect.Ptr, reflect.Map:
 		return x.val.Elem().IsNil()
 	}
 	return false

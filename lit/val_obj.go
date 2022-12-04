@@ -76,15 +76,21 @@ func (s *Obj) Print(p *bfr.P) error {
 		if i > 0 {
 			p.Sep()
 		}
-		p.RecordKey(par.Key)
 		var v Val
 		if i < len(s.Vals) {
 			v = s.Vals[i]
 		}
+
 		if v == nil || v.Zero() {
-			PrintZero(p, par.Type)
+			if !p.JSON && v == nil || v.Nil() {
+				p.RecordKeyTag(par.Key, ';')
+			} else {
+				p.RecordKey(par.Key)
+				PrintZero(p, par.Type)
+			}
 			continue
 		}
+		p.RecordKey(par.Key)
 		if err = v.Print(p); err != nil {
 			return err
 		}

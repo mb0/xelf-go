@@ -62,8 +62,13 @@ func (h *Map) Print(p *bfr.P) (err error) {
 		if i > 0 {
 			p.Sep()
 		}
+		v, ok := h.M[k]
+		if !p.JSON && (!ok || v.Nil()) {
+			p.RecordKeyTag(k, ';')
+			continue
+		}
 		p.RecordKey(k)
-		if err = h.M[k].Print(p); err != nil {
+		if err = v.Print(p); err != nil {
 			return err
 		}
 	}

@@ -95,7 +95,8 @@ func (p *P) Quote(v string) (err error) {
 
 // RecordKey writes key as quoted string followed by a colon to the buffer or returns an error.
 // The quote used depends on the json context flag.
-func (p *P) RecordKey(key string) (err error) {
+func (p *P) RecordKey(key string) error { return p.RecordKeyTag(key, ':') }
+func (p *P) RecordKeyTag(key string, tag byte) (err error) {
 	if p.JSON || !cor.IsSym(key) {
 		err = p.Quote(key)
 	} else {
@@ -104,7 +105,7 @@ func (p *P) RecordKey(key string) (err error) {
 	if err != nil {
 		return p.err(err)
 	}
-	return p.Byte(':')
+	return p.Byte(tag)
 }
 
 // Sep writes a record field or list element separator to the buffer or returns an error.

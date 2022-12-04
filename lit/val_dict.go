@@ -49,9 +49,13 @@ func (d Keyed) Print(p *bfr.P) (err error) {
 		if i > 0 {
 			p.Sep()
 		}
-		p.RecordKey(v.Key)
-		if err = v.Val.Print(p); err != nil {
-			return err
+		if !p.JSON && v.Val.Nil() {
+			p.RecordKeyTag(v.Key, ';')
+		} else {
+			p.RecordKey(v.Key)
+			if err = v.Val.Print(p); err != nil {
+				return err
+			}
 		}
 	}
 	return p.Byte('}')
@@ -165,7 +169,6 @@ func (d *Keyed) Key(k string) (Val, error) {
 			}
 		}
 	}
-	// TODO think about zero values of keyr go uses zero value and js undefined values
 	return Null{}, ErrKeyNotFound
 }
 func (d *Keyed) SetKey(k string, el Val) error {

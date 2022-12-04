@@ -30,12 +30,12 @@ func TestNode(t *testing.T) {
 		raw  string
 		want string
 	}{
-		{`(el)`, `{kind:'el' w:3 font:null}`},
-		{`(el 'test')`, `{kind:'test' w:3 font:null}`},
-		{`(el 'test' 1 2)`, `{kind:'test' x:1 y:2 w:3 font:null}`},
-		{`(el 'test' 4 3 2 1)`, `{kind:'test' x:4 y:3 w:2 h:1 font:null}`},
-		{`(el)`, `{kind:'el' w:3 font:null}`},
-		{`(el h:4)`, `{kind:'el' w:3 h:4 font:null}`},
+		{`(el)`, `{kind:'el' w:3 font;}`},
+		{`(el 'test')`, `{kind:'test' w:3 font;}`},
+		{`(el 'test' 1 2)`, `{kind:'test' x:1 y:2 w:3 font;}`},
+		{`(el 'test' 4 3 2 1)`, `{kind:'test' x:4 y:3 w:2 h:1 font;}`},
+		{`(el)`, `{kind:'el' w:3 font;}`},
+		{`(el h:4)`, `{kind:'el' w:3 h:4 font;}`},
 		{`(el font.size:4)`, `{kind:'el' w:3 font:{size:4}}`},
 		{`(fold [0 1] [] (fn (append .0 (el font.size:(4 .1)))))`,
 			`[{kind:'el' w:3 font:{size:4}} {kind:'el' w:3 font:{size:5}}]`},

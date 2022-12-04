@@ -94,11 +94,15 @@ func (x *MapPrx) Print(p *bfr.P) error {
 		if i > 0 {
 			p.Sep()
 		}
-		p.RecordKey(k)
 		el, err := x.entry(k, e.MapIndex(reflect.ValueOf(k)))
 		if err != nil {
 			return err
 		}
+		if !p.JSON && (el == nil || el.Nil()) {
+			p.RecordKeyTag(k, ';')
+			continue
+		}
+		p.RecordKey(k)
 		err = el.Print(p)
 		if err != nil {
 			return err

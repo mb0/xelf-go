@@ -119,6 +119,10 @@ func (x *ObjPrx) Print(p *bfr.P) error {
 		if n++; n > 1 {
 			p.Sep()
 		}
+		if !p.JSON && (el == nil || el.Nil()) {
+			p.RecordKeyTag(param.Key, ';')
+			continue
+		}
 		p.RecordKey(param.Key)
 		err = el.Print(p)
 		if err != nil {
