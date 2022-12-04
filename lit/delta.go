@@ -1,6 +1,8 @@
 package lit
 
 import (
+	"strings"
+
 	"xelf.org/xelf/cor"
 )
 
@@ -43,8 +45,28 @@ func diffVals(a, b Val, pre cor.Path, d Delta) (Delta, error) {
 			return d, nil
 		}
 	}
-	d = append(d, KeyVal{pre.String(), b})
+	d = addEdit(d, pre, b, "")
 	return d, nil
+}
+
+func addEdit(d Delta, p cor.Path, v Val, suf string) Delta {
+	var vars Vals
+	for i, s := range p {
+		if isSafe(s) {
+			continue
+		}
+		vars = append(vars, Str(s.Key))
+		p[i].Key = "$"
+	}
+	kv := KeyVal{p.Suffix(suf), v}
+	if len(vars) > 0 {
+		vars = append(vars, v)
+		kv.Val = &vars
+	}
+	return append(d, kv)
+}
+func isSafe(s cor.Seg) bool {
+	return s.Key == "" || s.Key != "$" && !strings.ContainsAny(s.Key, "./ +-*\t\n")
 }
 
 func diffKeyr(a, b Keyr, pre cor.Path, d Delta) (Delta, error) {
@@ -68,8 +90,7 @@ func diffKeyr(a, b Keyr, pre cor.Path, d Delta) (Delta, error) {
 				if err != nil {
 					return nil, err
 				}
-				p := addKeySeg(pre, k).String()
-				d = append(d, KeyVal{p, v})
+				d = addEdit(d, addKeySeg(pre, k), v, "")
 				// mark as handled
 				km[k] = false
 			} // duplicate key in b
@@ -95,8 +116,7 @@ func diffKeyr(a, b Keyr, pre cor.Path, d Delta) (Delta, error) {
 	}
 	for k, v := range km {
 		if v { // deleted key
-			p := addKeySeg(pre, k).Suffix("-")
-			d = append(d, KeyVal{p, Null{}})
+			d = addEdit(d, addKeySeg(pre, k), Null{}, "-")
 		}
 	}
 	return d, nil

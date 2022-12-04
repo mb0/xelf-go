@@ -155,8 +155,7 @@ func (t *diffCounts) diffRes(ops Ops, b Val, pre cor.Path, d Delta, hook idxHook
 	if !t.changed() {
 		return d, nil
 	} else if t.replaced() {
-		d = append(d, KeyVal{pre.String(), b})
-		return d, nil
+		return addEdit(d, pre, b, ""), nil
 	}
 	// we have at least two ops and known at least one of them to be ret and one del or ins
 	// ops of the same kind are merged and do not follow each other
@@ -168,8 +167,7 @@ func (t *diffCounts) diffRes(ops Ops, b Val, pre cor.Path, d Delta, hook idxHook
 	// two ops u,v where u is ret and v is ins
 	if oLen == 2 && o0N > 0 && o1N == 0 {
 		// lets return the special append op
-		d = append(d, KeyVal{pre.Suffix("+"), o1V})
-		return d, nil
+		return addEdit(d, pre, o1V, "+"), nil
 	}
 	// we also want to detect replacing a single element and use idx path notation. that does
 	// only occur in two instances:
@@ -181,8 +179,7 @@ func (t *diffCounts) diffRes(ops Ops, b Val, pre cor.Path, d Delta, hook idxHook
 		}
 	}
 	// lets return the ops as list
-	d = append(d, KeyVal{pre.Suffix("*"), opsToVals(ops)})
-	return d, nil
+	return addEdit(d, pre, opsToVals(ops), "*"), nil
 }
 
 var addMarker = fmt.Errorf("add")
