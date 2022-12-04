@@ -49,3 +49,25 @@ func IsCased(s string) bool {
 	}
 	return false
 }
+
+// SymStart tests whether r is ascii letter, underscore or punctuation.
+func SymStart(r rune) bool { return NameStart(r) || Punct(r) }
+
+// SymPart tests whether r is ascii letter, digit, underscore or punctuation.
+func SymPart(r rune) bool { return NameStart(r) || Digit(r) || Punct(r) }
+
+// IsSym tests whether s is a valid symbol.
+func IsSym(s string) bool {
+	if s == "" {
+		return false
+	}
+	if c := s[0]; c == '-' && len(s) > 1 && Digit(rune(s[1])) || !SymStart(rune(c)) {
+		return false
+	}
+	for _, r := range s[1:] {
+		if !SymPart(r) {
+			return false
+		}
+	}
+	return true
+}

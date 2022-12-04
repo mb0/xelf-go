@@ -96,7 +96,7 @@ func (p *P) Quote(v string) (err error) {
 // RecordKey writes key as quoted string followed by a colon to the buffer or returns an error.
 // The quote used depends on the json context flag.
 func (p *P) RecordKey(key string) (err error) {
-	if p.JSON || !cor.IsName(key) {
+	if p.JSON || !cor.IsSym(key) {
 		err = p.Quote(key)
 	} else {
 		_, err = p.WriteString(key)

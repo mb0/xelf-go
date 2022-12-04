@@ -141,7 +141,7 @@ func (l *Lexer) Tok() (Tok, error) {
 	if cor.Digit(r) || r == '-' && cor.Digit(l.nxt) {
 		return l.lexNumber()
 	}
-	if cor.NameStart(r) || cor.Punct(r) {
+	if cor.SymStart(r) {
 		return l.lexSymbol()
 	}
 	t := l.rtok(knd.Void)
@@ -178,7 +178,7 @@ func (l *Lexer) lexSymbol() (Tok, error) {
 	p := l.pos()
 	var b strings.Builder
 	b.WriteRune(l.cur)
-	for cor.NamePart(l.nxt) || cor.Punct(l.nxt) {
+	for cor.SymPart(l.nxt) {
 		b.WriteRune(l.next())
 	}
 	return l.tok(knd.Sym, p, b.String()), nil
