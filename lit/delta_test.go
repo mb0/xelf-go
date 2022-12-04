@@ -7,6 +7,10 @@ func TestDiff(t *testing.T) {
 		a, b string
 		want string
 	}{
+		{`1`, `1`, `{}`},
+		{`1`, `2`, `{.:2}`},
+		{`'1'`, `'12'`, `{.+:'2'}`},
+		{`'12'`, `'1342'`, `{.*:[1 '34']}`},
 		{`[1]`, `[1]`, `{}`},
 		{`[1]`, `[1 2]`, `{.+:[2]}`},
 		{`[1]`, `[1 2 3]`, `{.+:[2 3]}`},
@@ -38,7 +42,7 @@ func TestDiff(t *testing.T) {
 			t.Errorf("delta failed %s %s: %v", test.a, test.b, err)
 			continue
 		}
-		got := Keyed(d).String()
+		got := d.String()
 		if got != test.want {
 			t.Errorf("for %s and %s want %s got %s", test.a, test.b, test.want, got)
 			continue
