@@ -162,3 +162,4 @@ Implementation
 --------------
 
 We change the env lookup signature to use paths and allow path segments to by empty (with magic).
+We provide the new core spec `sel` to select path with variables from the environment.

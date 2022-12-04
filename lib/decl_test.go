@@ -25,7 +25,8 @@ func TestDeclEval(t *testing.T) {
 			continue
 		}
 		if !reflect.DeepEqual(got, test.want) {
-			t.Errorf("eval %s want %[2]T %[2]s got %[3]T %[3]s", test.raw, test.want, got)
+			t.Errorf("eval %s want %[2]T %[2]s got %[3]T %[3]s",
+				test.raw, test.want, got)
 		}
 	}
 }
