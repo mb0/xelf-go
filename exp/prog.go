@@ -91,17 +91,20 @@ func (p *Prog) Lookup(s *Sym, k string, eval bool) (res lit.Val, err error) {
 	case '$':
 		if p.Arg != nil {
 			v, err := SelectLookup(p.Arg, cor.Keyed(k[1:]), eval)
-			if err != nil {
-				return nil, err
+			if err == nil && v != nil {
+				s.Update(v.Type(), p, k)
+				if !eval && v.Nil() {
+					return nil, nil
+				}
+				return v, nil
 			}
-			s.Update(v.Type(), p, k)
-			return v, err
+			return nil, ErrSymNotFound
 		}
 	default:
 		if qual, rest := SplitQualifier(k); qual != "" {
-			if l, err := LookupMod(p, qual, rest); err == nil {
-				s.Update(l.Val.Type(), p, k)
-				return l.Val, nil
+			if v, err := LookupMod(p, qual, rest); err == nil {
+				s.Update(v.Type(), p, k)
+				return v, nil
 			}
 		}
 	}
@@ -112,10 +115,15 @@ func (p *Prog) Lookup(s *Sym, k string, eval bool) (res lit.Val, err error) {
 			if err != nil {
 				return nil, err
 			}
+			s.Update(t.Type(), p, k)
 			return t, nil
 		}
+		return nil, err
+	} else if err != nil || res == nil {
+		return nil, err
 	}
-	return res, err
+	s.Update(res.Type(), p, k)
+	return res, nil
 }
 
 // Resl resolves an expression using a type hint and returns the result or an error.
@@ -152,13 +160,11 @@ func (p *Prog) Resl(env Env, e Exp, h typ.Type) (Exp, error) {
 		if err != nil {
 			return nil, ast.ErrReslSym(a.Src, a.Sym, err)
 		}
-		if h != typ.Void {
-			ut, err := p.Sys.Unify(a.Res, h)
-			if err != nil {
-				return nil, ast.ErrUnify(a.Src, err.Error())
-			}
-			a.Res = ut
+		ut, err := p.Sys.Unify(a.Res, h)
+		if err != nil {
+			return nil, ast.ErrUnify(a.Src, err.Error())
 		}
+		a.Res = ut
 		if r != nil {
 			return LitSrc(r, a.Src), nil
 		}

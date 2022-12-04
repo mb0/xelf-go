@@ -49,10 +49,12 @@ func (e *DotEnv) Lookup(s *Sym, k string, eval bool) (lit.Val, error) {
 		return e.Par.Lookup(s, k, eval)
 	}
 	v, err := SelectLookup(e.Dot, k, eval)
-	if err != nil {
-		return nil, err
+	if err != nil || v == nil {
+		return nil, ErrSymNotFound
 	}
-	s.Update(typ.Res(v.Type()), e, k)
+	if s.Update(typ.Res(v.Type()), e, k); !eval && v.Nil() {
+		return nil, nil
+	}
 	return v, nil
 }
 

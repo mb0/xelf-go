@@ -60,10 +60,7 @@ func (t Type) Zero() bool    { return t == Void }
 func (t Type) Mut() LitMut   { return &t }
 func (t Type) Value() LitVal { return t }
 func (t Type) As(o Type) (LitVal, error) {
-	if o == Typ {
-		return t, nil
-	}
-	return &Wrap{Typ: o, Val: &t}, nil
+	return &Wrap{Typ: o, Val: &t, OK: !t.Zero()}, nil
 }
 func (*Type) New() LitMut        { return new(Type) }
 func (t *Type) Ptr() interface{} { return t }

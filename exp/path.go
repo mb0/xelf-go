@@ -17,12 +17,15 @@ func SelectLookup(v lit.Val, k string, eval bool) (lit.Val, error) {
 		return nil, err
 	}
 	val, err := lit.SelectPath(v, p)
-	if err == nil || eval {
-		return val, err
-	}
-	t, err := typ.SelectPath(v.Type(), p)
 	if err != nil {
-		return nil, err
+		return nil, ErrSymNotFound
 	}
-	return lit.AnyWrap(t), nil
+	if !eval && val == nil {
+		t, err := typ.SelectPath(v.Type(), p)
+		if err != nil {
+			return nil, err
+		}
+		return lit.AnyWrap(t), nil
+	}
+	return val, nil
 }

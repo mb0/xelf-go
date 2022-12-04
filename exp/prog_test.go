@@ -28,8 +28,8 @@ func TestProgEval(t *testing.T) {
 		{`(fold (list|typ int str) [] (fn r:list t:typ (_ (.1 null)))))`, `[0 '']`},
 	}
 	tval, _ := typ.Parse("<obj@test.point x:int y:int>")
-	env := &lib.LetEnv{Par: extlib.Std, Lets: map[string]lit.Val{
-		"test.point": tval,
+	env := &lib.LetEnv{Par: extlib.Std, Dot: lit.Keyed{
+		{Key: "test", Val: &lit.Keyed{{Key: "point", Val: tval}}},
 	}}
 	arg := &lit.Dict{Keyed: []lit.KeyVal{
 		{Key: "now", Val: lit.Char("2021-08-19T15:00:00Z")},
@@ -69,8 +69,8 @@ func TestProgResl(t *testing.T) {
 		{`<@test.point>`, `<lit|typ|obj@test.point>`, `<obj@test.point>`},
 	}
 	tval, _ := typ.Parse("<obj@test.point x:int y:int>")
-	env := &lib.LetEnv{Par: extlib.Std, Lets: map[string]lit.Val{
-		"test.point": tval,
+	env := &lib.LetEnv{Par: extlib.Std, Dot: lit.Keyed{
+		{Key: "test", Val: &lit.Keyed{{Key: "point", Val: tval}}},
 	}}
 	for _, test := range tests {
 		e, err := exp.Read(strings.NewReader(test.raw), "test")

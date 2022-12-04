@@ -68,7 +68,7 @@ func (ms ModRefs) Find(k string) *ModRef {
 	return nil
 }
 
-func LookupMod(p *Prog, qual, rest string) (*Lit, error) {
+func LookupMod(p *Prog, qual, rest string) (lit.Val, error) {
 	m := p.File.Refs.Find(qual)
 	if m == nil {
 		return nil, ErrSymNotFound
@@ -77,11 +77,18 @@ func LookupMod(p *Prog, qual, rest string) (*Lit, error) {
 	if err != nil {
 		return nil, err
 	}
-	if m.File.URL != p.File.URL {
-		// we are at a file boundary
-		return MoveTo(p, m, val), nil
+	if m.File.URL == p.File.URL || m.Alias == "" || m.Alias == m.Name {
+		return val, nil
 	}
-	return LitVal(val), nil
+	return lit.EditTypes(val, func(e *typ.Editor) (typ.Type, error) {
+		if e.Ref != "" {
+			q, sel := SplitQualifier(e.Ref)
+			if q == m.Name && m.Alias != "" { // cover the mod name itself for now
+				e.Ref = m.Alias + sel
+			}
+		}
+		return e.Type, nil
+	})
 }
 
 func SplitQualifier(k string) (q, _ string) {
@@ -92,75 +99,4 @@ func SplitQualifier(k string) (q, _ string) {
 		}
 	}
 	return "", k
-}
-
-func MoveTo(p *Prog, m *ModRef, val lit.Val) *Lit {
-	var edit = func(e *typ.Editor) (typ.Type, error) {
-		// TODO check and replace all type refs
-		q, sel := SplitQualifier(e.Ref)
-		if q == m.Name && m.Alias != "" { // cover the mod name itself for now
-			e.Ref = m.Alias + sel
-		}
-		return e.Type, nil
-	}
-	return LitVal(editTypes(val, edit))
-}
-
-func editTypes(val lit.Val, edit typ.EditFunc) lit.Val {
-	switch v := val.Value().(type) {
-	case typ.Type:
-		v, _ = typ.Edit(v, edit)
-		return v
-	case *SpecRef:
-		decl, _ := typ.Edit(v.Decl, edit)
-		return &SpecRef{Spec: v.Spec, Decl: decl}
-	case Spec:
-		decl, _ := typ.Edit(v.Type(), edit)
-		return &SpecRef{Spec: v, Decl: decl}
-	case *lit.Vals:
-		vs := make(lit.Vals, 0, len(*v))
-		for _, el := range *v {
-			vs = append(vs, editTypes(el, edit))
-		}
-		return &vs
-	case *lit.List:
-		vs := make(lit.Vals, 0, len(v.Vals))
-		for _, el := range v.Vals {
-			vs = append(vs, editTypes(el, edit))
-		}
-		t, _ := typ.Edit(v.Typ, edit)
-		return &lit.List{Typ: t, Vals: vs}
-	case *lit.Keyed:
-		ks := make(lit.Keyed, 0, len(*v))
-		for _, kv := range *v {
-			kv.Val = editTypes(kv.Val, edit)
-			ks = append(ks, kv)
-		}
-		return &ks
-	case *lit.Dict:
-		ks := make(lit.Keyed, 0, len(v.Keyed))
-		for _, kv := range v.Keyed {
-			kv.Val = editTypes(kv.Val, edit)
-			ks = append(ks, kv)
-		}
-		t, _ := typ.Edit(v.Typ, edit)
-		return &lit.Dict{Typ: t, Keyed: ks}
-	case *lit.Map:
-		m := make(map[string]lit.Val, len(v.M))
-		for k, v := range v.M {
-			m[k] = editTypes(v, edit)
-		}
-		t, _ := typ.Edit(v.Typ, edit)
-		return &lit.Map{Typ: t, M: m}
-	case *lit.Obj:
-		vs := make(lit.Vals, 0, len(v.Vals))
-		for _, el := range v.Vals {
-			vs = append(vs, editTypes(el, edit))
-		}
-		t, _ := typ.Edit(v.Typ, edit)
-		return &lit.Obj{Typ: t, Vals: vs}
-	default:
-		// TODO every other impl that contains a type or other literals
-	}
-	return val
 }

@@ -20,7 +20,11 @@ func (s *withSpec) Resl(p *exp.Prog, env exp.Env, c *exp.Call, h typ.Type) (_ ex
 	if err != nil {
 		return c, err
 	}
-	de.Dot = dot.(*exp.Lit).Val
+	if l, _ := dot.(*exp.Lit); l != nil {
+		de.Dot = l.Val
+	} else {
+		de.Dot = lit.AnyWrap(typ.Res(dot.Type()))
+	}
 	res, err := p.Resl(de, c.Args[1], h)
 	if err != nil {
 		return c, err
@@ -88,7 +92,8 @@ func (e *LetEnv) Parent() exp.Env { return e.Par }
 func (e *LetEnv) Lookup(s *exp.Sym, k string, eval bool) (lit.Val, error) {
 	v, err := exp.SelectLookup(&e.Dot, k, eval)
 	if err == nil && v != nil {
-		if s.Update(v.Type(), e, k); !eval {
+		s.Update(v.Type(), e, k)
+		if !eval && v.Nil() {
 			return nil, nil
 		}
 		return v, nil

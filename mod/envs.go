@@ -164,7 +164,7 @@ func (e *ModEnv) Lookup(s *exp.Sym, k string, eval bool) (lit.Val, error) {
 			key = k[n+1:]
 		}
 		v, err := lit.Select(m.Decl, key)
-		if err == nil {
+		if err == nil && v != nil {
 			return v, nil
 		}
 		if key != k {
