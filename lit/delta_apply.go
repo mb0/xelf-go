@@ -8,36 +8,60 @@ import (
 )
 
 // Apply applies edits d to mutable a or returns an error.
-func Apply(mut Mut, d Delta) error {
+func Apply(mut Mut, d Delta) (Mut, error) {
 	for _, kv := range d {
-		key := kv.Key
-		if key != "" && key != "." && key[0] == '.' {
-			lst := len(key) - 1
-			if suf := key[lst]; suf == '+' {
-				return applyAppend(mut, key[:lst], kv.Val)
-			} else if suf == '*' {
-				return applyOps(mut, key[:lst], kv.Val)
-			} else if suf == '-' {
-				return applyDelete(mut, key[:lst])
+		k := kv.Key
+		if k == "" {
+			return nil, fmt.Errorf("empty delta edit path")
+		}
+		suf := k[len(k)-1]
+		switch suf {
+		case '-', '*', '+':
+			k = k[:len(k)-1]
+		}
+		p, err := cor.ParsePath(k)
+		if err != nil {
+			return nil, err
+		}
+		if p.HasVars() {
+			vals, ok := kv.Val.(*Vals)
+			if !ok {
+				return nil, fmt.Errorf("expect path vars got %T", kv.Val)
+			}
+			vs := *vals
+			vars := make([]string, len(vs)-1)
+			for i := range vars {
+				vars[i] = vs[i].String()
+			}
+			err = p.FillVars(vars)
+			if err != nil {
+				return nil, err
+			}
+			kv.Val = vs[len(vs)-1]
+		}
+		switch suf {
+		case '-':
+			return mut, applyDelete(mut, p)
+		case '*':
+			// TODO special
+			return mut, applyOps(mut, p, kv.Val)
+		case '+':
+			// TODO mirror op
+			return mut, applyAppend(mut, p, kv.Val)
+		}
+		if (len(p) == 0 || len(p) == 1 && p.Fst().Empty()) && kv.Nil() {
+			mut = AnyWrap(mut.Type())
+		} else {
+			err = CreatePath(mut, p, kv.Val)
+			if err != nil {
+				return nil, err
 			}
 		}
-		p, err := cor.ParsePath(key)
-		if err != nil {
-			return err
-		}
-		err = CreatePath(mut, p, kv.Val)
-		if err != nil {
-			return err
-		}
 	}
-	return nil
+	return mut, nil
 }
 
-func selMut(mut Mut, path string, full bool) (res Mut, p cor.Path, s cor.Seg, err error) {
-	p, err = cor.ParsePath(path)
-	if err != nil {
-		return
-	}
+func selMut(mut Mut, p cor.Path, full bool) (res Mut, _ cor.Path, s cor.Seg, err error) {
 	if len(p) == 0 {
 		return mut, p, s, nil
 	}
@@ -62,13 +86,13 @@ func selMut(mut Mut, path string, full bool) (res Mut, p cor.Path, s cor.Seg, er
 	return mut, p, s, nil
 }
 
-func applyDelete(mut Mut, path string) error {
-	mut, _, s, err := selMut(mut, path, false)
+func applyDelete(mut Mut, p cor.Path) error {
+	mut, _, s, err := selMut(mut, p, false)
 	if err != nil {
 		return err
 	}
 	if s.Key == "" {
-		return fmt.Errorf("expect key got %v in %s", s, path)
+		return fmt.Errorf("expect key got %v in %s", s, p)
 	}
 	k, ok := Unwrap(mut).(Keyr)
 	if !ok {
@@ -77,8 +101,8 @@ func applyDelete(mut Mut, path string) error {
 	return k.SetKey(s.Key, nil)
 }
 
-func applyAppend(mut Mut, key string, val Val) error {
-	mut, _, _, err := selMut(mut, key, true)
+func applyAppend(mut Mut, p cor.Path, val Val) error {
+	mut, _, _, err := selMut(mut, p, true)
 	if err != nil {
 		return err
 	}
@@ -99,8 +123,8 @@ func applyAppend(mut Mut, key string, val Val) error {
 	return fmt.Errorf("expect ops val got %T for target %T", val, mut.Value())
 }
 
-func applyOps(mut Mut, key string, val Val) error {
-	mut, _, _, err := selMut(mut, key, true)
+func applyOps(mut Mut, p cor.Path, val Val) error {
+	mut, _, _, err := selMut(mut, p, true)
 	if err != nil {
 		return err
 	}
@@ -139,7 +163,7 @@ func applyStrOps(mut Mut, rs []rune, ops Vals) error {
 			} else if n < 0 {
 				del += int(-n)
 			}
-		case Raw:
+		case Str:
 			b.WriteString(string(n))
 		}
 	}

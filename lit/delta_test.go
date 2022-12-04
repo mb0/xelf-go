@@ -1,6 +1,10 @@
 package lit
 
-import "testing"
+import (
+	"testing"
+
+	"xelf.org/xelf/bfr"
+)
 
 func TestDiff(t *testing.T) {
 	tests := []struct {
@@ -22,9 +26,9 @@ func TestDiff(t *testing.T) {
 		{`null`, `[1 2]`, `{.:[1 2]}`},
 		{`[1 2]`, `null`, `{.;}`},
 		{`{a:1}`, `{a:2}`, `{a:2}`},
-		{`{}`, `{'a.b':2}`, `{$:['a.b' 2]}`},
+		{`{}`, `{a.b:2}`, `{$:['a.b' 2]}`},
 		{`{}`, `{' ':2}`, `{$:[' ' 2]}`},
-		{`{}`, `{'$':2}`, `{$:['$' 2]}`},
+		{`{}`, `{$:2}`, `{$:['$' 2]}`},
 		{`{a:1 b:2}`, `{a:2}`, `{a:2 b-;}`},
 		{`{a:1 b:2}`, `{b:2}`, `{a-;}`},
 		{`{a:[1 2]}`, `{a:[1 3 2]}`, `{a*:[1 [3]]}`},
@@ -53,13 +57,14 @@ func TestDiff(t *testing.T) {
 			continue
 		}
 		mut := a.Mut()
-		err = Apply(mut, d)
+		mut, err = Apply(mut, d)
 		if err != nil {
 			t.Errorf("apply failed %s %s: %v", test.a, got, err)
 			continue
 		}
-		bstr := mut.String()
+		bstr := bfr.String(mut)
 		if bstr != test.b {
+			t.Errorf("apply %s to %s want %s got %s", d, test.a, test.b, bstr)
 			continue
 		}
 	}

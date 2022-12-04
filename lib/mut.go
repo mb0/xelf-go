@@ -39,7 +39,7 @@ func (s *mutSpec) Eval(p *exp.Prog, c *exp.Call) (lit.Val, error) {
 		}
 		delta = append(delta, lit.KeyVal{Key: tag.Tag, Val: ta})
 	}
-	return mut, lit.Apply(mut, delta)
+	return lit.Apply(mut, delta)
 }
 
 var Append = &appendSpec{impl("<form@append list tupl? _>")}
