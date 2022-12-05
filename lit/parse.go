@@ -148,6 +148,9 @@ func ParseMut(a ast.Ast) (Mut, error) {
 }
 
 func parseMutNull(a ast.Ast) (Val, error) {
+	if a.Kind == knd.Void {
+		return Null{}, nil
+	}
 	m, err := ParseMut(a)
 	if m == nil {
 		return Null{}, err

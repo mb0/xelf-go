@@ -145,11 +145,14 @@ func ScanRest(l *Lexer, t Tok) (Ast, error) {
 }
 
 func UnquotePair(e Ast) (key string, val Ast, err error) {
-	if e.Kind != knd.Tag || len(e.Seq) < 2 {
+	if e.Kind != knd.Tag || len(e.Seq) < 1 {
 		err = ErrExpectTag(e)
 		return
 	}
-	key, val = e.Seq[0].Raw, e.Seq[1]
+	key = e.Seq[0].Raw
+	if len(e.Seq) > 1 {
+		val = e.Seq[1]
+	}
 	if e.Seq[0].Kind == knd.Char {
 		key, err = cor.Unquote(key)
 		if err != nil {

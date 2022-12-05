@@ -130,8 +130,19 @@ func AssignPath(mut Mut, path cor.Path, val Val) (err error) {
 
 // CreatePath creates an element of root at path to val or returns an error.
 // It resizes and creates missing intermediate container values using the registry.
-func CreatePath(mut Mut, path cor.Path, val Val) (err error) {
+func CreatePath(mut Mut, path cor.Path, val Val) (_ Mut, err error) {
 	npath := path
+	if mut.Nil() {
+		t := typ.Any
+		if s := path.Fst(); s.IsIdx() {
+			t = typ.Idxr
+		} else if s.Key != "" {
+			t = typ.Keyr
+		} else if len(path) > 1 {
+			return nil, fmt.Errorf("unexpected empty assign path")
+		}
+		mut = ZeroWrap(t)
+	}
 	cur := mut
 	for i, s := range path {
 		var next Val
@@ -143,7 +154,7 @@ func CreatePath(mut Mut, path cor.Path, val Val) (err error) {
 			npath = path[i+1:]
 			break
 		} else {
-			return fmt.Errorf("unexpected empty assign path")
+			return nil, fmt.Errorf("unexpected empty assign path")
 		}
 		if err != nil {
 			break
@@ -162,13 +173,13 @@ func CreatePath(mut Mut, path cor.Path, val Val) (err error) {
 		cur, npath = nmut, path[i+1:]
 	}
 	if len(npath) == 0 {
-		return cur.Assign(val)
+		return mut, cur.Assign(val)
 	}
 	s := npath[0]
 	pt := cur.Type()
 	et, err := typ.SelectPath(pt, cor.Path{s})
 	if err != nil {
-		return err
+		return nil, err
 	}
 	var ev Val
 	isAny := et == typ.Void || et.Kind&knd.Data == knd.Data
@@ -176,20 +187,20 @@ func CreatePath(mut Mut, path cor.Path, val Val) (err error) {
 		ev = Unwrap(val)
 	} else {
 		if isAny {
-			if npath[1].Key == "" {
+			if np := npath[1]; np.IsIdx() {
 				et = typ.Idxr
-			} else {
+			} else if np.Key != "" {
 				et = typ.Keyr
 			}
 		}
 		z := Zero(typ.Deopt(et))
 		if len(npath) > 1 {
-			err = CreatePath(z, npath[1:], val)
+			z, err = CreatePath(z, npath[1:], val)
 		} else {
 			err = z.Assign(val)
 		}
 		if err != nil {
-			return err
+			return nil, err
 		}
 		ev = Unwrap(z)
 	}
@@ -197,14 +208,15 @@ func CreatePath(mut Mut, path cor.Path, val Val) (err error) {
 		x.OK = true
 		cur = x.Val
 	}
+	cur = Unwrap(cur.Value()).Mut()
 	if s.Key != "" {
 		if a, ok := cur.(Keyr); ok {
-			return a.SetKey(s.Key, ev)
+			return mut, a.SetKey(s.Key, ev)
 		}
 	} else {
 		if a, ok := cur.(Idxr); ok {
-			return a.SetIdx(s.Idx, ev)
+			return mut, a.SetIdx(s.Idx, ev)
 		}
 	}
-	return fmt.Errorf("not an applicable value %T %s at %s", cur, cur, npath)
+	return nil, fmt.Errorf("not an applicable value %T %s at %s", cur, cur, npath)
 }

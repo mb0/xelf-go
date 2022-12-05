@@ -142,7 +142,7 @@ func PathSetter(p *exp.Prog, n Node, key string, v lit.Val) error {
 	if err != nil {
 		return fmt.Errorf("parse %s: %w", key, err)
 	}
-	err = lit.CreatePath(n, path, v)
+	_, err = lit.CreatePath(n, path, v)
 	if err != nil {
 		return err
 	}
@@ -157,10 +157,10 @@ func ExtraSetter(m string) KeySetter {
 			return fmt.Errorf("parse %s: %w", key, err)
 		}
 		v = v.Value()
-		err = lit.CreatePath(n, path, v)
+		_, err = lit.CreatePath(n, path, v)
 		if err != nil {
 			path = append(cor.Path{{Key: m}}, path...)
-			err = lit.CreatePath(n, path, v)
+			_, err = lit.CreatePath(n, path, v)
 		}
 		return err
 	}

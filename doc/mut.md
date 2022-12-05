@@ -33,7 +33,8 @@ requirements for assign and merge edits and more:
 
 	{a:1 b:2} is valid delta to arrive at the same keyr value
 	{.:1} the root path can be used to assing the whole value
-	{.:{a:1 b:2}} and {.a:1 .b:2} can be simplified to {a:1 b:2}
+	{.a:1 .b:2} can be simplified to {a:1 b:2}
+	{.:{a:1 b:2}} cannot be simplified because it is an assignment an not an edit
 	{.:{a:1} b:2} would require ordered edits which could be defined
 	{.:[1 2 3] .1:3 .-1:7} we can select into any idxr from both ends
 	{docs/secret:null} or even set the same value to a list selection

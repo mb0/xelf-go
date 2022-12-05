@@ -50,7 +50,7 @@ func Apply(mut Mut, d Delta) (Mut, error) {
 		if (len(p) == 0 || len(p) == 1 && p.Fst().Empty()) && kv.Nil() {
 			mut = AnyWrap(mut.Type())
 		} else {
-			err = CreatePath(mut, p, kv.Val)
+			mut, err = CreatePath(mut, p, kv.Val)
 			if err != nil {
 				return nil, err
 			}

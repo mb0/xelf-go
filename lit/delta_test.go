@@ -69,3 +69,39 @@ func TestDiff(t *testing.T) {
 		}
 	}
 }
+
+func TestApply(t *testing.T) {
+	tests := []struct {
+		a, d, b string
+	}{
+		{`null`, `{a:1 b:2}`, `{a:1 b:2}`},
+		{`null`, `{.:1}`, `1`},
+		{`null`, `{.:{a:1} b:2}`, `{a:1 b:2}`},
+		{`null`, `{.:[1 2 3] .1:3 .-1:7}`, `[1 3 7]`},
+		{`1`, `{.;}`, `null`},
+	}
+	for _, test := range tests {
+		a, err := Parse(test.a)
+		if err != nil {
+			t.Errorf("parse a %s: %v", test.a, err)
+			continue
+		}
+		var d Delta
+		err = ParseInto(test.d, (*Keyed)(&d))
+		if err != nil {
+			t.Errorf("parse d %s: %v", test.b, err)
+			continue
+		}
+		mut := a.Mut()
+		mut, err = Apply(mut, d)
+		if err != nil {
+			t.Errorf("apply failed %s %s: %v", test.a, test.d, err)
+			continue
+		}
+		bstr := bfr.String(mut)
+		if bstr != test.b {
+			t.Errorf("apply %s to %s want %s got %s", test.d, test.a, test.b, bstr)
+			continue
+		}
+	}
+}
