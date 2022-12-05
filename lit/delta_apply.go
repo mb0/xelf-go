@@ -23,13 +23,18 @@ func Apply(mut Mut, d Delta) (Mut, error) {
 		if err != nil {
 			return nil, err
 		}
-		if p.HasVars() {
+		if vn := p.CountVars(); vn > 0 {
 			vals, ok := kv.Val.(*Vals)
 			if !ok {
 				return nil, fmt.Errorf("expect path vars got %T", kv.Val)
 			}
 			vs := *vals
-			vars := make([]string, len(vs)-1)
+			n := len(vs)
+			long := suf != '-' || vn == n-1
+			if long {
+				n--
+			}
+			vars := make([]string, n)
 			for i := range vars {
 				vars[i] = vs[i].String()
 			}
@@ -37,7 +42,11 @@ func Apply(mut Mut, d Delta) (Mut, error) {
 			if err != nil {
 				return nil, err
 			}
-			kv.Val = vs[len(vs)-1]
+			if long {
+				kv.Val = vs[len(vs)-1]
+			} else {
+				kv.Val = Null{}
+			}
 		}
 		switch suf {
 		case '-':

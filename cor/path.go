@@ -90,13 +90,13 @@ func (p Path) Fst() Seg {
 	}
 	return Seg{Sel: 'n'}
 }
-func (p Path) HasVars() bool {
+func (p Path) CountVars() (n int) {
 	for _, s := range p {
 		if s.Key == "$" {
-			return true
+			n++
 		}
 	}
-	return false
+	return n
 }
 
 func (p Path) FillVars(vars []string) error {
