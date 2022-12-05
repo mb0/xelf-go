@@ -12,6 +12,7 @@ type (
 	Ops interface {
 		Len() int
 		Op(int) (int, Val)
+		Swap(int, int)
 	}
 
 	// StrOp represents a string operation used for str diff edits. N > 0 means retain N runes
@@ -47,6 +48,10 @@ func (ops StrOps) Op(i int) (int, Val)  { return ops[i].N, Str(ops[i].V) }
 func (ops RawOps) Op(i int) (int, Val)  { return ops[i].N, Raw(ops[i].V) }
 func (ops ListOps) Op(i int) (int, Val) { return ops[i].N, &ops[i].V }
 
+func (ops StrOps) Swap(i, j int)  { ops[i], ops[j] = ops[j], ops[i] }
+func (ops RawOps) Swap(i, j int)  { ops[i], ops[j] = ops[j], ops[i] }
+func (ops ListOps) Swap(i, j int) { ops[i], ops[j] = ops[j], ops[i] }
+
 func opsToVals(ops Ops) *Vals {
 	vs := make(Vals, ops.Len())
 	for i := range vs {
@@ -62,6 +67,12 @@ func opsToVals(ops Ops) *Vals {
 		}
 	}
 	return &vs
+}
+
+func mirrorOps(v Ops) {
+	for i, j := 0, v.Len()-1; i < j; i, j = i+1, j-1 {
+		v.Swap(i, j)
+	}
 }
 
 // diffStr diffs a and b and appends any str ops to d and returns the result or an error.
@@ -95,6 +106,31 @@ func diffRaw(a, b Raw, pre cor.Path, d Delta) (Delta, error) {
 		return t.diffRes(ops, b, pre, d, nil)
 	}
 	return d, nil
+}
+func readOps(nn int, vals Vals, f func(int, Val)) error {
+	var ret, del int
+	for _, op := range vals {
+		switch v := op.(type) {
+		case Int:
+			n := int(v)
+			f(n, nil)
+			if n > 0 {
+				ret += n
+			} else if n < 0 {
+				del += -n
+			}
+		case Str:
+			f(0, v)
+		case Raw:
+			f(0, v)
+		case *Vals:
+			f(0, v)
+		}
+	}
+	if idx := ret + del; idx < nn {
+		f(nn-idx, nil)
+	}
+	return nil
 }
 
 // diffIdxr diffs a and b and appends any list ops to d and returns the result or an error.
@@ -167,7 +203,7 @@ func (t *diffCounts) diffRes(ops Ops, b Val, pre cor.Path, d Delta, hook idxHook
 	// two ops u,v where u is ret and v is ins
 	if oLen == 2 && o0N > 0 && o1N == 0 {
 		// lets return the special append op
-		return addEdit(d, pre, o1V, "+"), nil
+		return addEdit(d, pre, &Vals{o1V}, "+"), nil
 	}
 	// we also want to detect replacing a single element and use idx path notation. that does
 	// only occur in two instances:

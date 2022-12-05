@@ -43,11 +43,9 @@ func Apply(mut Mut, d Delta) (Mut, error) {
 		case '-':
 			return mut, applyDelete(mut, p)
 		case '*':
-			// TODO special
-			return mut, applyOps(mut, p, kv.Val)
+			return mut, applyOps(mut, p, kv.Val, false)
 		case '+':
-			// TODO mirror op
-			return mut, applyAppend(mut, p, kv.Val)
+			return mut, applyOps(mut, p, kv.Val, true)
 		}
 		if (len(p) == 0 || len(p) == 1 && p.Fst().Empty()) && kv.Nil() {
 			mut = AnyWrap(mut.Type())
@@ -101,29 +99,7 @@ func applyDelete(mut Mut, p cor.Path) error {
 	return k.SetKey(s.Key, nil)
 }
 
-func applyAppend(mut Mut, p cor.Path, val Val) error {
-	mut, _, _, err := selMut(mut, p, true)
-	if err != nil {
-		return err
-	}
-	switch v := val.(type) {
-	case *Vals:
-		if apdr, ok := mut.Value().(Appender); ok {
-			return apdr.Append(*v...)
-		}
-	case Str:
-		if s, ok := mut.Value().(Str); ok {
-			return mut.Assign(s + v)
-		}
-	case Raw:
-		if r, ok := mut.Value().(Raw); ok {
-			return mut.Assign(append(r, v...))
-		}
-	}
-	return fmt.Errorf("expect ops val got %T for target %T", val, mut.Value())
-}
-
-func applyOps(mut Mut, p cor.Path, val Val) error {
+func applyOps(mut Mut, p cor.Path, val Val, mirror bool) error {
 	mut, _, _, err := selMut(mut, p, true)
 	if err != nil {
 		return err
@@ -138,96 +114,103 @@ func applyOps(mut Mut, p cor.Path, val Val) error {
 		if !ok {
 			return fmt.Errorf("expect ops val slice got %T", v)
 		}
-		return applyListOps(mut, vals, ops)
+		return applyListOps(mut, vals, ops, mirror)
 	case *CharMut:
 		// TODO decide whether it is a str or raw op
-		return applyStrOps(mut, []rune(*v), ops)
+		return applyStrOps(mut, []rune(*v), ops, mirror)
 	case *StrMut:
-		return applyStrOps(mut, []rune(*v), ops)
+		return applyStrOps(mut, []rune(*v), ops, mirror)
 	case *RawMut:
-		return applyRawOps(mut, []byte(*v), ops)
+		return applyRawOps(mut, []byte(*v), ops, mirror)
 	}
 	return fmt.Errorf("expect ops val got %T for target %T", val, Unwrap(mut).Mut())
 }
 
-func applyStrOps(mut Mut, rs []rune, ops Vals) error {
+func applyStrOps(mut Mut, rs []rune, vals Vals, mirror bool) error {
+	ops := make(StrOps, 0, len(vals)+1)
+	err := readOps(len(rs), vals, func(n int, v Val) {
+		s, _ := v.(Str)
+		ops = append(ops, StrOp{N: n, V: s})
+	})
+	if err != nil {
+		return err
+	}
+	if mirror {
+		mirrorOps(ops)
+	}
 	var b bytes.Buffer
 	var ret, del int
 	for _, op := range ops {
-		switch n := op.(type) {
-		case Int:
-			if n > 0 {
-				idx := ret + del
-				b.WriteString(string(rs[idx : idx+int(n)]))
-				ret += int(n)
-			} else if n < 0 {
-				del += int(-n)
-			}
-		case Str:
-			b.WriteString(string(n))
+		if op.N > 0 {
+			idx := ret + del
+			b.WriteString(string(rs[idx : idx+op.N]))
+			ret += op.N
+		} else if op.N < 0 {
+			del += -op.N
+		} else {
+			b.WriteString(string(op.V))
 		}
-	}
-	if idx := ret + del; idx < len(rs) {
-		b.WriteString(string(rs[idx:]))
 	}
 	return mut.Assign(Str(b.String()))
 }
 
-func applyRawOps(mut Mut, bs []byte, ops Vals) error {
+func applyRawOps(mut Mut, bs []byte, vals Vals, mirror bool) error {
+	ops := make(RawOps, 0, len(vals)+1)
+	err := readOps(len(bs), vals, func(n int, v Val) {
+		r, _ := v.(Raw)
+		ops = append(ops, RawOp{N: n, V: r})
+	})
+	if err != nil {
+		return err
+	}
+	if mirror {
+		mirrorOps(ops)
+	}
 	var b bytes.Buffer
 	var ret, del int
 	for _, op := range ops {
-		switch n := op.(type) {
-		case Int:
-			if n > 0 {
-				idx := ret + del
-				b.Write(bs[idx : idx+int(n)])
-				ret += int(n)
-			} else if n < 0 {
-				del += int(-n)
-			}
-		case Raw:
-			b.Write(n)
+		if op.N > 0 {
+			idx := ret + del
+			b.Write(bs[idx : idx+op.N])
+			ret += op.N
+		} else if op.N < 0 {
+			del += -op.N
+		} else {
+			b.Write(op.V)
 		}
-	}
-	if idx := ret + del; idx < len(bs) {
-		b.Write(bs[idx:])
 	}
 	return mut.Assign(Raw(b.Bytes()))
 }
-func applyListOps(mut Mut, vals Vals, ops Vals) error {
-	var ret, del, add, nn int
-	for _, op := range ops {
-		switch n := op.(type) {
-		case Int:
-			if n > 0 {
-				ret += int(n)
-			} else if n < 0 {
-				del += int(-n)
-			}
-		case *Vals:
-			add += len(*n)
-		}
-		add += len(vals) - ret - del
+func applyListOps(mut Mut, vals Vals, ovals Vals, mirror bool) error {
+	ops := make(ListOps, 0, len(ovals)+1)
+	err := readOps(len(vals), ovals, func(n int, v Val) {
+		vs, _ := toVals(v)
+		ops = append(ops, ListOp{N: n, V: vs})
+	})
+	if err != nil {
+		return err
 	}
-	nn, ret, del = ret+add, 0, 0
+	if mirror {
+		mirrorOps(ops)
+	}
+	var ret, del, nn int
+	for _, op := range ops {
+		if op.N > 0 {
+			nn += op.N
+		}
+		nn += len(op.V)
+	}
 	res := make(Vals, 0, nn)
 	for _, op := range ops {
-		switch n := op.(type) {
-		case Int:
-			if n > 0 {
-				idx := ret + del
-				res = append(res, vals[idx:idx+int(n)]...)
-				ret += int(n)
-			} else if n < 0 {
-				del += int(-n)
-			}
-		case *Vals:
-			res = append(res, *n...)
+		if op.N > 0 {
+			idx := ret + del
+			res = append(res, vals[idx:idx+op.N]...)
+			ret += op.N
+		} else if op.N < 0 {
+			del += -op.N
+		} else {
+			res = append(res, op.V...)
 		}
-	}
-	if idx := ret + del; idx < len(vals) {
-		res = append(res, vals[idx:]...)
 	}
 	return mut.Assign(&res)
 }
