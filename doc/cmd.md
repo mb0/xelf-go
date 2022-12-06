@@ -41,13 +41,13 @@ module system to expand program capabilities.
 
  * We could simply use a `$XELF_EVAL` environment variable to configure which command evaluates
    code. That however does not allow us to mix runtimes.
- * We could use a new xelf-cmd project that imports all runtimes and supported backend. This would
+ * We could use a new xelf-cmd project that imports all runtimes and supported backends. This would
    not allow others to use xelf in the same way.
  * Could we somehow provide runtime integration using an external process, like rpc plugin modules?
    This would be nice and would also help provide external non-go code generators.
  * We could compile a new runner every time, that imports a list of go runtime packages. This would
-   involve create a temporary module, fetching all dependencies and compiling it. This was easier to
-   implement with GOPATH. And then we are still limited to runtimes written in go.
+   involve creating a temporary module, fetching all dependencies and compiling it. This was easier
+   to implement with GOPATH. And then we are still limited to runtimes written in go.
  * We decided to use go plugins, they fit our requirements well and only require building a special
    go plugin binary, but otherwise has none of the problems, work or overhead associated with the
    other options. We would need an option to easily build and locate plugins. Go plugins must be
@@ -64,6 +64,14 @@ daql plugin.
 
 It would be great for daql qry backend providers to use modules in the same way. For now we can
 simply provide an empty module that ensures the provider is registered.
+
+If we use xelf plugins to provide runtime modules and other extensions, we might also want to
+lazy load and provide subcommands from plugins. This would allow us to drop the daql and layla
+command entirely and use subcommands like `xelf daql graph` instead. Users that prefer simpler
+commands can use bash aliases. The positive aspects are:
+
+ * Projects can easily provide specialized subcommands without adding any extra dependencies.
+ * We do not pollute the system path namespace and it is easier to discover features.
 
 Links
 -----

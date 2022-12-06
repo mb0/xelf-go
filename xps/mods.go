@@ -1,6 +1,7 @@
 package xps
 
 import (
+	"fmt"
 	"sort"
 
 	"xelf.org/xelf/mod"
@@ -9,8 +10,9 @@ import (
 // Mods wrapps a SysMods module source registry with a list of plugin manifests.
 // It lazy-loads a plugin that provides a module source missing from the registry.
 type Mods struct {
-	Sys *mod.SysMods
-	All []Manifest
+	Sys   *mod.SysMods
+	All   []Manifest
+	Plugs []*Plug
 }
 
 func NewMods(sys *mod.SysMods, all []Manifest) *Mods {
@@ -26,7 +28,7 @@ func (sm *Mods) LoadSrc(raw, base *mod.Loc) (*mod.Src, error) {
 		ms := manifestsFor(sm.All, raw.Path())
 		if len(ms) > 0 {
 			// sorted by mods count desc, we use the match that covers the most plugins
-			_, err = loadPlug(ms[0])
+			_, err = sm.load(ms[0])
 			if err != nil {
 				return nil, err
 			}
@@ -34,6 +36,37 @@ func (sm *Mods) LoadSrc(raw, base *mod.Loc) (*mod.Src, error) {
 		}
 	}
 	return src, err
+}
+
+func (sm *Mods) RunCmd(dir string, args []string) error {
+	plug := args[0]
+	for _, m := range sm.All {
+		if m.Name != plug {
+			continue
+		}
+		p, err := sm.load(m)
+		if err != nil {
+			return err
+		}
+		if p.Cmd == nil {
+			return fmt.Errorf("plugin %q has no command", plug)
+		}
+		return p.Cmd(dir, args)
+	}
+	return fmt.Errorf("subcommand %q not found", plug)
+}
+func (sm *Mods) load(m Manifest) (*Plug, error) {
+	for _, p := range sm.Plugs {
+		if p.Path == m.Path {
+			return p, nil
+		}
+	}
+	p, err := loadPlug(m)
+	if err != nil {
+		return nil, err
+	}
+	sm.Plugs = append(sm.Plugs, p)
+	return p, nil
 }
 
 func manifestsFor(all []Manifest, path string) (res []Manifest) {
