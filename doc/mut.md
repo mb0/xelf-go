@@ -163,4 +163,10 @@ Implementation
 --------------
 
 We change the env lookup signature to use paths and allow path segments to by empty (with magic).
-We provide the new core spec `sel` to select path with variables from the environment.
+We add path variables signified by path segment with a separator and dollar key. Paths starting with
+a dollar sign are argument path but it can use variables in following segments.
+
+We implemented diff ops for raw and str literals too and mirror ops using the plus marker.
+
+We provide the new core spec `sel` to select path with variables from the environment. We add the
+subcommands sel and mut to the xelf command.

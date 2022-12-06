@@ -91,8 +91,8 @@ func (p Path) Fst() Seg {
 	return Seg{Sel: 'n'}
 }
 func (p Path) CountVars() (n int) {
-	for _, s := range p {
-		if s.Key == "$" {
+	for i, s := range p {
+		if s.Key == "$" && (i > 0 || s.Sel != 0) {
 			n++
 		}
 	}
@@ -102,7 +102,7 @@ func (p Path) CountVars() (n int) {
 func (p Path) FillVars(vars []string) error {
 	for i := range p {
 		s := &p[i]
-		if s.Key != "$" {
+		if s.Key != "$" || (i == 0 && s.Sel == 0) {
 			continue
 		}
 		if len(vars) == 0 {

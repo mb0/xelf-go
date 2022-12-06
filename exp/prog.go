@@ -94,12 +94,16 @@ func (p *Prog) Lookup(s *Sym, pp cor.Path, eval bool) (res lit.Val, err error) {
 	if fst := &pp[0]; fst.Sep() == 0 {
 		if fst.Key != "" && fst.Key[0] == '$' {
 			if p.Arg != nil {
-				if len(pp) == 1 && len(fst.Key) == 1 {
-					return p.Arg, nil
+				np := pp
+				if len(fst.Key) == 1 {
+					if len(pp) == 1 {
+						return p.Arg, nil
+					}
+					np = pp[1:]
 				}
 				org := fst.Key
 				fst.Key = org[1:]
-				v, err := SelectLookup(p.Arg, pp, eval)
+				v, err := SelectLookup(p.Arg, np, eval)
 				fst.Key = org
 				if err == nil && v != nil {
 					s.Update(v.Type(), p, pp)

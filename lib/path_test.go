@@ -14,12 +14,15 @@ func TestSelEval(t *testing.T) {
 		want lit.Val
 	}{
 		{`(with {a:1 b:2} (sel .$ 'a'))`, lit.Num(1)},
+		{`(with {a:1 b:2} (sel $))`, &lit.Vals{lit.Str("arg")}},
+		{`(with {a:1 b:2} (sel $.-1))`, lit.Str("arg")},
+		{`(with {a:1 b:2} (sel $.$ -1))`, lit.Str("arg")},
 		{`(with {a:1 b:2} (sel '.$' 'b'))`, lit.Num(2)},
 		{`(with [1 2] (sel .$ 0))`, lit.Num(1)},
 		{`(with [1 2] (sel .$ -1))`, lit.Num(2)},
 	}
 	for _, test := range tests {
-		got, err := exp.NewProg(Std).RunStr(test.raw, nil)
+		got, err := exp.NewProg(Std).RunStr(test.raw, &lit.Vals{lit.Str("arg")})
 		if err != nil {
 			t.Errorf("eval %s failed:\n%v", test.raw, err)
 			continue
