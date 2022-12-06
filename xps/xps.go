@@ -2,6 +2,7 @@
 package xps
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"plugin"
@@ -78,4 +79,23 @@ func loadPlug(m Manifest) (*Plug, error) {
 		cmd = sym.(Cmd)
 	}
 	return &Plug{Manifest: m, Plugin: p, Cmd: cmd}, nil
+}
+
+// PlugCmd loads and returns a subcommand for plug or nil.
+// It only returns an error if a plugin was found but could not load a command and nil otherwise.
+func PlugCmd(all []Manifest, plug string) (Cmd, error) {
+	for _, m := range all {
+		if m.Name != plug {
+			continue
+		}
+		p, err := loadPlug(m)
+		if err != nil {
+			return nil, err
+		}
+		if p.Cmd == nil {
+			return nil, fmt.Errorf("plugin %q has no command", plug)
+		}
+		return p.Cmd, nil
+	}
+	return nil, nil
 }

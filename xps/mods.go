@@ -1,7 +1,6 @@
 package xps
 
 import (
-	"fmt"
 	"sort"
 
 	"xelf.org/xelf/mod"
@@ -38,23 +37,6 @@ func (sm *Mods) LoadSrc(raw, base *mod.Loc) (*mod.Src, error) {
 	return src, err
 }
 
-func (sm *Mods) RunCmd(dir string, args []string) error {
-	plug := args[0]
-	for _, m := range sm.All {
-		if m.Name != plug {
-			continue
-		}
-		p, err := sm.load(m)
-		if err != nil {
-			return err
-		}
-		if p.Cmd == nil {
-			return fmt.Errorf("plugin %q has no command", plug)
-		}
-		return p.Cmd(dir, args)
-	}
-	return fmt.Errorf("subcommand %q not found", plug)
-}
 func (sm *Mods) load(m Manifest) (*Plug, error) {
 	for _, p := range sm.Plugs {
 		if p.Path == m.Path {
