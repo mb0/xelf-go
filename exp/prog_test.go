@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	"xelf.org/xelf/bfr"
 	"xelf.org/xelf/exp"
 	"xelf.org/xelf/lib"
 	"xelf.org/xelf/lib/extlib"
@@ -16,6 +17,8 @@ func TestProgEval(t *testing.T) {
 		raw  string
 		want string
 	}{
+		{`($now)`, `'2021-08-19T15:00:00Z'`},
+		{`($)`, `{now:'2021-08-19T15:00:00Z'}`},
 		{`(@test.point {})`, `{x:0 y:0}`},
 		{`(with {a:[{b:2}]} .a.0.b)`, `2`},
 		{`(with {a:[{b:2}, {b:3}]} .a/b)`, `[2 3]`},
@@ -40,7 +43,7 @@ func TestProgEval(t *testing.T) {
 			t.Errorf("eval %s failed: %v", test.raw, err)
 			continue
 		}
-		str := got.String()
+		str := bfr.String(got)
 		if str != test.want {
 			t.Errorf("eval %s want res %s got %s", test.raw, test.want, str)
 		}
