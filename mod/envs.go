@@ -41,7 +41,7 @@ func (le *LoaderEnv) LoadFile(prog *exp.Prog, loc *Loc) (f *File, err error) {
 			if err == ErrFileNotFound {
 				continue
 			}
-			return nil, fmt.Errorf("module source load error for %s:\n%v", src.URL, err)
+			return nil, fmt.Errorf("module source load error for %s:\n%v", loc.URL, err)
 		}
 		if prog.Files == nil {
 			prog.Files = make(map[string]*File)

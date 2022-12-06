@@ -22,4 +22,7 @@ Think about restricting the environment for nested expressions. We could use tha
    at least be easier to filter references by origin module. This would also leave the program root
    environments solely to language extensions.
 
-
+We want to use the cat and other specs both with individual arguments or a compatible list. We need
+a syntax that discerns between lists used as element or as fill-in for a variadic tuple argument.
+ * We could add a use make to type a list as tupl|lit and a dict as tupl|tag|lit
+ * `(sep '-' (tupl (range 12)))` looks alright to me

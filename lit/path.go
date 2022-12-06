@@ -78,7 +78,6 @@ func SelectList(val Val, path cor.Path) (Val, error) {
 }
 
 func collectIdxrVal(v Val, path cor.Path, into *List) (err error) {
-
 	if s := path.Fst(); s.IsIdx() {
 		v, err = SelectIdx(v, s.Idx)
 	} else if s.Key != "" {
@@ -134,7 +133,10 @@ func CreatePath(mut Mut, path cor.Path, val Val) (_ Mut, err error) {
 	npath := path
 	if mut.Nil() {
 		t := typ.Any
-		if s := path.Fst(); s.IsIdx() {
+		if s := path.Fst(); s.Sep() == '/' {
+			// we cannot create list path only modify contents
+			return nil, nil
+		} else if s.IsIdx() {
 			t = typ.Idxr
 		} else if s.Key != "" {
 			t = typ.Keyr
@@ -146,7 +148,10 @@ func CreatePath(mut Mut, path cor.Path, val Val) (_ Mut, err error) {
 	cur := mut
 	for i, s := range path {
 		var next Val
-		if s.IsIdx() {
+		if s.Sep() == '/' {
+			// TODO make selection insert
+			return nil, fmt.Errorf("unexpected list selection segment")
+		} else if s.IsIdx() {
 			next, err = SelectIdx(cur, s.Idx)
 		} else if s.Key != "" {
 			next, err = SelectKey(cur, s.Key)
