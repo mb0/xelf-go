@@ -22,17 +22,16 @@ actual command package at xelf.org/cmd/xelf.
 We use the new xps package to load external runtime support from $XELF_PLUGINS into the process.
 This works really great.
 
-The command should provide a collection of helpers organised as subcommands:
+The command should provide a collection of helpers organised as subcommands. Most subcommands should
+read stdin and print to stdout, so that we can easily compose commands.
 
- * help: show help text obviously
- * fmt:  a generic ast formatter, that also tries to correct unbalanced pairs
- * sel:  select a path from the xelf file, a simple jq for xelf
- * json: convert xelf literal input to json output, should work with streams
- * mods: list all modules in path or searches for specific path
- * test: resolves xelf input and reports problems
- * eval: evaluate xelf input
- * fix:  a specialized formatter that simplifies and standardizes the input
- * repl: a xelf repl that can load xelf plugins
+	echo '{a:1 b:[2 3 4]}' | xelf mut '{a:7 b+:[[5]]}' | xelf json
+
+We want to provide following subcommands:
+ * evaluation commands:  'run', 'test' and 'repl'
+ * development commands: 'fmt', 'fix' and 'list'
+ * literal commands:     'sel', 'mut' and 'json'
+ * other commands:       'version' and 'help'
 
 Discussion
 ----------
