@@ -116,7 +116,7 @@ func FindModEnv(env exp.Env) *ModEnv {
 }
 func NewModEnv(par exp.Env, file *File) *ModEnv {
 	return &ModEnv{Par: par, Mod: &Mod{File: file, Decl: &lit.Obj{
-		Typ: typ.Type{Kind: knd.Mod | knd.Obj, Body: &typ.ParamBody{}},
+		Typ: typ.Type{Kind: knd.Obj, Body: &typ.ParamBody{}},
 	}}}
 }
 

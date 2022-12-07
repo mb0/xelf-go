@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 	"strings"
 	"testing"
-
-	"xelf.org/xelf/knd"
 )
 
 func TestParse(t *testing.T) {
@@ -47,8 +45,6 @@ func TestParse(t *testing.T) {
 		{ElemTupl(Int), `<tupl int>`, `<tupl|int>`},
 		{ElemTupl(Int), `<tupl|int>`, ``},
 		{Obj("", P("Name", Str)), `<obj Name:str>`, ``},
-		{Type{Kind: knd.Mod}, `<mod>`, ``},
-		{Type{Kind: knd.Mod | knd.Ref, Ref: "prod"}, `<mod@prod>`, ``},
 
 		{Var(-1, Void), `@`, `<@>`},
 		{Var(1, Void), `<@1>`, ``},

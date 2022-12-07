@@ -49,13 +49,12 @@ const (
 	Var
 	Ref
 	Sel
-	Mod
 )
 
 const (
 	Void = Kind(0)
 	Exp  = Lit | Sym | Tag | Tupl | Call
-	Meta = Alt | Var | Ref | Sel | Mod
+	Meta = Alt | Var | Ref | Sel
 
 	Num  = Int | Real | Bits
 	Char = Str | Raw | UUID | Span | Time | Enum
@@ -121,7 +120,6 @@ var Infos = []Info{
 	{"var", Var},
 	{"ref", Ref},
 	{"sel", Sel},
-	{"mod", Mod},
 
 	{"exp", Exp},
 	{"meta", Meta},
