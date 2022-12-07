@@ -56,7 +56,11 @@ func addEdit(d Delta, p cor.Path, v Val, suf string) Delta {
 			continue
 		}
 		vars = append(vars, Str(s.Key))
-		p[i].Key = "$"
+
+		if s.Key = "$"; i == 0 && s.Sel == 0 {
+			s.Sel = '.'
+		}
+		p[i] = s
 	}
 	kv := KeyVal{p.Suffix(suf), v}
 	if len(vars) > 0 {
@@ -130,6 +134,9 @@ func addKeySeg(p cor.Path, k string) cor.Path { return addSeg(p, cor.Seg{Key: k}
 func addIdxSeg(p cor.Path, idx int) cor.Path  { return addSeg(p, cor.Seg{Sel: '.', Idx: idx}) }
 func addSeg(p cor.Path, s cor.Seg) cor.Path {
 	if emptyDot(p) {
+		if s.Key == "$" && s.Sel == 0 {
+			s.Sel = '.'
+		}
 		return cor.Path{s}
 	}
 	return append(p, s)
