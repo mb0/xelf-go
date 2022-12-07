@@ -65,11 +65,6 @@ func (e *Editor) edit(f EditFunc) (res Type, err error) {
 		if err == nil {
 			*b = sub
 		}
-	case *SelBody:
-		sub, err = e.sub(b.Sel, f)
-		if err == nil {
-			b.Sel = sub
-		}
 	case *AltBody:
 		for i, a := range b.Alts {
 			sub, err = e.sub(a, f)
@@ -108,11 +103,6 @@ func clone(r Type, stack [][2]Body) Type {
 		n := new(Type)
 		stack = append(stack, [2]Body{b, n})
 		*n = clone(*b, stack)
-		r.Body = n
-	case *SelBody:
-		n := &SelBody{Path: b.Path}
-		stack = append(stack, [2]Body{b, n})
-		n.Sel = clone(b.Sel, stack)
 		r.Body = n
 	case *AltBody:
 		n := &AltBody{Alts: make([]Type, len(b.Alts))}

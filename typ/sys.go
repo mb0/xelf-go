@@ -81,7 +81,7 @@ func (sys *Sys) inst(lup Lookup, t Type, m map[int32]Type) (Type, error) {
 			} else {
 				r = n
 			}
-		} else if _, ok := r.Body.(*SelBody); ok {
+		} else if r.Kind&knd.Sel != 0 && r.Ref != "" {
 			deferSel = true
 			return r, nil
 		}
@@ -94,8 +94,8 @@ func (sys *Sys) inst(lup Lookup, t Type, m map[int32]Type) (Type, error) {
 		return res, err
 	}
 	return Edit(res, func(e *Editor) (Type, error) {
-		if b, ok := e.Type.Body.(*SelBody); ok {
-			return resolveSel(e, b.Path)
+		if e.Kind&knd.Sel != 0 && e.Ref != "" {
+			return resolveSel(e, e.Ref)
 		}
 		return e.Type, nil
 	})

@@ -23,8 +23,6 @@ func (t Type) AssignableTo(dst Type) bool {
 		if dst.Kind&sk == sk {
 			return elem(t).AssignableTo(*db)
 		}
-	case *SelBody:
-		return db.EqualBody(t.Body, nil)
 	case *AltBody:
 		if dst.Kind&sk == sk {
 			return true
@@ -94,8 +92,6 @@ func (t Type) ConvertibleTo(dst Type) bool {
 		if dst.Kind&sk != 0 {
 			return elem(t).ConvertibleTo(*db)
 		}
-	case *SelBody:
-		return db.EqualBody(t.Body, nil)
 	case *AltBody:
 		if dst.Kind&sk == sk {
 			return true

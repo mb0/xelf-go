@@ -61,7 +61,7 @@ func Var(id int32, t Type) Type {
 }
 
 func Ref(name string) Type { return Type{Kind: knd.Ref, Ref: name} }
-func Sel(sel string) Type  { return Type{Kind: knd.Sel, Body: &SelBody{Path: sel}} }
+func Sel(sel string) Type  { return Type{Kind: knd.Sel, Ref: sel} }
 
 func Bits(n string, cs ...Const) Type {
 	return Type{Kind: knd.Bits, Ref: n, Body: &ConstBody{Consts: cs}}

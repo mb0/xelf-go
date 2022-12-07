@@ -101,7 +101,7 @@ func (t Type) print(b *bfr.P, sb *strings.Builder, stack []Body, enclose bool) e
 		}
 	}
 	if isSel {
-		path := t.Body.(*SelBody).Path
+		path := t.Ref
 		if strings.HasPrefix(path, ".0") {
 			path = "_" + path[2:]
 		}
@@ -114,7 +114,7 @@ func (t Type) print(b *bfr.P, sb *strings.Builder, stack []Body, enclose bool) e
 			sb.WriteString(s)
 		}
 	}
-	if t.Ref != "" {
+	if t.Ref != "" && !isSel {
 		sb.WriteByte('@')
 		sb.WriteString(t.Ref)
 	} else if isVar {

@@ -78,9 +78,7 @@ func ParseSym(raw string, src ast.Src, hist []Type) (Type, error) {
 				tk |= knd.Var
 				pi := strings.IndexAny(v, "/.")
 				if pi >= 0 {
-					var vp string
-					v, vp = v[:pi], v[pi:]
-					tb = &SelBody{Path: vp}
+					v, tr = v[:pi], v[pi:]
 				}
 				id, err := strconv.ParseUint(v, 10, 32)
 				if err != nil {
@@ -92,13 +90,16 @@ func ParseSym(raw string, src ast.Src, hist []Type) (Type, error) {
 			}
 		}
 		if s != "" {
-			if s[0] == '.' {
-				// local ref
+			if fst := s[0]; fst == '.' || fst == '_' && (len(s) == 1 || s[1] == '.') {
+				// local ref cannot have a reference
+				if tr != "" {
+					return Void, ast.ErrInvalidType(src, sp[i])
+				}
 				tk |= knd.Sel
-				tb = &SelBody{Path: s}
-			} else if s[0] == '_' && (len(s) == 1 || s[1] == '.') {
-				tk |= knd.Sel
-				tb = &SelBody{Path: ".0" + s[1:]}
+				tr = s
+				if fst == '_' {
+					tr = ".0" + s[1:]
+				}
 			} else {
 				k, err := knd.ParseName(s)
 				if err != nil {
@@ -113,7 +114,7 @@ func ParseSym(raw string, src ast.Src, hist []Type) (Type, error) {
 				tb = &tmp
 			}
 		}
-		if tr != "" && tk&knd.All == 0 {
+		if tr != "" && tk&(knd.All|knd.Sel) == 0 {
 			tk |= knd.Ref
 		}
 		res = Type{tk, tid, tr, tb}

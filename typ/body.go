@@ -30,14 +30,6 @@ func C(name string, v int64) Const {
 }
 
 type (
-
-	// SelBody contains a selection type and selection path into that type.
-	// Selection types are mainly used internally for partially resolved selections.
-	SelBody struct {
-		Sel  Type
-		Path string
-	}
-
 	// AltBody contains compound type alternatives.
 	AltBody struct {
 		Alts []Type
@@ -73,11 +65,6 @@ func (t *Type) EqualBody(b Body, h Hist) bool {
 		return o.Body == nil
 	}
 	return t.Body.EqualBody(o.Body, h)
-}
-
-func (b *SelBody) EqualBody(o Body, h Hist) bool {
-	ob, ok := o.(*SelBody)
-	return ok && b.Path == ob.Path && b.Sel.EqualHist(ob.Sel, h)
 }
 
 func (b *AltBody) EqualBody(o Body, h Hist) bool {
