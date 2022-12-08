@@ -120,7 +120,7 @@ func callFunc(p *exp.Prog, c *exp.Call, s exp.Spec, org []exp.Exp) (lit.Val, err
 	if err != nil {
 		return nil, fmt.Errorf("layout fun call %s with %s\n\t%v", sig, org, err)
 	}
-	cc := &exp.Call{Sig: sig, Spec: s, Args: args}
+	cc := &exp.Call{Sig: sig, Spec: s, Args: args, Src: c.Src}
 	_, err = s.Resl(p, c.Env, cc, typ.Void)
 	if err != nil {
 		return nil, err

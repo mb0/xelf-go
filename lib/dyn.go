@@ -63,7 +63,7 @@ func (s *dynSpec) Resl(p *exp.Prog, env exp.Env, c *exp.Call, h typ.Type) (_ exp
 	if err != nil {
 		return nil, fmt.Errorf("layout error for %s %s: %v", sig.Type(), args, err)
 	}
-	cc := &exp.Call{Sig: sig, Spec: spec, Args: args, Src: d.Src}
+	cc := &exp.Call{Sig: sig, Spec: spec, Args: args, Src: c.Src}
 	return spec.Resl(p, env, cc, h)
 }
 func (s *dynSpec) Eval(p *exp.Prog, c *exp.Call) (lit.Val, error) {
@@ -85,7 +85,7 @@ func (s *dynSpec) Eval(p *exp.Prog, c *exp.Call) (lit.Val, error) {
 	if err != nil {
 		return nil, fmt.Errorf("layout error for %s %s: %v", sig.Type(), args, err)
 	}
-	cc := &exp.Call{Sig: sig, Spec: spec, Args: args, Src: d.Src}
+	cc := &exp.Call{Sig: sig, Spec: spec, Args: args, Src: c.Src}
 	ce, err := spec.Resl(p, c.Env, cc, typ.Void)
 	if err != nil {
 		return nil, ast.ErrEval(fst.Source(), fmt.Sprintf("dyn resl call failed for %s", a), err)
