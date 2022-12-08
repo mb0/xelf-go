@@ -73,6 +73,16 @@ commands can use bash aliases. The positive aspects are:
  * Projects can easily provide specialized subcommands without adding any extra dependencies.
  * We do not pollute the system path namespace and it is easier to discover features.
 
+We want to make it easy to use the xelf command during development, however plug-ins must be rebuilt
+whenever its code or a dependency was changes. For now we provide a simple rebuild subcommand that
+looks for plugin.go files in folders along xps manifest files and runs the go tool. Instead of doing
+that manually whenever we get an error, we could use the runtime/debug and debug/buildinfo go
+standard packages to read the module versions of host and plug-in and compare them for mismatches
+and rebuild if necessary. We should however measure the impact, to see whether we want to enable the
+check permanently or toggle it with a dev flag.
+
+We want some way to document specs. And a doc subcommand to discover that documentation.
+
 Links
 -----
 
