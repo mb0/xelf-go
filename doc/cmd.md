@@ -81,6 +81,14 @@ standard packages to read the module versions of host and plug-in and compare th
 and rebuild if necessary. We should however measure the impact, to see whether we want to enable the
 check permanently or toggle it with a dev flag.
 
+We want to access the postgres db from the web ui plugin by using a data source schema. We already
+use register imported backend providers, but do not advertise them in the backend for lazy loading.
+The backend provider is very specific to daql, so should we find a more generic way to advertise
+plugin capabilities, that other runtimes and features can utilize? The daql project would use the
+new xps manifests capabilities to provide lazy loading of backend plugins behind the scenes. We want
+the same mechanism to provide code generators based on project configuration. We could also provide
+a mechanism to extend the repl for the daql repl to drop the cmd package dependency.
+
 We want some way to document specs. And a doc subcommand to discover that documentation.
 
 Links
