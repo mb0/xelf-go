@@ -1,8 +1,6 @@
 package xps
 
 import (
-	"sort"
-
 	"xelf.org/xelf/mod"
 )
 
@@ -53,14 +51,11 @@ func (sm *Mods) load(m Manifest) (*Plug, error) {
 
 func manifestsFor(all []Manifest, path string) (res []Manifest) {
 	for _, m := range all {
-		for _, mod := range m.Mods {
+		for _, mod := range m.Mods() {
 			if path == mod {
 				res = append(res, m)
 			}
 		}
 	}
-	sort.Slice(res, func(i, j int) bool {
-		return len(res[i].Mods) > len(res[j].Mods)
-	})
 	return res
 }
