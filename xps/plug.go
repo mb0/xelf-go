@@ -57,17 +57,7 @@ func (ps *Plugs) LoadCmd(name string) (Cmd, error) {
 	return nil, nil
 }
 
-func (p *Plug) ensure() error {
-	if p == nil {
-		return fmt.Errorf("plugin not found")
-	}
-	if p.Plugin == nil {
-		return p.load()
-	}
-	return nil
-}
-
-func (p *Plug) load() (err error) {
+func (p *Plug) Load() (err error) {
 	p.Plugin, err = plugin.Open(p.PlugPath())
 	if err != nil {
 		return err
@@ -82,7 +72,17 @@ func (p *Plug) load() (err error) {
 	return nil
 }
 
-// ModLoader wrapps a SysMods module source registry with a list of plugin manifests.
+func (p *Plug) ensure() error {
+	if p == nil {
+		return fmt.Errorf("plugin not found")
+	}
+	if p.Plugin == nil {
+		return p.Load()
+	}
+	return nil
+}
+
+// ModLoader wrapps a SysMods module source registry with a plugin list.
 // It lazy-loads plugins that provide module source missing from the registry.
 type ModLoader struct {
 	Sys *mod.SysMods
@@ -96,16 +96,12 @@ func (l *ModLoader) LoadSrc(raw, base *mod.Loc) (*mod.Src, error) {
 	src, err := l.Sys.LoadSrc(raw, base)
 	if err != nil {
 		p := modPlug(l.All, raw.Path())
-		if p == nil {
-			return nil, mod.ErrFileNotFound
-		}
-		if p.Plugin == nil {
-			err = p.load()
-			if err != nil {
+		if p != nil && p.Plugin == nil {
+			if err = p.Load(); err != nil {
 				return nil, err
 			}
+			src, err = l.Sys.LoadSrc(raw, base)
 		}
-		src, err = l.Sys.LoadSrc(raw, base)
 	}
 	return src, err
 }
