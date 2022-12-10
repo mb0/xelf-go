@@ -20,10 +20,12 @@ We created the new xelf.org/cmd module that provides generic xelf command relate
 actual command package at xelf.org/cmd/xelf.
 
 We use the new xps package to load external runtime support from $XELF_PLUGINS into the process.
-This works really great.
+Plugin manifest files store plugin capabilities and enable us to defer loading of plugins until we
+actually need them. This mechanism currently covers subcommand extensions, module loaders and query
+backend providers and works really great.
 
-The command should provide a collection of helpers organised as subcommands. Most subcommands should
-read stdin and print to stdout, so that we can easily compose commands.
+The command provides a collection of helpers organised as subcommands. Most subcommands read from
+stdin and print to stdout, so that we can easily compose commands:
 
 	echo '{a:1 b:[2 3 4]}' | xelf mut '{a:7 b+:[[5]]}' | xelf json
 
@@ -55,24 +57,6 @@ module system to expand program capabilities.
 
 Using the plugin system we can provide the same features as the daql repl.
 
-We currently load all plugins that we can find whenever a program is prepared. This is wasteful if
-all we do is evaluating simple expressions. We could use a plugin manifest file that declares all
-the xelf module paths it provides. That way we could add a lazy module registry that only loads the
-plugins it needs once. It is also the case that plugins overlap: dapgx for example provides all daql
-modules through its package dependencies, so if we load the dapgx plugin we can skip loading the
-daql plugin.
-
-It would be great for daql qry backend providers to use modules in the same way. For now we can
-simply provide an empty module that ensures the provider is registered.
-
-If we use xelf plugins to provide runtime modules and other extensions, we might also want to
-lazy load and provide subcommands from plugins. This would allow us to drop the daql and layla
-command entirely and use subcommands like `xelf daql graph` instead. Users that prefer simpler
-commands can use bash aliases. The positive aspects are:
-
- * Projects can easily provide specialized subcommands without adding any extra dependencies.
- * We do not pollute the system path namespace and it is easier to discover features.
-
 We want to make it easy to use the xelf command during development, however plug-ins must be rebuilt
 whenever its code or a dependency was changes. For now we provide a simple rebuild subcommand that
 looks for plugin.go files in folders along xps manifest files and runs the go tool. Instead of doing
@@ -80,14 +64,6 @@ that manually whenever we get an error, we could use the runtime/debug and debug
 standard packages to read the module versions of host and plug-in and compare them for mismatches
 and rebuild if necessary. We should however measure the impact, to see whether we want to enable the
 check permanently or toggle it with a dev flag.
-
-We want to access the postgres db from the web ui plugin by using a data source schema. We already
-use register imported backend providers, but do not advertise them in the backend for lazy loading.
-The backend provider is very specific to daql, so should we find a more generic way to advertise
-plugin capabilities, that other runtimes and features can utilize? The daql project would use the
-new xps manifests capabilities to provide lazy loading of backend plugins behind the scenes. We want
-the same mechanism to provide code generators based on project configuration. We could also provide
-a mechanism to extend the repl for the daql repl to drop the cmd package dependency.
 
 We want some way to document specs. And a doc subcommand to discover that documentation.
 
