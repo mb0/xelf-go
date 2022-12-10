@@ -61,8 +61,9 @@ func (m Manifest) Cmds() lit.Keyed {
 	}
 	return nil
 }
-func (m Manifest) Mods() []string {
-	v, _ := m.Caps.Key("mods")
+func (m Manifest) Mods() []string { return m.CapList("mods") }
+func (m Manifest) CapList(key string) []string {
+	v, _ := m.Caps.Key(key)
 	if vs, ok := v.(*lit.Vals); ok {
 		res := make([]string, 0, len(*vs))
 		for _, el := range *vs {
