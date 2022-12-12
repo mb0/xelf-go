@@ -148,14 +148,6 @@ func (t Type) ResolvableTo(dst Type) bool {
 	return t.ConvertibleTo(dst)
 }
 
-func expr(t Type) (knd.Kind, Type) {
-	k := t.Kind & knd.Exp
-	if k == knd.Void {
-		return knd.Lit, t
-	}
-	return k, elem(t)
-}
-
 func elem(t Type) Type {
 	if el := El(t); el != Void {
 		return el

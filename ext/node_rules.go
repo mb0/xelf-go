@@ -184,5 +184,3 @@ func BitsSetter(b string) KeySetter {
 		return n.SetKey(b, lit.Int(uint64(fi)|uint64(vi)))
 	}
 }
-
-var norule Rule

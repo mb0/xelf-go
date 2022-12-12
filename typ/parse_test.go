@@ -100,6 +100,10 @@ func TestParse(t *testing.T) {
 			continue
 		}
 		b, err := json.Marshal(want)
+		if err != nil {
+			t.Errorf("%s marshal want error: %v", test.raw, err)
+			continue
+		}
 		want = string(b)
 		if got := string(rawb); got != want {
 			t.Errorf("%s marshal got %v", want, got)

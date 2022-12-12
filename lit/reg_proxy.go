@@ -17,9 +17,9 @@ func (c *PrxReg) ProxyValue(ptr reflect.Value) (mut Mut, err error) {
 		return checkMut(pt, ptr, ptr)
 	}
 	var opt, null bool
-	et, el := pt.Elem(), ptr.Elem()
+	et := pt.Elem()
 	if opt = et.Kind() == reflect.Ptr; opt {
-		pt, ptr, et, el = et, el, et.Elem(), el.Elem()
+		pt, ptr, et = et, ptr.Elem(), et.Elem()
 		if isMut(pt) {
 			return checkMut(pt, ptr, org)
 		}

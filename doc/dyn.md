@@ -29,11 +29,11 @@ This indicates the limited usefulness of extending the dyn sugar concept to cust
 custom sugar has a spec lookup problem as well, because much of the interesting types already
 match the mut spec.
 
-In practice the core sugar specs are only good if a consistent part of all dialects. I decided that
-dyn and syntax sugar in general, should either be a reliable or completely dropped. The implicit
-behaviour change would be hard to keep in mind and the code would be too involved, to justify the
-cost of that feature. That means the dyn behaviour should not change during program resolution in
-any way.
+In practice the core sugar specs are only good if they are a consistent part of all dialects. I
+decided that dyn (and syntax sugar in general) should either be a reliable or completely dropped.
+The implicit behaviour change would be hard to keep in mind and the code would be too involved, to
+justify the cost of that feature. That means the dyn behaviour should not change during program
+resolution in any way.
 
 The most essential feature that dyn provides is late binding spec and the typ sugar, values of these
 two types should not be mutated. All other values can however be mutated. So, provided we add an
@@ -41,11 +41,10 @@ explicit call spec for late binding and unify a mut spec, we can drop dyn and re
 sugar to only three specs: call, make and mut. We can instead provide a dyn hook to the program,
 that can replace this behaviour.
 
-We could add an explicit call spec to the core builtins.
-
 That leaves the question: Can we find a good definition of mutate that covers all our needs?
-We explore that question in more detail in [doc/mut.md](mutate spec doc).
+We explore that question in more detail in [mutate spec doc](./mut.md).
 
 If we find a unified mutable spec we should consider providing the same syntax in the make spec.
 That would further unify value creation and modification syntax `(@proposal.Rating tag:'Cool')`.
 
+Ideally we have a similar generic signature for mut, make and call `<form @ tupl?|exp lit|_>`.

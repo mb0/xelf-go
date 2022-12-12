@@ -15,11 +15,6 @@ type AnyPrx struct {
 	val Val
 }
 
-func newAnyPrx(reg *PrxReg, t typ.Type) *AnyPrx {
-	var any interface{}
-	return &AnyPrx{proxy{reg, t, reflect.ValueOf(&any)}, Null{}}
-}
-
 func anyVal(v reflect.Value) Val {
 	if !v.IsValid() || v.Kind() != reflect.Ptr || v.IsNil() || v.Elem().Kind() != reflect.Interface {
 		panic(fmt.Errorf("invalid anyprx value %s", v.Type()))

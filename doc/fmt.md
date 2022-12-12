@@ -46,7 +46,7 @@ We could first try how far we get with a generic formatter. The generic formatte
 ast info and tries to find a balance between abstract metrics like number of calls in one line and a
 max line length. Even if the result is not great we can use it as a fall-back for more specific
 formatters. It is good to check other generic
-[https://stackoverflow.com/questions/36079915/how-to-format-lisp-code](lisp formatting rules).
+[lisp formatting rules](https://stackoverflow.com/questions/36079915/how-to-format-lisp-code).
 
 For more nuanced custom formatting rules, we would need to resolve spec types to lookup the rules.
 Using naive spec name maps to formatting rules does not handle aliases and name shadowing and is

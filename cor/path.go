@@ -15,7 +15,7 @@ type Seg struct {
 	Sel byte
 }
 
-func (s Seg) Sep() byte   { return (s.Sel & '?') /* magic */ }
+func (s Seg) Sep() byte   { return (s.Sel & magic) }
 func (s Seg) Empty() bool { return (s.Sel & '@') != 0 /* magic */ }
 func (s Seg) IsIdx() bool { return s.Idx != 0 || !s.Empty() && s.Key == "" }
 func (s Seg) String() string {

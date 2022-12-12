@@ -57,7 +57,7 @@ func TestSelectErr(t *testing.T) {
 			continue
 		}
 		got := err.Error()
-		if strings.Index(got, test.want) < 0 {
+		if !strings.Contains(got, test.want) {
 			t.Errorf("%s error want %s got %s", test.raw, test.want, got)
 		}
 	}

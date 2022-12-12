@@ -13,12 +13,43 @@ Both problems are highly related. Any generic mut spec should be able to apply t
 
 Our mutation needs boil down to four distinct variants:
 
- * We want to **assign** one compatible value to any value
+ * We want to **assign** one compatible value to any value including typ and spec
  * We want to **merge**  with compatible values for num, char, raw, str, time, span, list, keyr, obj
- * We want to **append** compatible element values to list and dict values
+ * We want to **append** compatible element values to list values
  * We want to **modify** compound idxr and keyr values
 
 We want to **diff** values A, B and get a **delta** D that, when we **apply** D to A, results in B.
+
+Implementation
+--------------
+
+Paths new support variable segments (using '$') and empty segments (using magic). Paths starting
+with a dollar sign are still argument path but it can use variables in following segments.
+
+A new 'sel' spec provides language support for path variables. The requires and allows us to use
+paths as central xelf program concept for the env lookup api.
+
+Diff ops for raw and str literals were added, and the new mirror op concept uses the plus marker.
+
+The new 'apply' spec applies one delta dict to target value.
+The new 'set' spec assigns one value to a target value.
+
+The 'mut' spec now covers all value mutations with the signature `<form@mut any tupl?|expr _>` and
+replaces the 'dyn' spec for all calls starting with a data value by delegating to other specs.
+Arguments are expected to be either all tags or all plain expressions.
+
+Tag arguments are treated as delta edits and thereby cover all variants in generic ways:
+
+	(mut . .:$v)           →  (set . $v)
+	(mut . key:1)          →  (apply . {key:1})
+	(mut . .*:$delta)      →  (apply . $delta)
+	(mut [] .+:[[1 2]])    →  (append [] 1 2)
+	(mut 'a' .+:['b' 'c']) →  (cat 'a' 'b' 'c')
+
+Plain arguments work only for str and list values and select either the cat or append spec:
+
+	(mut [] 1 2)      →  (append [] 1 2)
+	(mut 'a' 'b' 'c') →  (cat 'a' 'b' 'c')
 
 Discussion
 ----------
@@ -136,37 +167,27 @@ The remaining question for deltas is whether the dict must preserve order or not
 Without a clear conclusion we should use an ordered dict until we can better describe the problem.
 Then we try to write a transformer to simplify deltas and remove order ambiguity.
 
-Now to the specs: we want one spec that ideally handles all mutation variants. The basic signature
-must be `<form@mut v:data? tupl?|expr _>` it must have a fist argument, any number of tag or value
-arguments and return a result with the type of first argument. It would fill part of the role the
-dyn spec had and like dyn could delegate to other specs based on input to provide a better structure
-and provide ways to handle corner cases.
-
- * We should use the delta syntax in tag arguments for all input values. We can use nested tag
-   syntax to apply delta dicts to the root value `(v .*:delta)`.
- * Add a new 'apply' spec to apply a delta dict directly, not using tags (maybe a diff spec too?)
- * We want to support simple merge and append syntax for str and list values specifically,
-   but have a conflict with merge and append with one element and simple assign mutation `(v 1)`.
- * If we add a simple 'set' spec to explicitly assign one value we could clear up that conflict.
-   We can always fall back on the delta syntax and use (v .:1) instead of (set v 1).
- * We would have have tag arguments exclusively to **modify** mutations covered by the delta syntax
-   and plain arguments for merge and append mutations.
- * We prefer append for container types and add an explicit merge spec, to updates dicts and
-   concatenate lists specifically. Again, both append mutations can be easily written as delta tag.
-
-We want to add a sel spec `(sel path.with/$.var 'my key val')` to use path variables. This requires
-some changes how we pass paths through the environment. Currently we pass in the symbol string
-itself, that we can then change for parent environments. So we need to way to pass along the path
-variables or parse the path once, fill vars if available, and lookup on the path.
-
-Implementation
---------------
-
-We change the env lookup signature to use paths and allow path segments to by empty (with magic).
-We add path variables signified by path segment with a separator and dollar key. Paths starting with
-a dollar sign are argument path but it can use variables in following segments.
-
-We implemented diff ops for raw and str literals too and mirror ops using the plus marker.
-
-We provide the new core spec `sel` to select path with variables from the environment. We add the
-subcommands sel and mut to the xelf command.
+Open questions:
+ * Whether to simplify or resolve mut calls to specific calls or keep the generic syntax around.
+   * we have to think about simplifying on resolve in connection with format anyway.
+   * lets lean on keeping original calls intact for now.
+ * Do we allow only cat and append variants for multiple plain args?
+   * We would minimize special rules to two reasonable and practical cases we often use an, that
+     only have a unintuitive alternative syntax with mirror ops.
+   * We would drop the sugar to add numbers, but writing `(1 2 3)` instead of `(add 1 2 3)` is not
+     as useful as cat and append sugar and might even be confusing.
+   * This would allow us to keep assign sugar to `(. $v)` for all values except str and list.
+     But do we want that and how do we treat char? This would be inconsistent and confusing again.
+     Is saving two chars for `(. .:$v)` or four to use the explicit `(set . $v)` worth it?
+ * Do we add a merge spec? Is the concept of merging values even clear enough?
+   * We use edit ops for complex str, raw and list mutations, we can already merge keyers by using
+     them as deltas, we could default to add for numbers and even spans, but from an delta point
+     of view primitive values other than str and raw use simple assignment in the end.
+   * The merge concept would really only makes sense if applied to the mut spec. then it does is
+     allow some sugar to combine a common operation and assignment into one call:
+	(. 1 2 3) instead of (set . (add 1 2 3))
+   * How would we even generalize the merge aspect for plain arguments beyond str and raw?
+   * Let's keep it simple and revisit when we think more about time, span, enum and bits values
+ * Dicts are more or less `<list|obj key:str val:any>`. If we introduce a named key val obj type
+   into the core type system, we could allow conversion between `dict ` and `list|@keyval`, and
+   promote dict not only to a real idxr but to an appender as well.
