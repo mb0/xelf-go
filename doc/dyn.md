@@ -11,6 +11,27 @@ We want to allow late binding of call specs, and also some syntax sugar.
 We want to allow users to change the program environment and evaluation, to potentially define a
 whole other language within the limits of the ast, typ, lit and the basic program structure.
 
+Implementation
+--------------
+
+We add a minimal dyn hook to the program that resolves call specs. The default dyn function returns
+either resolved spec directly, the call spec for unresolved specs, the make spec for type values or
+the mut spec for all other value types. The specs use the program scope for lookup and can be
+replaced individually.
+
+The call spec covers importent corner cases by deferring the spec resolution to the evaluation
+phase. However in contrast to the previous dyn spec we need to know initially that the value will
+resolve to a spec. 
+
+The mut spec covers all mutations by using delta edits and additionally provides some syntax sugar
+for common but otherwise inconveniet expression for append and cat.
+
+The make spec covers all type value construction and conversions and should mostly reflect the
+behaviour of mut for a value of that type, with some additions:
+
+	(typ .) return the resolved type of the argument
+	(@T .) attempts to convert the argument to type @T
+
 Discussion
 ----------
 

@@ -26,3 +26,7 @@ We want to use the cat and other specs both with individual arguments or a compa
 a syntax that discerns between lists used as element or as fill-in for a variadic tuple argument.
  * We could add a use make to type a list as tupl|lit and a dict as tupl|tag|lit
  * `(sep '-' (tupl (range 12)))` looks alright to me
+
+Dicts are more or less `<list|obj key:str val:any>`. If we introduce a named key val obj type into
+the core type system, we could allow conversion between `dict ` and `list|@keyval`, and promote dict
+not only to a real idxr but to an appender as well.

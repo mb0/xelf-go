@@ -60,9 +60,9 @@ We want to think about a solution to mark primary keys: `<obj@Prod ID!:uuid>` mi
 optional field and clearly marks the pk field as non-optional in a way. This would keep the obj
 field specific flag out of the general type data structure and its bitset.
 
-We want that publicly visible references can be resolved by the program env. That usually includes
-the types used by builtins, mods and arg value. That also means we only want to keep references that
-point to or into named types or field refs. To restrict resolved type names we can check if the
+We want publicly visible references to be resolvable by the program env. That usually includes
+the types used by builtins, mods and arg values. That also means we only want to keep references
+that point to or into named types or field refs. To restrict resolved type names we can check if the
 resolving env is prog or beyond, and otherwise attempt a second resolution using the program env.
 
  * limit names to program env, lookup check resolved sym env for prog or beyond

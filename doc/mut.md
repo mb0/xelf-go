@@ -168,26 +168,40 @@ Without a clear conclusion we should use an ordered dict until we can better des
 Then we try to write a transformer to simplify deltas and remove order ambiguity.
 
 Open questions:
- * Whether to simplify or resolve mut calls to specific calls or keep the generic syntax around.
-   * we have to think about simplifying on resolve in connection with format anyway.
-   * lets lean on keeping original calls intact for now.
- * Do we allow only cat and append variants for multiple plain args?
-   * We would minimize special rules to two reasonable and practical cases we often use an, that
-     only have a unintuitive alternative syntax with mirror ops.
-   * We would drop the sugar to add numbers, but writing `(1 2 3)` instead of `(add 1 2 3)` is not
-     as useful as cat and append sugar and might even be confusing.
-   * This would allow us to keep assign sugar to `(. $v)` for all values except str and list.
-     But do we want that and how do we treat char? This would be inconsistent and confusing again.
-     Is saving two chars for `(. .:$v)` or four to use the explicit `(set . $v)` worth it?
- * Do we add a merge spec? Is the concept of merging values even clear enough?
-   * We use edit ops for complex str, raw and list mutations, we can already merge keyers by using
-     them as deltas, we could default to add for numbers and even spans, but from an delta point
-     of view primitive values other than str and raw use simple assignment in the end.
-   * The merge concept would really only makes sense if applied to the mut spec. then it does is
-     allow some sugar to combine a common operation and assignment into one call:
-	(. 1 2 3) instead of (set . (add 1 2 3))
-   * How would we even generalize the merge aspect for plain arguments beyond str and raw?
-   * Let's keep it simple and revisit when we think more about time, span, enum and bits values
- * Dicts are more or less `<list|obj key:str val:any>`. If we introduce a named key val obj type
-   into the core type system, we could allow conversion between `dict ` and `list|@keyval`, and
-   promote dict not only to a real idxr but to an appender as well.
+
+Whether to simplify or resolve mut calls to specific calls or keep the generic syntax around.
+ * We have to think about simplifying on resolve in connection with format anyway.
+ * Let's lean on keeping original calls intact for now.
+
+Do we allow only cat and append variants for multiple plain args?
+ * We would minimize special rules to two reasonable and practical cases we often use, that only
+   have a unintuitive alternative syntax with mirror ops.
+ * We would drop the sugar to add numbers, but writing `(1 2 3)` instead of `(add 1 2 3)` is not
+   as useful as cat and append sugar and might even be confusing.
+ * This would allow us to keep assign sugar to `(. $v)` for all values except str and list.
+   But do we want that and how do we treat char? This would be inconsistent and confusing again.
+   Is saving two chars for `(. .:$v)` or four to use the explicit `(set . $v)` worth it?
+ * On the other hand we ideally want to mirror the conceptual behaviour of mut and make.
+   There we have the same problem because we want a simple syntax for type conversions which
+   would mirror assignments in mut. Writing `(@T .)` is obviously preferred to `(@T .:.)`
+ * But like mut we want to allow an easy append syntax for list construction `(list|int 1 2 3)`
+ * Maybe we should look for a combination of spare markers … yes maybe this is what `++` is for?
+   We could hide cat and append behind a specially marked tag (list|int ++; 1 2 3) and can even
+   provide an alternative version using lists instead of tupl `('' ++:['a' 2 null])` or even
+   combined version `(buf ++:(log_prefix) .key '=' .val)`
+ * (list|int ++ 1 2 3) would look much better, we can use a custom resolver for make and mut to
+   treat ++ as a reserved identifier within these specs and in second position only.
+
+Do we add a merge spec? Is the concept of merging values even clear enough?
+ * We use edit ops for complex str, raw and list mutations, we can already merge keyers by using
+   them as deltas, we could default to add for numbers and even spans, but from an delta point
+   of view primitive values other than str and raw use simple assignment in the end.
+ * The merge concept would really only makes sense if applied to the mut spec. Then all it does is
+   allow some sugar to combine a common operation and assignment into one call:
+      (. 1 2 3) instead of (set . (add 1 2 3))
+ * How would we even generalize the merge aspect for plain arguments beyond str and raw?
+ * Let's keep it simple and revisit when we think more about time, span, enum and bits values
+
+More ideas:
+ * we could use `{.+:3}` or `{.+:-2}` to increment or decrement numbers
+ * we could also use `{.+;}` or `{.*;}` to toggle bool
