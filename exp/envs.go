@@ -36,29 +36,6 @@ func (e Builtins) Lookup(s *Sym, p cor.Path, eval bool) (lit.Val, error) {
 	return nil, ErrSymNotFound
 }
 
-// DotEnv is a child scope that supports relative paths into a literal.
-type DotEnv struct {
-	Par Env
-	Dot lit.Val
-}
-
-func (e *DotEnv) Parent() Env { return e.Par }
-
-func (e *DotEnv) Lookup(s *Sym, p cor.Path, eval bool) (lit.Val, error) {
-	p, ok := DotPath(p)
-	if !ok {
-		return e.Par.Lookup(s, p, eval)
-	}
-	v, err := SelectLookup(e.Dot, p, eval)
-	if err != nil || v == nil {
-		return nil, ErrSymNotFound
-	}
-	if s.Update(typ.Res(v.Type()), e, p); !eval && v.Nil() {
-		return nil, nil
-	}
-	return v, nil
-}
-
 // DotPath returns whether p is a dot path or returns p with a leading dot segment removed.
 func DotPath(p cor.Path) (cor.Path, bool) {
 	fst := p.Fst()

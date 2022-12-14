@@ -19,7 +19,7 @@ func TestDynEval(t *testing.T) {
 		{`('a'+ 'b' 'c')`, `abc`, "<char>"},
 		{`('a'+ (json ['b']) (xelf 'c'))`, "a[\"b\"]'c'", "<char>"},
 		{`(with (fn n:int (add .n 1)) (. 2))`, `3`, "<int>"},
-		{`(let addone:(fn (add _ 1)) (addone 2))`, `3`, "<num>"},
+		{`(with addone:(fn (add _ 1)) (addone 2))`, `3`, "<num>"},
 		{`(if false add sub)`, `<form@sub num@2 tupl|num num@2>`, "<form@sub num@2 tupl|num num@2>"},
 		{`((if false add sub) 1 2)`, `-1`, "<num>"},
 	}

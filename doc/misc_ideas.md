@@ -1,18 +1,10 @@
-
 Ideas
 =====
 
-Note half-backed ideas for later review.
+Note half-baked and smaller ideas tracked here for comments and later review.
 
-
-Unify the variable declaration specs `with` and `let`.
- * with is the better name, because it better implies the limited scope from use in other languages
- * let might imply the variable is registered in the parent env
- * with must have the dot value or a tag as first value, may have additional tags and an action.
- * we can chain operations for readability `(with input ast:(scan .) exp:(parse ast) res:(run exp))`
- * do we always split a dot on lookup, even if the first argument is a tag?
-   * it would be confusing when changing to a tag and changing nested dot symbol paths with it
-
+Problem
+-------
 
 Think about restricting the environment for nested expressions. We could use that in daql/qry.
  * We separated the built-ins in core and decl, but we need a mechanism to restrict built-ins.
@@ -30,3 +22,13 @@ a syntax that discerns between lists used as element or as fill-in for a variadi
 Dicts are more or less `<list|obj key:str val:any>`. If we introduce a named key val obj type into
 the core type system, we could allow conversion between `dict ` and `list|@keyval`, and promote dict
 not only to a real idxr but to an appender as well.
+
+Implementation
+--------------
+
+We combined the two variable declaration specs `with` and `let` into a new `with` spec, that allows
+both old variants and combined declarations. The new decl environment always split a dot on lookup,
+even if the first argument is a tag, to avoid confusion. The new spec allows chaining of expressions
+in a more declarative and traditional way:
+
+	`(with input ast:(scan .) exp:(parse ast) (run exp))`

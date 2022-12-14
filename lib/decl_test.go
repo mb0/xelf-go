@@ -14,9 +14,10 @@ func TestDeclEval(t *testing.T) {
 		want lit.Val
 	}{
 		{`(with 1 .)`, lit.Num(1)},
+		{`(with a:1 .)`, lit.Null{}},
 		{`(with 1 (add 2 .))`, lit.Num(3)},
 		{`(with {a:1 b:2} (add .a .b))`, lit.Num(3)},
-		{`(let a:1 b:2 (add a b))`, lit.Num(3)},
+		{`(with a:1 b:(add a 1) (add a b))`, lit.Num(3)},
 	}
 	for _, test := range tests {
 		got, err := exp.NewProg(Std).RunStr(test.raw, nil)
