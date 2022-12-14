@@ -81,6 +81,8 @@ func TestApply(t *testing.T) {
 		{`1`, `{.;}`, `null`},
 		{`{name:'foo' cat:'bar'}`, `{.$-:['cat']}`, `{name:'foo'}`},
 		{`{name:'foo' cat:'bar'}`, `{.$-:['cat' null]}`, `{name:'foo'}`},
+		{`[{sym:'foo'} {sym:'bar'}]`, `{/sym:'spam'}`, `[{sym:'spam'} {sym:'spam'}]`},
+		{`[[1 2 3] [4 5 6]]`, `{/1:7}`, `[[1 7 3] [4 7 6]]`},
 	}
 	for _, test := range tests {
 		a, err := Parse(test.a)

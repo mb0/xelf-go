@@ -28,7 +28,11 @@ func SelectPath(val Val, path cor.Path) (_ Val, err error) {
 			return typ.SelectPath(t, path[i:])
 		}
 		if s.Sep() == '/' {
-			val, err = SelectList(val, path[i:])
+			vs, err := SelectList(val, path[i:])
+			if err != nil {
+				return nil, err
+			}
+			val = &vs
 		} else if s.IsIdx() {
 			val, err = SelectIdx(val, s.Idx)
 		} else if s.Key != "" {
@@ -63,21 +67,42 @@ func SelectIdx(val Val, idx int) (res Val, err error) {
 	return nil, fmt.Errorf("idx segment %d expects idxr got %[2]T %[2]s", idx, v)
 }
 
-func SelectList(val Val, path cor.Path) (Val, error) {
+func SelectList(val Val, path cor.Path) (Vals, error) {
 	v := Unwrap(val)
 	if a, ok := v.(Idxr); ok {
-		res := &List{Typ: typ.List, Vals: make([]Val, 0, a.Len())}
+		res := make(Vals, 0, a.Len())
 		return res, a.IterIdx(func(_ int, v Val) (err error) {
-			return collectIdxrVal(v, path, res)
+			return collectIdxrVal(v, path, &res)
 		})
 	}
 	if v == (Null{}) {
-		return v, nil
+		return nil, nil
 	}
 	return nil, fmt.Errorf("list select %s expects idxr got %[2]T %[2]s", path, v)
 }
 
-func collectIdxrVal(v Val, path cor.Path, into *List) (err error) {
+func assignList(to Val, path cor.Path, val Val) error {
+	v := Unwrap(to)
+	if a, ok := v.(Idxr); ok {
+		p := append(cor.Path(nil), path...)
+		s := &p[0]
+		s.Sel = '.' | (s.Sel & '@')
+		return a.IterIdx(func(idx int, v Val) error {
+			m := v.Mut()
+			err := AssignPath(m, p, val)
+			if err == nil && m != v {
+				a.SetIdx(idx, m)
+			}
+			return err
+		})
+	}
+	if v == (Null{}) {
+		return nil
+	}
+	return fmt.Errorf("list assign %s expects idxr got %[2]T %[2]s", path, v)
+}
+
+func collectIdxrVal(v Val, path cor.Path, into *Vals) (err error) {
 	if s := path.Fst(); s.IsIdx() {
 		v, err = SelectIdx(v, s.Idx)
 	} else if s.Key != "" {
@@ -89,24 +114,23 @@ func collectIdxrVal(v Val, path cor.Path, into *List) (err error) {
 	if err != nil {
 		return err
 	}
-	el := typ.ContEl(into.Typ)
-	if n := typ.Alt(el, v.Type()); el != n {
-		into.Typ = typ.ListOf(n)
-	}
-	into.Vals = append(into.Vals, v)
+	*into = append(*into, v)
 	return nil
 }
 
 // AssignPath sets an element of root at path to val or returns an error.
 // It fails on missing intermediate container values.
 func AssignPath(mut Mut, path cor.Path, val Val) (err error) {
-	var root Val = mut
-	for _, s := range path {
+	var cur, par Val
+	cur = mut
+	for i, s := range path {
 		var next Val
-		if s.IsIdx() {
-			next, err = SelectIdx(root, s.Idx)
+		if s.Sep() == '/' {
+			return assignList(cur, path[i:], val)
+		} else if s.IsIdx() {
+			next, err = SelectIdx(cur, s.Idx)
 		} else if s.Key != "" {
-			next, err = SelectKey(root, s.Key)
+			next, err = SelectKey(cur, s.Key)
 		} else if len(path) == 1 {
 			break
 		} else {
@@ -116,13 +140,26 @@ func AssignPath(mut Mut, path cor.Path, val Val) (err error) {
 			return err
 		}
 		if next.Nil() {
-			return fmt.Errorf("no value in %T at %s", s, root)
+			return fmt.Errorf("no value in %T at %s", s, cur)
 		}
-		root = next
+		cur, par = next, cur
 	}
-	mut, ok := root.(Mut)
+	mut, ok := cur.(Mut)
 	if !ok {
-		return fmt.Errorf("not a mutable value %T at %s", root, path)
+		mut, ok = par.(Mut)
+		if ok {
+			s := path[len(path)-1]
+			if s.IsIdx() {
+				if idxr, _ := mut.(Idxr); idxr != nil {
+					return idxr.SetIdx(s.Idx, val)
+				}
+			} else if s.Key != "" {
+				if keyr, _ := mut.(Keyr); keyr != nil {
+					return keyr.SetKey(s.Key, val)
+				}
+			}
+		}
+		return fmt.Errorf("not a mutable value %T at %s", cur, path)
 	}
 	return mut.Assign(val)
 }
@@ -149,8 +186,11 @@ func CreatePath(mut Mut, path cor.Path, val Val) (_ Mut, err error) {
 	for i, s := range path {
 		var next Val
 		if s.Sep() == '/' {
-			// TODO make selection insert
-			return nil, fmt.Errorf("unexpected list selection segment")
+			err = assignList(cur, path[i:], val)
+			if err != nil {
+				return nil, err
+			}
+			return mut, nil
 		} else if s.IsIdx() {
 			next, err = SelectIdx(cur, s.Idx)
 		} else if s.Key != "" {
