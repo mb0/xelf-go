@@ -26,7 +26,7 @@ func TestFSMods(t *testing.T) {
 		{"none", "1", nil, "1"},
 		{"simple", "(module big a:'A') big.a", []string{"testdata/#big"}, `"A"`},
 		{"import foo", "(import './foo') foo.b", []string{"file:testdata/foo.xelf#foo"}, "2"},
-		{"import multi", "(import './multi') ([] bar.c spam.e egg.name)", []string{
+		{"import multi", "(import './multi') ([]+ bar.c spam.e egg.name)", []string{
 			"file:testdata/multi.xelf#bar",
 			"file:testdata/multi.xelf#egg",
 			"file:testdata/multi.xelf#spam",

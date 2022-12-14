@@ -12,22 +12,35 @@ var Add = &addSpec{impl("<form@add num@ tupl?|num _>")}
 type addSpec struct{ exp.SpecBase }
 
 func (s *addSpec) Eval(p *exp.Prog, c *exp.Call) (lit.Val, error) {
-	args, err := p.EvalArgs(c)
+	val, err := p.Eval(c.Env, c.Args[0])
 	if err != nil {
 		return nil, err
 	}
-	r, err := lit.ToReal(args[0])
+	tupl := c.Args[1].(*exp.Tupl)
+	r, err := add(p, c.Env, val, tupl.Els)
 	if err != nil {
 		return nil, err
 	}
-	for _, v := range args[1].(*lit.List).Vals {
+	return toNum(c.Sig, r)
+}
+
+func add(p *exp.Prog, env exp.Env, val lit.Val, els []exp.Exp) (lit.Real, error) {
+	r, err := lit.ToReal(val)
+	if err != nil {
+		return r, err
+	}
+	for _, el := range els {
+		v, err := p.Eval(env, el)
+		if err != nil {
+			return r, err
+		}
 		rr, err := lit.ToReal(v)
 		if err != nil {
-			return nil, err
+			return r, err
 		}
 		r += rr
 	}
-	return toNum(c.Sig, r)
+	return r, nil
 }
 
 var Mul = &mulSpec{impl("<form@mul num@ tupl?|num _>")}
@@ -207,13 +220,14 @@ func (s *maxSpec) Eval(p *exp.Prog, c *exp.Call) (lit.Val, error) {
 }
 
 func toNum(sig typ.Type, r lit.Real) (lit.Val, error) {
-	var v lit.Val = r
-	t := exp.SigRes(sig).Type
+	return typedNum(exp.SigRes(sig).Type, r), nil
+}
+func typedNum(t typ.Type, r lit.Real) lit.Val {
 	switch t.Kind & knd.Num {
 	case knd.Num:
-		v = lit.Num(r)
+		return lit.Num(r)
 	case knd.Int:
-		v = lit.Int(r)
+		return lit.Int(r)
 	}
-	return v, nil
+	return r
 }

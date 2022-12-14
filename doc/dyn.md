@@ -19,12 +19,12 @@ either resolved spec directly, the call spec for unresolved specs, the make spec
 the mut spec for all other value types. The specs use the program scope for lookup and can be
 replaced individually.
 
-The call spec covers importent corner cases by deferring the spec resolution to the evaluation
+The call spec covers important corner cases by deferring the spec resolution to the evaluation
 phase. However in contrast to the previous dyn spec we need to know initially that the value will
 resolve to a spec. 
 
 The mut spec covers all mutations by using delta edits and additionally provides some syntax sugar
-for common but otherwise inconveniet expression for append and cat.
+for common but otherwise inconvenient expression for append and cat.
 
 The make spec covers all type value construction and conversions and should mostly reflect the
 behaviour of mut for a value of that type, with some additions:

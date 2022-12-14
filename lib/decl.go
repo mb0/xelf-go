@@ -17,10 +17,11 @@ func (s *withSpec) Resl(p *exp.Prog, env exp.Env, c *exp.Call, h typ.Type) (_ ex
 		de = &exp.DotEnv{Par: env}
 		c.Env = de
 	}
-	dot, err := p.Resl(env, c.Args[0], typ.Any)
+	dot, err := p.Resl(env, c.Args[0], typ.Void)
 	if err != nil {
 		return c, err
 	}
+	c.Args[0] = dot
 	if l, _ := dot.(*exp.Lit); l != nil {
 		de.Dot = l.Val
 	} else {
@@ -50,7 +51,7 @@ type letSpec struct{ exp.SpecBase }
 func (s *letSpec) Resl(p *exp.Prog, env exp.Env, c *exp.Call, h typ.Type) (_ exp.Exp, err error) {
 	le, ok := c.Env.(*LetEnv)
 	if !ok {
-		le = &LetEnv{Par: env}
+		le = &LetEnv{Par: env, Dot: lit.MakeObj(nil)}
 		c.Env = le
 	}
 	tags := c.Args[0].(*exp.Tupl)
@@ -61,7 +62,10 @@ func (s *letSpec) Resl(p *exp.Prog, env exp.Env, c *exp.Call, h typ.Type) (_ exp
 			return c, err
 		}
 		tag.Exp = ta
-		le.Dot.SetKey(tag.Tag, lit.AnyWrap(typ.Res(ta.Type())))
+		p := typ.P(tag.Tag, typ.Res(ta.Type()))
+		pb := le.Dot.Typ.Body.(*typ.ParamBody)
+		pb.Params = append(pb.Params, p)
+		le.Dot.Vals = append(le.Dot.Vals, lit.AnyWrap(p.Type))
 	}
 	res, err := p.Resl(le, c.Args[1], h)
 	if err != nil {
@@ -73,25 +77,25 @@ func (s *letSpec) Resl(p *exp.Prog, env exp.Env, c *exp.Call, h typ.Type) (_ exp
 func (s *letSpec) Eval(p *exp.Prog, c *exp.Call) (lit.Val, error) {
 	le := c.Env.(*LetEnv)
 	tags := c.Args[0].(*exp.Tupl)
-	for _, el := range tags.Els {
+	for i, el := range tags.Els {
 		tag := el.(*exp.Tag)
 		v, err := p.Eval(le.Par, tag.Exp)
 		if err != nil {
 			return nil, err
 		}
-		le.Dot.SetKey(tag.Tag, v)
+		le.Dot.Vals[i].Mut().Assign(v)
 	}
 	return p.Eval(le, c.Args[1])
 }
 
 type LetEnv struct {
 	Par exp.Env
-	Dot lit.Keyed
+	Dot *lit.Obj
 }
 
 func (e *LetEnv) Parent() exp.Env { return e.Par }
 func (e *LetEnv) Lookup(s *exp.Sym, p cor.Path, eval bool) (lit.Val, error) {
-	v, err := exp.SelectLookup(&e.Dot, p, eval)
+	v, err := exp.SelectLookup(e.Dot, p, eval)
 	if err == nil && v != nil {
 		s.Update(v.Type(), e, p)
 		if !eval && v.Nil() {

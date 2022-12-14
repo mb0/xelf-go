@@ -11,14 +11,13 @@ func TestMutEval(t *testing.T) {
 		raw  string
 		want string
 	}{
-		{`(append [3] 2 1)`, "[3 2 1]"},
-		{`(append [3 2] 1)`, "[3 2 1]"},
-		{`(append [3] 2 1)`, "[3 2 1]"},
 		{`(mut {} a:1 b:2)`, "{a:1 b:2}"},
 		{`(mut {a:1} b:2)`, "{a:1 b:2}"},
 		{`(mut {a:1} a:2)`, "{a:2}"},
 		{`(mut [3 4 1] 1:2)`, "[3 2 1]"},
 		{`(mut {a:{}} a.b:1)`, "{a:{b:1}}"},
+		{`(mut [3 2]+ 1)`, "[3 2 1]"},
+		{`(mut [3]+ 2 1)`, "[3 2 1]"},
 	}
 	for _, test := range tests {
 		got, err := exp.NewProg(Std).RunStr(test.raw, nil)

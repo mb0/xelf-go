@@ -1,2 +1,2 @@
 (import './liba')
-(module libb name:("libb using " liba.name))
+(module libb name:("libb using "+ liba.name))

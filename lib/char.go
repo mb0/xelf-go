@@ -14,12 +14,20 @@ var Cat = &catSpec{impl("<form@cat tupl str>")}
 type catSpec struct{ exp.SpecBase }
 
 func (s *catSpec) Eval(p *exp.Prog, c *exp.Call) (lit.Val, error) {
-	args, err := p.EvalArgs(c)
-	if err != nil {
-		return nil, err
-	}
+	tupl := c.Args[0].(*exp.Tupl)
+	return cat(p, c.Env, nil, tupl.Els)
+}
+
+func cat(p *exp.Prog, env exp.Env, val lit.Val, args []exp.Exp) (r lit.Str, err error) {
 	var b strings.Builder
-	for _, v := range args[0].(*lit.List).Vals {
+	if val != nil {
+		b.WriteString(val.String())
+	}
+	for _, el := range args {
+		v, err := p.Eval(env, el)
+		if err != nil {
+			return r, err
+		}
 		b.WriteString(v.String())
 	}
 	return lit.Str(b.String()), nil

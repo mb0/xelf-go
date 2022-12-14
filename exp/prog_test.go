@@ -1,7 +1,6 @@
 package exp_test
 
 import (
-	"strings"
 	"testing"
 
 	"xelf.org/xelf/bfr"
@@ -23,17 +22,17 @@ func TestProgEval(t *testing.T) {
 		{`(with {a:[{b:2}]} .a.0.b)`, `2`},
 		{`(with {a:[{b:2}, {b:3}]} .a/b)`, `[2 3]`},
 		{`(with {a:'2021-08-19T15:00:00Z'} (month .a))`, `8`},
-		{`(dyn (month $now))`, `8`},
+		{`((month $now))`, `8`},
 		{`@`, `<@1>`},
 		{`<@>`, `<@1>`},
 		{`<@test.point>`, `<obj@test.point>`},
-		{`(with make ([] (. int) (. str)))`, `[0 '']`},
-		{`(fold (list|typ int str) [] (fn r:list t:typ (_ (.1 null)))))`, `[0 '']`},
+		{`(with make ([]+ (. int) (. str)))`, `[0 '']`},
+		{`(fold (list|typ + int str) [] (fn r:list t:typ (mut .r + (.t null))))`, `[0 '']`},
 	}
 	tval, _ := typ.Parse("<obj@test.point x:int y:int>")
-	env := &lib.LetEnv{Par: extlib.Std, Dot: lit.Keyed{
+	env := &lib.LetEnv{Par: extlib.Std, Dot: lit.MakeObj(lit.Keyed{
 		{Key: "test", Val: &lit.Keyed{{Key: "point", Val: tval}}},
-	}}
+	})}
 	arg := &lit.Dict{Keyed: []lit.KeyVal{
 		{Key: "now", Val: lit.Char("2021-08-19T15:00:00Z")},
 	}}
@@ -67,16 +66,20 @@ func TestProgResl(t *testing.T) {
 			`<form@add num@ tupl?|num _>`},
 		{`(if true add sub)`, `<call|spec>`,
 			`<form@if <tupl cond:any then:exp|spec> else:exp?|spec spec>`},
-		{`(make @test.point {})`, `<call|obj@test.point>`, ``},
+		{`(@test.point {})`, `<call|obj@test.point>`, ``},
 		{`(add (int 1) 2)`, `<call|int>`, `<form@add int tupl?|num int>`},
+		{`(fn 1)`, `<lit|func@fn1 num>`, ``},
+		{`(fn (add _ 2))`, `<lit|func@fn1 num@3 num@3>`, ``},
+		{`(''+ test)`, `<call|char@1>`, ``},
+		{`([]+ test)`, `<call|idxr@1>`, ``},
 		{`<@test.point>`, `<lit|typ|obj@test.point>`, `<obj@test.point>`},
 	}
 	tval, _ := typ.Parse("<obj@test.point x:int y:int>")
-	env := &lib.LetEnv{Par: extlib.Std, Dot: lit.Keyed{
+	env := &lib.LetEnv{Par: extlib.Std, Dot: lit.MakeObj(lit.Keyed{
 		{Key: "test", Val: &lit.Keyed{{Key: "point", Val: tval}}},
-	}}
+	})}
 	for _, test := range tests {
-		e, err := exp.Read(strings.NewReader(test.raw), "test")
+		e, err := exp.Parse(test.raw)
 		if err != nil {
 			t.Errorf("read %s failed: %v", test.raw, err)
 			continue

@@ -31,25 +31,25 @@ paths as central xelf program concept for the env lookup api.
 
 Diff ops for raw and str literals were added, and the new mirror op concept uses the plus marker.
 
-The new 'apply' spec applies one delta dict to target value.
-The new 'set' spec assigns one value to a target value.
-
 The 'mut' spec now covers all value mutations with the signature `<form@mut any tupl?|expr _>` and
 replaces the 'dyn' spec for all calls starting with a data value by delegating to other specs.
 Arguments are expected to be either all tags or all plain expressions.
 
-Tag arguments are treated as delta edits and thereby cover all variants in generic ways:
+Tag arguments are treated as delta edits and thereby cover all variants in generic ways. We expect
+only one plain argument as assignment unless that argument is the symbol '+', in that case we use
+add for numbers, cat for chars or append for lists. Together we get:
 
-	(mut . .:$v)           →  (set . $v)
-	(mut . key:1)          →  (apply . {key:1})
-	(mut . .*:$delta)      →  (apply . $delta)
-	(mut [] .+:[[1 2]])    →  (append [] 1 2)
-	(mut 'a' .+:['b' 'c']) →  (cat 'a' 'b' 'c')
+	(a .:v)          assign v to a, same as (a v) 
+	(a path:1)       apply an edit to a, same as (a .*:{path:1})
+	(a .+:[[1 2]])   append to list a, same as (a + 1 2) or (append a 1 2)
+	(a .+:['b' 'c']) cat to str a, same as (a + 'b' 'c') or (cat a 'b' 'c')
+	(n + 1 2 3)      add when n is a number  (add n 1 2 3)
+	(l + 1 2 3)      append when l is a list (append l 1 2 3)
+	(s + 1 2 3)      cat when s is a string  (cat s 1 2 3)
+	(list|num + a b) same sytax for make
 
-Plain arguments work only for str and list values and select either the cat or append spec:
-
-	(mut [] 1 2)      →  (append [] 1 2)
-	(mut 'a' 'b' 'c') →  (cat 'a' 'b' 'c')
+We drop the append spec in favor of the simple mut syntax `(a + 1 2 3)`. We can always attempt a
+type conversion `((list a) + 1 2 3)` as explicit replacement for `(append a 1 2 3)`.
 
 Discussion
 ----------
@@ -167,41 +167,32 @@ The remaining question for deltas is whether the dict must preserve order or not
 Without a clear conclusion we should use an ordered dict until we can better describe the problem.
 Then we try to write a transformer to simplify deltas and remove order ambiguity.
 
+We need to resolve a conflict in the mut and make specs between simple assignment and conversation
+or append and merge operations. We want `(list|int [])` to work and want an equally simple syntax
+to construct a typed list with a number of element values. This case is especially important because
+we do not allow expression in literal values, so we could not write `(list|str [title])`. Special
+casing on target value type and number of arguments would not be reliable and very confusing.
+We can use a special resolution rule for make and mut specs to use a plain '+' as marker to apply
+an append or merge operation:
+
+ 	(val 137) simple assignment
+	(int 137) simple conversion
+	(val + (len a) -1) add arguments to val, modifying it
+	(''+ title '!\n\n' body '\n---\n' footer) construct a new str
+	(list|str + title body footer) construct a typed list
+
 Open questions:
+
+Whether to use `{.+:3}` or `{.+:-2}` to increment or decrement numbers?
+Whether to use use `{.*;}` to toggle bools?
 
 Whether to simplify or resolve mut calls to specific calls or keep the generic syntax around.
  * We have to think about simplifying on resolve in connection with format anyway.
  * Let's lean on keeping original calls intact for now.
 
-Do we allow only cat and append variants for multiple plain args?
- * We would minimize special rules to two reasonable and practical cases we often use, that only
-   have a unintuitive alternative syntax with mirror ops.
- * We would drop the sugar to add numbers, but writing `(1 2 3)` instead of `(add 1 2 3)` is not
-   as useful as cat and append sugar and might even be confusing.
- * This would allow us to keep assign sugar to `(. $v)` for all values except str and list.
-   But do we want that and how do we treat char? This would be inconsistent and confusing again.
-   Is saving two chars for `(. .:$v)` or four to use the explicit `(set . $v)` worth it?
- * On the other hand we ideally want to mirror the conceptual behaviour of mut and make.
-   There we have the same problem because we want a simple syntax for type conversions which
-   would mirror assignments in mut. Writing `(@T .)` is obviously preferred to `(@T .:.)`
- * But like mut we want to allow an easy append syntax for list construction `(list|int 1 2 3)`
- * Maybe we should look for a combination of spare markers … yes maybe this is what `++` is for?
-   We could hide cat and append behind a specially marked tag (list|int ++; 1 2 3) and can even
-   provide an alternative version using lists instead of tupl `('' ++:['a' 2 null])` or even
-   combined version `(buf ++:(log_prefix) .key '=' .val)`
- * (list|int ++ 1 2 3) would look much better, we can use a custom resolver for make and mut to
-   treat ++ as a reserved identifier within these specs and in second position only.
-
-Do we add a merge spec? Is the concept of merging values even clear enough?
- * We use edit ops for complex str, raw and list mutations, we can already merge keyers by using
-   them as deltas, we could default to add for numbers and even spans, but from an delta point
-   of view primitive values other than str and raw use simple assignment in the end.
- * The merge concept would really only makes sense if applied to the mut spec. Then all it does is
-   allow some sugar to combine a common operation and assignment into one call:
-      (. 1 2 3) instead of (set . (add 1 2 3))
- * How would we even generalize the merge aspect for plain arguments beyond str and raw?
+How do we implement merge operations for values other than str, int and real?
+ * Do we use cat for all chars? That would include raw, time, span, enum and uuid.
+ * Should we use xelf or json spec for raw instead?
+ * Do we want to provide specs to for span and time addition and subtraction
+ * Do we special case bits to use a binary-or instead of the add spec?
  * Let's keep it simple and revisit when we think more about time, span, enum and bits values
-
-More ideas:
- * we could use `{.+:3}` or `{.+:-2}` to increment or decrement numbers
- * we could also use `{.+;}` or `{.*;}` to toggle bool

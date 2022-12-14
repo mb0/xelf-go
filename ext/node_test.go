@@ -37,7 +37,7 @@ func TestNode(t *testing.T) {
 		{`(el)`, `{kind:'el' w:3 font;}`},
 		{`(el h:4)`, `{kind:'el' w:3 h:4 font;}`},
 		{`(el font.size:4)`, `{kind:'el' w:3 font:{size:4}}`},
-		{`(fold [0 1] [] (fn (append .0 (el font.size:(4 .1)))))`,
+		{`(fold [0 1] [] (fn (mut _ + (el font.size:(4+ .1)))))`,
 			`[{kind:'el' w:3 font:{size:4}} {kind:'el' w:3 font:{size:5}}]`},
 	}
 	for _, test := range tests {

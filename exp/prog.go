@@ -31,8 +31,9 @@ type Prog struct {
 	// Birth holds the uri for actively loading files to break recursive loads
 	Birth map[string]struct{}
 
+	Dyn Dyn
+
 	fnid uint
-	dyn  Spec
 }
 
 // NewProg returns a new program using the given registry, environment and expression.
@@ -41,6 +42,8 @@ func NewProg(env Env, args ...interface{}) *Prog {
 	p := &Prog{Ctx: context.Background(), Root: env, Sys: typ.NewSys(), Reg: *lit.GlobalRegs()}
 	for _, arg := range args {
 		switch a := arg.(type) {
+		case Dyn:
+			p.Dyn = a
 		case *lit.Regs:
 			p.Reg = *lit.DefaultRegs(a)
 		case context.Context:
@@ -51,8 +54,8 @@ func NewProg(env Env, args ...interface{}) *Prog {
 			p.Reg.PrxReg = a
 		}
 	}
-	if dyn, _ := LookupKey(env, "dyn"); dyn != nil {
-		p.dyn, _ = dyn.Value().(Spec)
+	if p.Dyn == nil {
+		p.Dyn = DefaultDyn(env)
 	}
 	return p
 }
@@ -234,32 +237,13 @@ func (p *Prog) Resl(env Env, e Exp, h typ.Type) (Exp, error) {
 		return a, nil
 	case *Call:
 		if a.Spec == nil {
-			if len(a.Args) == 0 {
-				return nil, ast.ErrReslSpec(a.Src, "unexpected empty call", nil)
-			}
-			fst, err := p.Resl(env, a.Args[0], typ.Void)
+			err := p.Dyn(p, env, a, h)
 			if err != nil {
 				return nil, err
 			}
-			ft := fst.Type()
-			if ft.Kind == knd.Lit && ft.Body != nil && ft.Body.(*typ.Type).Kind&knd.Spec != 0 {
-				if l, ok := fst.(*Lit); ok {
-					if s, ok := l.Value().(Spec); ok {
-						a.Spec = s
-						a.Args = a.Args[1:]
-					}
-				}
-			}
-			if a.Spec == nil {
-				if p.dyn == nil {
-					return nil, ast.ErrReslSpec(a.Src, "unsupported dyn call", nil)
-				}
-				a.Spec = p.dyn
-				a.Args[0] = fst
-			}
 			a.Sig, err = p.Sys.Inst(LookupType(env), a.Spec.Type())
 			if err != nil {
-				return nil, ast.ErrReslSpec(a.Src, p.dyn.Type().String(), err)
+				return nil, ast.ErrReslSpec(a.Src, a.Spec.Type().String(), err)
 			}
 			a.Args, err = LayoutSpec(a.Sig, a.Args)
 			if err != nil {

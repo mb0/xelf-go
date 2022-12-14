@@ -9,7 +9,7 @@ import (
 	"xelf.org/xelf/typ"
 )
 
-var Fn = &fnSpec{impl("<form@fn tupl?|tag|typ exp|@1 func@|@1>")}
+var Fn = &fnSpec{impl("<form@fn tupl?|tag|typ exp|@1 spec|@1>")}
 
 type fnSpec struct{ exp.SpecBase }
 
@@ -18,9 +18,9 @@ func (s *fnSpec) Resl(p *exp.Prog, env exp.Env, c *exp.Call, h typ.Type) (_ exp.
 	tags, ok := c.Args[0].(*exp.Tupl)
 	if ok && len(tags.Els) > 0 {
 		explicitArgs(p, fe, tags.Els)
+	} else {
+		fe.mock = true
 	}
-
-	fe.mock = true
 	x, err := p.Resl(fe, c.Args[1], typ.Void)
 	fe.mock = false
 	if err != nil {
@@ -178,8 +178,9 @@ type FuncEnv struct {
 func (e *FuncEnv) Parent() exp.Env { return e.Par }
 func (e *FuncEnv) Lookup(s *exp.Sym, p cor.Path, eval bool) (lit.Val, error) {
 	if p.Plain() == "recur" {
-		if e.mock {
+		if !eval {
 			e.rec = true
+			s.Update(typ.Spec, e, p)
 			return nil, nil
 		}
 		if e.recur != nil {
