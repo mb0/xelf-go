@@ -9,17 +9,7 @@ func NameStart(r rune) bool { return Letter(r) || r == '_' }
 func NamePart(r rune) bool { return NameStart(r) || Digit(r) }
 
 // IsName tests whether s is a valid name.
-func IsName(s string) bool {
-	if s == "" || !NameStart(rune(s[0])) {
-		return false
-	}
-	for _, r := range s[1:] {
-		if !NamePart(r) {
-			return false
-		}
-	}
-	return true
-}
+func IsName(s string) bool { return is(s, NameStart, NamePart) }
 
 // Cased returns n starting with uppercase letter.
 // This function is especially used for go code gen.
@@ -51,21 +41,25 @@ func IsCased(s string) bool {
 }
 
 // SymStart tests whether r is ascii letter, underscore or punctuation.
-func SymStart(r rune) bool { return NameStart(r) || Punct(r) }
+func SymStart(r rune) bool { return SymPart(r) && !Digit(r) }
 
 // SymPart tests whether r is ascii letter, digit, underscore or punctuation.
-func SymPart(r rune) bool { return NameStart(r) || Digit(r) || Punct(r) }
+func SymPart(r rune) bool { return r >= '!' && r <= '~' && r != '\\' && Ctrl(r) < 0 }
 
 // IsSym tests whether s is a valid symbol.
 func IsSym(s string) bool {
-	if s == "" {
+	if c := s[0]; c == '-' && s != "-" && Digit(rune(s[1])) {
 		return false
 	}
-	if c := s[0]; c == '-' && len(s) > 1 && Digit(rune(s[1])) || !SymStart(rune(c)) {
+	return is(s, SymStart, SymPart)
+}
+
+func is(s string, start, part func(r rune) bool) bool {
+	if s == "" || !start(rune(s[0])) {
 		return false
 	}
 	for _, r := range s[1:] {
-		if !SymPart(r) {
+		if !part(r) {
 			return false
 		}
 	}

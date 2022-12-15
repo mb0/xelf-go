@@ -9,17 +9,7 @@ func KeyStart(r rune) bool { return r >= 'a' && r <= 'z' || r == '_' }
 func KeyPart(r rune) bool { return KeyStart(r) || Digit(r) || r == '.' }
 
 // IsKey tests whether s is a valid key.
-func IsKey(s string) bool {
-	if s == "" || !KeyStart(rune(s[0])) {
-		return false
-	}
-	for _, r := range s[1:] {
-		if !KeyPart(r) {
-			return false
-		}
-	}
-	return true
-}
+func IsKey(s string) bool { return is(s, KeyStart, KeyPart) }
 
 // Keyed returns the s starting with the first name segment as key.
 func Keyed(s string) string {

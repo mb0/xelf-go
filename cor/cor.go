@@ -42,3 +42,23 @@ func Punct(r rune) bool {
 	}
 	return false
 }
+
+func Ctrl(r rune) int {
+	switch r {
+	case '"', '\'', '`':
+		return 0x1000
+	case '(', ')':
+		return 0x80
+	case ',':
+		return 0
+	case ':', ';':
+		return 0x20
+	case '<', '>':
+		return 0x08
+	case '[', ']':
+		return 0x140000
+	case '{', '}':
+		return 0x180000
+	}
+	return -1
+}

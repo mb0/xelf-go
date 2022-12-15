@@ -119,29 +119,19 @@ func (l *Lexer) Tok() (Tok, error) {
 	for cor.Space(r) {
 		r = l.next()
 	}
-	switch r {
-	case eof:
-		t := l.rtok(knd.Void)
-		return t, l.err
-	case ',':
-		return l.rtok(knd.Void), nil
-	case ':', ';':
-		return l.rtok(knd.Tag), nil
-	case '(', ')':
-		return l.rtok(knd.Call), nil
-	case '[', ']':
-		return l.rtok(knd.Idxr), nil
-	case '{', '}':
-		return l.rtok(knd.Keyr), nil
-	case '<', '>':
-		return l.rtok(knd.Typ), nil
-	case '"', '\'', '`':
-		return l.lexString()
+	if r == eof {
+		return l.rtok(knd.Void), l.err
+	}
+	if k := cor.Ctrl(r); k >= 0 {
+		if k == int(knd.Str) {
+			return l.lexString()
+		}
+		return l.rtok(knd.Kind(k)), nil
 	}
 	if cor.Digit(r) || r == '-' && cor.Digit(l.nxt) {
 		return l.lexNumber()
 	}
-	if cor.SymStart(r) {
+	if r >= '!' && r <= '~' && r != '\\' {
 		return l.lexSymbol()
 	}
 	t := l.rtok(knd.Void)
