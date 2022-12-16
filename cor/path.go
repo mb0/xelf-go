@@ -57,26 +57,11 @@ func ParsePath(path string) (res Path, err error) {
 
 // FillPath reads and returns the segments for the path filled with vars or an error.
 func FillPath(path string, vars ...string) (res Path, err error) {
-	for len(path) > 0 {
-		res, path, err = addSeg(res, path)
-		if err != nil {
-			return nil, err
-		}
+	res, err = ParsePath(path)
+	if err != nil {
+		return nil, err
 	}
 	return res, res.FillVars(vars)
-}
-
-func addSeg(p Path, s string) (_ Path, rest string, err error) {
-	var res Seg
-	if r := s[0]; r == '.' || r == '/' {
-		s = s[1:]
-		res.Sel = r
-	} else if len(p) > 0 {
-		return p, s, fmt.Errorf("missing path sep")
-	}
-	rest = res.parse(s, false)
-	p = append(p, res)
-	return p, rest, nil
 }
 func (p Path) Plain() string {
 	if len(p) == 1 && p[0].Sep() == 0 {
@@ -108,7 +93,15 @@ func (p Path) FillVars(vars []string) error {
 		if len(vars) == 0 {
 			return fmt.Errorf("not enough path variables")
 		}
-		s.parse(vars[0], true)
+
+		idx, raw, _ := checkSeg(vars[0], false)
+		if s.Key = ""; idx {
+			s.Idx, _ = strconv.Atoi(raw)
+		} else if raw == "" {
+			s.Sel += '@' // magic
+		} else {
+			s.Key = raw
+		}
 		vars = vars[1:]
 	}
 	if len(vars) > 0 {
@@ -117,31 +110,40 @@ func (p Path) FillVars(vars []string) error {
 	return nil
 }
 
-func (res *Seg) parse(s string, ignoreSep bool) (rest string) {
-	var idx, upper, other bool
+func addSeg(p Path, s string) (Path, string, error) {
+	var res Seg
+	if r := s[0]; r == '.' || r == '/' {
+		s = s[1:]
+		res.Sel = r
+	} else if len(p) > 0 {
+		return p, "", fmt.Errorf("missing path sep")
+	}
+	idx, raw, rest := checkSeg(s, true)
+	if idx {
+		res.Idx, _ = strconv.Atoi(s)
+	} else if raw != "" {
+		res.Key = strings.ToLower(raw)
+	} else { // empty
+		res.Key = ""
+		res.Sel += '@' // magic
+	}
+	p = append(p, res)
+	return p, rest, nil
+}
+
+func checkSeg(s string, split bool) (idx bool, raw, rest string) {
+	var other bool
+	raw = s
 	for i, r := range s {
-		if !ignoreSep && (r == '.' || r == '/') {
-			s, rest = s[:i], s[i:]
+		if split && (r == '.' || r == '/') {
+			raw, rest = s[:i], s[i:]
 			break
-		} else if r >= 'A' && r <= 'Z' {
-			upper = true
 		} else if r >= '0' && r <= '9' || r == '-' && i == 0 {
 			idx = true
 		} else {
 			other = true
 		}
 	}
-	if upper || other {
-		if upper {
-			s = strings.ToLower(s)
-		}
-		res.Key = s
-	} else if idx && len(s) < 10 {
-		res.Key = ""
-		res.Idx, _ = strconv.Atoi(s)
-	} else { // empty
-		res.Key = ""
-		res.Sel += '@' // magic
-	}
-	return rest
+	idx = idx && !other && s != "-"
+	return
 }
