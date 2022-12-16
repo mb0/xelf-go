@@ -6,10 +6,45 @@ const kndVal = knd.Any | knd.Exp
 
 // AssignableTo returns whether *all* values represented by type t can be assigned to dst.
 func (t Type) AssignableTo(dst Type) bool {
-	if t.ID > 0 && t.ID == dst.ID {
+	if !t.Kind.IsAlt() || t.Kind&knd.Any == knd.Any {
+		return t.assignableTo(dst)
+	}
+	if t.always(dst) || t.Kind&knd.None != 0 && dst.Kind&knd.None != 0 {
 		return true
 	}
-	if dst.Kind&knd.Var != 0 && dst.Kind&kndVal == knd.Void {
+	for _, tt := range altTypes(t) {
+		if !tt.assignableTo(dst) {
+			return false
+		}
+	}
+	return true
+}
+
+// ConvertibleTo returns whether *any* value represented by type t can be assigned to dst.
+// That means char is convertible to time, but str is not.
+func (t Type) ConvertibleTo(dst Type) bool {
+	if !t.Kind.IsAlt() || t.Kind&knd.Any == knd.Any {
+		return t.convertibleTo(dst)
+	}
+	if t.always(dst) || t.Kind&knd.None != 0 && dst.Kind&knd.None != 0 {
+		return true
+	}
+	for _, tt := range altTypes(t) {
+		if tt.convertibleTo(dst) {
+			return true
+		}
+	}
+	return false
+}
+
+func (t Type) always(dst Type) bool {
+	return t.ID > 0 && t.ID == dst.ID ||
+		dst.Kind&knd.Var != 0 && dst.Kind&kndVal == knd.Void ||
+		dst.Kind&knd.Any == knd.None && t.Kind&knd.None != 0
+}
+
+func (t Type) assignableTo(dst Type) bool {
+	if t.always(dst) {
 		return true
 	}
 	sk := t.Kind & kndVal
@@ -28,14 +63,14 @@ func (t Type) AssignableTo(dst Type) bool {
 			return true
 		}
 		for _, da := range db.Alts {
-			if t.AssignableTo(da) {
+			if t.assignableTo(da) {
 				return true
 			}
 		}
 	case *ParamBody:
-		if dst.Kind&sk != sk &&
-			(sk&knd.Spec == 0 || dst.Kind&knd.Spec == 0) &&
-			(sk&knd.Obj == 0 || dst.Kind&knd.Obj == 0) {
+		if k := sk &^ knd.None; dst.Kind&k != k &&
+			(k&knd.Spec == 0 || dst.Kind&knd.Spec == 0) &&
+			(k&knd.Obj == 0 || dst.Kind&knd.Obj == 0) {
 			return false
 		}
 		sb, ok := t.Body.(*ParamBody)
@@ -54,31 +89,20 @@ func (t Type) AssignableTo(dst Type) bool {
 		}
 		return true
 	case *ConstBody:
-		if dst.Kind&sk != sk {
+		if dst.Kind&sk == sk {
 			_, ok := t.Body.(*ConstBody)
 			return ok && dst.Ref == t.Ref
 		}
 		// we can assign constant names and values
-		if sk == knd.Str {
-			return true
-		}
-		if sk == knd.Int {
+		if sk == knd.Str || sk == knd.Int {
 			return true
 		}
 	}
 	return false
 }
 
-// ConvertibleTo returns whether *any* value represented by type t can be assigned to dst.
-// That means char is convertible to time, but str is not.
-func (t Type) ConvertibleTo(dst Type) bool {
-	if t.ID > 0 && t.ID == dst.ID {
-		return true
-	}
-	if dst.Kind&knd.Var != 0 && dst.Kind&kndVal == knd.Void {
-		return true
-	}
-	if t.Kind&knd.Var != 0 && t.Kind&kndVal == knd.Void {
+func (t Type) convertibleTo(dst Type) bool {
+	if t.always(dst) || t.Kind&knd.Var != 0 && t.Kind&kndVal == knd.Void {
 		return true
 	}
 	sk := t.Kind & kndVal
@@ -89,7 +113,7 @@ func (t Type) ConvertibleTo(dst Type) bool {
 	case nil:
 		return dst.Kind&sk != 0
 	case *Type:
-		if dst.Kind&sk != 0 {
+		if k := sk &^ knd.None; dst.Kind&k != 0 {
 			return elem(t).ConvertibleTo(*db)
 		}
 	case *AltBody:
@@ -102,21 +126,23 @@ func (t Type) ConvertibleTo(dst Type) bool {
 			}
 		}
 	case *ParamBody:
-		if dst.Kind&sk != sk &&
-			(sk&knd.Spec == 0 || dst.Kind&knd.Spec == 0) &&
-			(sk&knd.Obj == 0 || dst.Kind&knd.Obj == 0) {
+		if k := sk &^ knd.None; dst.Kind&k != k &&
+			(k&knd.Spec == 0 || dst.Kind&knd.Spec == 0) &&
+			(k&knd.Obj == 0 || dst.Kind&knd.Obj == 0) {
 			return false
 		}
 		sb, ok := t.Body.(*ParamBody)
 		if !ok {
 			return false
 		}
-		for _, sp := range sb.Params {
-			di := db.FindKeyIndex(sp.Key)
-			if di >= 0 {
-				if !sp.Type.ConvertibleTo(db.Params[di].Type) {
+		for _, dp := range db.Params {
+			si := sb.FindKeyIndex(dp.Key)
+			if si >= 0 {
+				if !sb.Params[si].Type.ConvertibleTo(dp.Type) {
 					return false
 				}
+			} else if !dp.IsOpt() {
+				return false
 			}
 		}
 		return true
@@ -151,6 +177,11 @@ func (t Type) ResolvableTo(dst Type) bool {
 func elem(t Type) Type {
 	if el := El(t); el != Void {
 		return el
+	}
+	if k := t.Kind & knd.All; k == knd.Form || k == knd.Func {
+		if pb, _ := t.Body.(*ParamBody); pb != nil && len(pb.Params) > 0 {
+			return pb.Params[len(pb.Params)-1].Type
+		}
 	}
 	return Any
 }
