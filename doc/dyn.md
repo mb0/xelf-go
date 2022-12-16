@@ -20,7 +20,7 @@ the mut spec for all other value types. The specs use the program scope for look
 replaced individually.
 
 The call spec covers important corner cases by deferring the spec resolution to the evaluation
-phase. However in contrast to the previous dyn spec we need to know initially that the value will
+phase. However in contrast to the previous dyn spec we initially need to know that the value will
 resolve to a spec. 
 
 The mut spec covers all mutations by using delta edits and additionally provides some syntax sugar
@@ -35,37 +35,32 @@ behaviour of mut for a value of that type, with some additions:
 Discussion
 ----------
 
-We do load a dyn spec on init from the program environment. The default dyn spec provides syntax
+We did load a dyn spec on init from the program environment. The default dyn spec provided syntax
 sugar for following literals:
 
   * spec: call    - implicitly part of the xelf definition
   * typ:  make    - very useful as core part of the language
-  * str:  cat     - useful for formatting and templating, should cover all char
+  * str:  cat     - useful for formatting and templates, should cover all char
   * num:  add     - not really that useful, consequent if we allow char
   * list: append  - should probably be covered by mut as well
   * keyr: mut     - this is generally nice but could be great if this listop concept works
 
-The omissions are because all options would be confusing and are better served by the make sugar.
-This indicates the limited usefulness of extending the dyn sugar concept to custom types. Adding
+The omissions were because all options would be confusing and are better served by the make sugar.
+This indicated the limited usefulness of extending the dyn sugar concept to custom types. Adding
 custom sugar has a spec lookup problem as well, because much of the interesting types already
 match the mut spec.
 
-In practice the core sugar specs are only good if they are a consistent part of all dialects. I
+In practice the core sugar specs were only good if they were a consistent part of all dialects. I
 decided that dyn (and syntax sugar in general) should either be a reliable or completely dropped.
 The implicit behaviour change would be hard to keep in mind and the code would be too involved, to
 justify the cost of that feature. That means the dyn behaviour should not change during program
 resolution in any way.
 
-The most essential feature that dyn provides is late binding spec and the typ sugar, values of these
+The most essential feature dyn provided was late binding calls and the typ sugar, values of these
 two types should not be mutated. All other values can however be mutated. So, provided we add an
 explicit call spec for late binding and unify a mut spec, we can drop dyn and reduce the supported
 sugar to only three specs: call, make and mut. We can instead provide a dyn hook to the program,
 that can replace this behaviour.
 
-That leaves the question: Can we find a good definition of mutate that covers all our needs?
-We explore that question in more detail in [mutate spec doc](./mut.md).
-
-If we find a unified mutable spec we should consider providing the same syntax in the make spec.
-That would further unify value creation and modification syntax `(@proposal.Rating tag:'Cool')`.
-
-Ideally we have a similar generic signature for mut, make and call `<form @ tupl?|exp lit|_>`.
+We found a good syntax of mutate that covers all needs and use the same syntax for the make spec
+`(@proposal.Rating tag:'Cool')`. We explore that question in [mutate spec doc](./mut.md).
