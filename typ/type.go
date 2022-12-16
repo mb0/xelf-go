@@ -65,22 +65,20 @@ func (t Type) Print(b *bfr.P) error {
 }
 
 func (t Type) print(b *bfr.P, sb *strings.Builder, stack []Body, enclose bool) error {
-	if t.Kind == knd.Void {
+	if t.Kind == 0 {
 		return b.Fmt("<>")
 	}
-	var isRef, isVar, isNone, isSel, isAlt bool
+	var isVar, isNone, isSel, isAlt bool
 	k := t.Kind
-	if isRef = k&knd.Ref != 0; isRef {
+	if k&knd.Ref != 0 {
 		k &^= knd.Ref
-	}
-	if isVar = k&knd.Var != 0; isVar {
+	} else if isVar = k&knd.Var != 0; isVar {
 		k &^= knd.Var
+	} else if isSel = k&knd.Sel != 0; isSel {
+		k &^= knd.Sel
 	}
 	if isNone = k&knd.None != 0 && t.Kind != knd.None && k != knd.Any; isNone {
 		k &^= knd.None
-	}
-	if isSel = k&knd.Sel != 0; isSel {
-		k &^= knd.Sel
 	}
 	if sb == nil {
 		sb = &strings.Builder{}
@@ -114,13 +112,13 @@ func (t Type) print(b *bfr.P, sb *strings.Builder, stack []Body, enclose bool) e
 			sb.WriteString(s)
 		}
 	}
-	if t.Ref != "" && !isSel {
+	if isVar || t.Ref != "" && !isSel {
 		sb.WriteByte('@')
-		sb.WriteString(t.Ref)
-	} else if isVar {
-		sb.WriteByte('@')
-		if t.ID > 0 {
+		if isVar && t.ID > 0 {
 			fmt.Fprint(sb, t.ID)
+		}
+		if t.Ref != "" {
+			sb.WriteString(t.Ref)
 		}
 	}
 	if isNone {

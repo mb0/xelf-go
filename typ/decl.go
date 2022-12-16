@@ -34,6 +34,7 @@ var (
 
 	Data = Type{Kind: knd.Data}
 	Spec = Type{Kind: knd.Spec}
+	All  = Type{Kind: knd.All}
 	Any  = Type{Kind: knd.Any}
 )
 

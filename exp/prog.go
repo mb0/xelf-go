@@ -126,7 +126,7 @@ func (p *Prog) Lookup(s *Sym, pp cor.Path, eval bool) (res lit.Val, err error) {
 	}
 	res, err = p.Root.Lookup(s, pp, eval)
 	if err == ErrSymNotFound {
-		if t, err := typ.ParseSym(s.Sym, s.Src, nil); err == nil {
+		if t, err := typ.ParseSym(s.Sym, s.Src); err == nil {
 			t, err = p.Sys.Inst(LookupType(s.Env), t)
 			if err != nil {
 				return nil, err
@@ -159,7 +159,7 @@ func (p *Prog) Resl(env Env, e Exp, h typ.Type) (Exp, error) {
 			return LitSrc(lit.Wrap(lit.Str(a.Sym).Mut(), typ.Sym), a.Src), nil
 		}
 		if a.Sym[0] == '@' {
-			t, err := typ.ParseSym(a.Sym, a.Src, nil)
+			t, err := typ.ParseSym(a.Sym, a.Src)
 			if err != nil {
 				return nil, ast.ErrReslTyp(a.Src, a.Sym, err)
 			}

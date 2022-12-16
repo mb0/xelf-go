@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"strings"
 	"testing"
+
+	"xelf.org/xelf/knd"
 )
 
 func TestParse(t *testing.T) {
@@ -23,6 +25,8 @@ func TestParse(t *testing.T) {
 		{Void, `void`, `<>`},
 		{Void, `<void>`, `<>`},
 		{Void, `<>`, ``},
+		{None, `?`, `<none>`},
+		{Type{Kind: knd.Some}, `!`, `<some>`},
 		{None, `none`, `<none>`},
 		{None, `<none>`, ``},
 		{Data, `data`, `<data>`},
@@ -49,6 +53,7 @@ func TestParse(t *testing.T) {
 		{Var(-1, Void), `@`, `<@>`},
 		{Var(1, Void), `<@1>`, ``},
 		{Var(1, Num), `<num@1>`, ``},
+		{WithRef(".foo", Var(1, Num)), `<num@1.foo>`, ``},
 		{Var(1, Alt(Num, Str)), `<alt@1 num str>`, ``},
 		{Ref(`a`), `@a`, `<@a>`},
 		{Ref(`a.b`), `<@a.b>`, ``},

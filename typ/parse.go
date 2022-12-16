@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"xelf.org/xelf/ast"
+	"xelf.org/xelf/cor"
 	"xelf.org/xelf/knd"
 )
 
@@ -26,7 +27,7 @@ func ParseAst(a ast.Ast) (Type, error) { return parse(a, nil) }
 func parse(a ast.Ast, hist []Type) (Type, error) {
 	switch a.Kind {
 	case knd.Sym:
-		return ParseSym(a.Raw, a.Src, hist)
+		return ParseSym(a.Raw, a.Src)
 	case knd.Typ:
 		if len(a.Seq) == 0 { // empty expression is void
 			return Void, nil
@@ -35,7 +36,7 @@ func parse(a ast.Ast, hist []Type) (Type, error) {
 		if fst.Kind != knd.Sym {
 			return Void, ast.ErrUnexpected(a)
 		}
-		t, err := ParseSym(fst.Raw, fst.Src, hist)
+		t, err := ParseSym(fst.Raw, fst.Src)
 		if err != nil {
 			return t, err
 		}
@@ -44,82 +45,93 @@ func parse(a ast.Ast, hist []Type) (Type, error) {
 	return Void, ast.ErrUnexpected(a)
 }
 
-func ParseSym(raw string, src ast.Src, hist []Type) (Type, error) {
+func ParseSym(raw string, src ast.Src) (Type, error) {
 	var res Type
-	sp := strings.SplitN(raw, "|", -1)
+	sp := strings.Split(raw, "|")
 	var s, v string
 	for i := len(sp) - 1; i >= 0; i-- {
 		s, v = sp[i], ""
 		if s == "" {
 			return Void, ast.ErrInvalidType(src, raw)
 		}
-		var tk knd.Kind
+		var r Type
 		lst := s[len(s)-1]
 		none := lst == '?'
-		some := !none && lst == '!'
+		some := lst == '!'
 		if none || some {
 			s = s[:len(s)-1]
 			if some {
-				tk |= knd.Some
+				r.Kind = knd.Some
 			} else {
-				tk |= knd.None
+				r.Kind = knd.None
 			}
 		}
-		var tid int32
-		var tr string
-		var tb Body
 		vi := strings.IndexByte(s, '@')
 		if vi >= 0 {
 			s, v = s[:vi], s[vi+1:]
 			if len(v) == 0 {
-				tk |= knd.Var
-				tid = -1
-			} else if r := v[0]; r >= '0' && r <= '9' {
-				tk |= knd.Var
+				r.Kind |= knd.Var
+				r.ID = -1
+			} else if cor.Digit(rune(v[0])) {
+				r.Kind |= knd.Var
 				pi := strings.IndexAny(v, "/.")
 				if pi >= 0 {
-					v, tr = v[:pi], v[pi:]
+					v, r.Ref = v[:pi], v[pi:]
 				}
 				id, err := strconv.ParseUint(v, 10, 32)
 				if err != nil {
 					return Void, err
 				}
-				tid = int32(id)
+				r.ID = int32(id)
 			} else {
-				tr = v
+				r.Ref = v
 			}
 		}
 		if s != "" {
 			if fst := s[0]; fst == '.' || fst == '_' && (len(s) == 1 || s[1] == '.') {
 				// local ref cannot have a reference
-				if tr != "" {
+				if r.Ref != "" {
 					return Void, ast.ErrInvalidType(src, sp[i])
 				}
-				tk |= knd.Sel
-				tr = s
+				r.Kind |= knd.Sel
+				r.Ref = s
 				if fst == '_' {
-					tr = ".0" + s[1:]
+					r.Ref = ".0" + s[1:]
 				}
 			} else {
 				k, err := knd.ParseName(s)
 				if err != nil {
 					return Void, ast.ErrInvalidType(src, s)
 				}
-				tk |= k
+				r.Kind |= k
 			}
 		}
-		if tk&(knd.Exp|knd.Typ|knd.List|knd.Dict) != 0 {
-			if res.Kind != 0 {
+		if r.Ref != "" && r.Kind&(knd.All|knd.Sel) == 0 {
+			r.Kind |= knd.Ref
+		}
+		if res.Kind != 0 {
+			if isElKind(r.Kind) {
 				tmp := res
-				tb = &tmp
+				r.Body = &tmp
+			} else {
+				return Void, ast.ErrInvalidType(src, s)
 			}
 		}
-		if tr != "" && tk&(knd.All|knd.Sel) == 0 {
-			tk |= knd.Ref
-		}
-		res = Type{tk, tid, tr, tb}
+		res = r
 	}
 	return res, nil
+}
+
+func isElKind(k knd.Kind) bool {
+	if k&knd.Exp == 0 {
+		switch k & knd.All {
+		case knd.Cont, knd.List, knd.Dict:
+		case knd.Typ, knd.Spec:
+		default:
+			return false
+		}
+	}
+	return true
 }
 
 func parseBody(a ast.Ast, args []ast.Ast, t Type, hist []Type) (_ Type, err error) {
@@ -133,13 +145,6 @@ func parseBody(a ast.Ast, args []ast.Ast, t Type, hist []Type) (_ Type, err erro
 		eb, ok = el.Body.(*Type)
 	}
 	switch el.Kind &^ (knd.Var | knd.Ref | knd.None) {
-	case knd.Bits, knd.Enum:
-		cs, err := parseConsts(args)
-		if err != nil {
-			return Void, err
-		}
-		el.Body = &ConstBody{Consts: cs}
-		return t, nil
 	case knd.Alt:
 		alts := make([]Type, 0, len(args))
 		for _, arg := range args {
@@ -152,26 +157,31 @@ func parseBody(a ast.Ast, args []ast.Ast, t Type, hist []Type) (_ Type, err erro
 		alt := Alt(alts...)
 		el.Kind = alt.Kind | (el.Kind & knd.Var)
 		el.Body = alt.Body
-		return t, nil
 	case knd.Obj, knd.Func, knd.Tupl, knd.Form:
-	case knd.List, knd.Dict, knd.Typ:
+		ps, err := parseParams(args, hist)
+		if err != nil {
+			return Void, err
+		}
+		if el.Kind&knd.Tupl != 0 && len(ps) == 1 && ps[0].Name == "" {
+			el.Body = &ps[0].Type
+		} else {
+			el.Body = &ParamBody{Params: ps}
+		}
+	case knd.Bits, knd.Enum:
+		cs, err := parseConsts(args)
+		if err != nil {
+			return Void, err
+		}
+		el.Body = &ConstBody{Consts: cs}
+	default:
+		if len(args) > 1 {
+			return Void, ast.ErrInvalidParams(a)
+		}
 		b, err := parse(args[0], hist)
 		if err != nil {
 			return Void, err
 		}
 		el.Body = &b
-		return t, nil
-	default:
-		return Void, ast.ErrInvalidParams(a)
-	}
-	ps, err := parseParams(args, hist)
-	if err != nil {
-		return Void, err
-	}
-	if el.Kind&knd.Tupl != 0 && len(ps) == 1 && ps[0].Name == "" {
-		el.Body = &ps[0].Type
-	} else {
-		el.Body = &ParamBody{Params: ps}
 	}
 	return t, nil
 }
