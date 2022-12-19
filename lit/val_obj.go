@@ -82,7 +82,7 @@ func (s *Obj) Print(p *bfr.P) error {
 		}
 
 		if v == nil || v.Zero() {
-			if !p.JSON && v == nil || v.Nil() {
+			if !p.JSON && (v == nil || v.Nil()) {
 				p.RecordKeyTag(par.Key, ';')
 			} else {
 				p.RecordKey(par.Key)

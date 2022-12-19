@@ -49,7 +49,7 @@ func (d Keyed) Print(p *bfr.P) (err error) {
 		if i > 0 {
 			p.Sep()
 		}
-		if !p.JSON && v.Val.Nil() {
+		if !p.JSON && (v.Val == nil || v.Val.Nil()) {
 			p.RecordKeyTag(v.Key, ';')
 		} else {
 			p.RecordKey(v.Key)
