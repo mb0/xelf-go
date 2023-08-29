@@ -117,6 +117,27 @@ func DynPrepper(p *exp.Prog, env exp.Env, _ Node, _ string, arg exp.Exp) (_ lit.
 	return p.Eval(env, arg)
 }
 
+// CatPrepper resolves args using p and env and returns a concatenated value or an error.
+// Empty args result in an untyped null value. Multiple args are resolved as call.
+func CatPrepper(p *exp.Prog, env exp.Env, _ Node, _ string, arg exp.Exp) (_ lit.Val, err error) {
+	switch a := arg.(type) {
+	case nil:
+		return lit.Str(""), nil
+	case *exp.Tupl:
+		if len(a.Els) == 0 {
+			return lit.Str(""), nil
+		}
+		call := &exp.Call{Args: make([]exp.Exp, 0, len(a.Els)+1), Src: a.Src}
+		call.Args = append(call.Args, &exp.Sym{Sym: "cat"})
+		call.Args = append(call.Args, a.Els...)
+		arg, err = p.Resl(env, call, typ.Str)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return p.Eval(env, arg)
+}
+
 // BitsPrepper returns a key prepper that tries to resolve a bits constant.
 func BitsPrepper(consts []typ.Const) KeyPrepper {
 	return func(p *exp.Prog, env exp.Env, n Node, key string, arg exp.Exp) (lit.Val, error) {
