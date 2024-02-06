@@ -11,7 +11,7 @@ Working on modules we discovered problems with type reference resolution. We hav
 and type registry. But we want to lookup reference types from the scoped environment. We need to
 extend the env api or provide a wrapper to lookup type references from the environment. In both
 cases ideally want to reuse the normal env lookup chain. The environment resl method however takes a
-program parameter which complicates the issue. 
+program parameter which complicates the issue.
 
 
 Implementation

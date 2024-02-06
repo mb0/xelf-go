@@ -12,10 +12,11 @@ func TestDynEval(t *testing.T) {
 		want string
 		typ  string
 	}{
-		{`(1 + 2 3)`, `6`, "<num>"},
+		{`(1+ 2 3)`, `6`, "<num>"},
 		{`(real 1)`, `1`, "<real>"},
 		{`(real)`, `0`, "<real>"},
 		{`(raw 'test')`, `test`, "<raw>"},
+		{`(cat '1' '2' '3')`, `123`, "<str>"},
 		{`('a'+ 'b' 'c')`, `abc`, "<char>"},
 		{`('a'+ (json ['b']) (xelf 'c'))`, "a[\"b\"]'c'", "<char>"},
 		{`(with (fn n:int (add .n 1)) (. 2))`, `3`, "<int>"},

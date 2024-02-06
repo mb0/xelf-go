@@ -53,6 +53,7 @@ func TestParse(t *testing.T) {
 		{Var(-1, Void), `@`, `<@>`},
 		{Var(1, Void), `<@1>`, ``},
 		{Var(1, Num), `<num@1>`, ``},
+		{Var(1, Int), `<int@1>`, ``},
 		{WithRef(".foo", Var(1, Num)), `<num@1.foo>`, ``},
 		{Var(1, Alt(Num, Str)), `<alt@1 num str>`, ``},
 		{Ref(`a`), `@a`, `<@a>`},

@@ -39,7 +39,7 @@ Tag arguments are treated as delta edits and thereby cover all variants in gener
 only one plain argument as assignment unless that argument is the symbol '+', in that case we use
 add for numbers, cat for chars or append for lists. Together we get:
 
-	(a .:v)          assign v to a, same as (a v) 
+	(a .:v)          assign v to a, same as (a v)
 	(a path:1)       apply an edit to a, same as (a .*:{path:1})
 	(a .+:[[1 2]])   append to list a, same as (a + 1 2) or (append a 1 2)
 	(a .+:['b' 'c']) cat to str a, same as (a + 'b' 'c') or (cat a 'b' 'c')
@@ -137,7 +137,7 @@ We can use the star marker for a **nested delta**, to reduce path lookups and im
 The plus marker makes no sense for deltas, we might allow both or raise an error for plus.
 
 	{docs.cv*:{hobbies-; attr+:['serious']}} drop hobbies from the cv and add an serious attrib
-	
+
 This is already a great improvement on previous concepts. The nested deltas are readable. The
 symmetry of the mirror ops is pretty. But now it gets outright crazy, buckle yourself! What if each
 element value in list ops can itself be a delta again? **delta-ops** Mind blown!

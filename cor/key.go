@@ -37,40 +37,40 @@ func Keyify(s string) string {
 		if KeyPart(r) {
 			sep = false
 			buf.WriteRune(r)
-		} else if idx := strings.IndexRune(trans, r); idx > 0 {
-			sep = false
-			buf.WriteByte(trans[idx-1])
-		} else {
-			switch r {
-			case 'ä':
-				buf.WriteString("ae")
-			case 'ö':
-				buf.WriteString("oe")
-			case 'ü':
-				buf.WriteString("ue")
-			case 'ß':
-				buf.WriteString("ss")
-			case 'æ':
-				buf.WriteString("ae")
-			case 'œ':
-				buf.WriteString("oe")
-			case '€':
-				buf.WriteString("euro")
-			case '$':
-				buf.WriteString("dollar")
-			case '£':
-				buf.WriteString("pound")
-			case '¥':
-				buf.WriteString("yen")
-			default:
-				if !sep {
-					sep = true
-					buf.WriteByte('_')
-				}
-				continue
-			}
-			sep = false
+			continue
 		}
+		switch r {
+		case 'ä':
+			buf.WriteString("ae")
+		case 'ö':
+			buf.WriteString("oe")
+		case 'ü':
+			buf.WriteString("ue")
+		case 'ß':
+			buf.WriteString("ss")
+		case 'æ':
+			buf.WriteString("ae")
+		case 'œ':
+			buf.WriteString("oe")
+		case '€':
+			buf.WriteString("euro")
+		case '$':
+			buf.WriteString("dollar")
+		case '£':
+			buf.WriteString("pound")
+		case '¥':
+			buf.WriteString("yen")
+		default:
+			if idx := strings.IndexRune(trans, r); idx > 0 {
+				sep = false
+				buf.WriteByte(trans[idx-1])
+			} else if !sep {
+				sep = true
+				buf.WriteByte('_')
+			}
+			continue
+		}
+		sep = false
 	}
 	return strings.Trim(buf.String(), "_")
 }

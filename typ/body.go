@@ -52,18 +52,18 @@ func (t *Type) EqualBody(b Body, h Hist) bool {
 	if !ok {
 		return false
 	}
-	for _, p := range h {
-		if p.A == t && p.B == o {
-			return true
-		}
-	}
-	h = append(h, BodyPair{t, o})
 	if t.Kind != o.Kind || t.ID != o.ID || t.Ref != o.Ref {
 		return false
 	}
 	if t.Body == nil {
 		return o.Body == nil
 	}
+	for _, p := range h {
+		if p.A == t && p.B == o {
+			return true
+		}
+	}
+	h = append(h, BodyPair{t, o})
 	return t.Body.EqualBody(o.Body, h)
 }
 
