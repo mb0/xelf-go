@@ -115,6 +115,9 @@ func (p *Prog) Lookup(s *Sym, pp cor.Path, eval bool) (res lit.Val, err error) {
 					}
 					return v, nil
 				}
+				if p.Arg.Type().Kind&knd.Dict != 0 {
+					return lit.Null{}, nil
+				}
 				return nil, ErrSymNotFound
 			}
 		} else if len(pp) > 1 && cor.IsKey(fst.Key) && strings.HasPrefix(s.Sym, fst.Key) {

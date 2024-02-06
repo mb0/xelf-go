@@ -23,6 +23,7 @@ func TestProgEval(t *testing.T) {
 		{`(with {a:[{b:2}, {b:3}]} .a/b)`, `[2 3]`},
 		{`(with {a:'2021-08-19T15:00:00Z'} (month .a))`, `8`},
 		{`((month $now))`, `8`},
+		{`$test`, `null`},
 		{`@`, `<@1>`},
 		{`<@>`, `<@1>`},
 		{`<@test.point>`, `<obj@test.point>`},
